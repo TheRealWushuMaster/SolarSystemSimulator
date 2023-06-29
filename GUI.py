@@ -1,11 +1,13 @@
 from settings import *
-import tkinter as tk
+#import tkinter as tk
+import customtkinter as ctk
 from skyfield.api import load, Topos
 import requests
 import os
 import email.utils
+import classes
 
-class App(tk.Tk):
+class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Solar System Simulator")
@@ -13,11 +15,13 @@ class App(tk.Tk):
         self.resizable=(True, True)
         self.minsize(WINDOW_MIN_SIZE[0], WINDOW_MIN_SIZE[1])
         self.iconbitmap("logos/logo-2.ico")
-        self.configure(background=DEFAULT_BACKGROUND)
+        self.configure(fg_color = DEFAULT_BACKGROUND)
         
         self.check_update()
 
         Controls(self)
+        
+        self.create_bodies()
 
         self.mainloop()
 
@@ -47,13 +51,20 @@ class App(tk.Tk):
         response = requests.get(ephemeris_url)
         with open(ephemeris_file, "wb") as file:
             file.write(response.content)
+    
+    def create_bodies(self):
+        pass
+        # sun = classes.Star(SUN_STAR_TYPE, 1, "Sun", 0, 0, SUN_RADIUS, SUN_MASS, SUN_TEMPERATURE,
+        #                    SUN_ROTATIONAL_PERIOD, SUN_COLOR, SUN_TEXTURE)
+        # mercury = classes.Planet(sun)
+        # venus = classes.Planet(sun, 1)
+        # earth = classes.Planet(sun, 1)
 
-class Controls(tk.Frame):
+class Controls(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(master=parent)
-
-        self.configure(background=DEFAULT_BACKGROUND)
-        canvas = tk.Canvas(parent, bg="black")
+        self.configure(fg_color=DEFAULT_BACKGROUND)
+        canvas = ctk.CTkCanvas(parent, bg="black")
 
         canvas.pack(fill="both", expand=True)
 
