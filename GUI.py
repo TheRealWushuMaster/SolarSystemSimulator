@@ -7,6 +7,7 @@ import email.utils
 import classes
 from jplephem.spk import SPK
 from jplephem import Ephemeris
+import vtk
 
 class App(ctk.CTk):
     def __init__(self):
@@ -19,13 +20,13 @@ class App(ctk.CTk):
         self.configure(fg_color = DEFAULT_BACKGROUND)
         # Verify ephemeris updates
         self.check_ephemeris_file_update()
-        self.load_ephemeris_data()
+        #self.load_ephemeris_data()
         # Create widgets
         Widgets(self)
         # Create celestial bodies        
         celestial_bodies = self.create_bodies()
         # Draw celestial bodies
-        self.draw_celestial_bodies(celestial_bodies, Widgets.canvas)
+        #self.draw_celestial_bodies(celestial_bodies, Widgets.canvas)
         # Start main loop
         self.mainloop()
 
@@ -35,7 +36,7 @@ class App(ctk.CTk):
         else:
             current_timestamp = 0
         response = requests.head(ephemeris_url)
-        #print(f"Response = {response}")
+
         if 'Last-Modified' in response.headers:
             latest_timestamp = response.headers['Last-Modified']
         else:
@@ -43,8 +44,6 @@ class App(ctk.CTk):
         
         latest_timestamp = email.utils.mktime_tz(email.utils.parsedate_tz(latest_timestamp))
 
-        #print(f"Current timestamp: {current_timestamp}")
-        #print(f"Latest timestamp: {latest_timestamp}")
         if current_timestamp < latest_timestamp:
             print("Downloading updated ephemeris file...")
             self.download_updated_ephemeris()
@@ -58,7 +57,7 @@ class App(ctk.CTk):
 
     def load_ephemeris_data(self):
         kernel = SPK.open('de421.bsp')
-        eph = Ephemeris(de421='de421.bsp')
+        #eph = Ephemeris(de421='de421.bsp')
         return kernel
     
     def close_ephemeris_data(self, kernel):
@@ -68,17 +67,16 @@ class App(ctk.CTk):
         celestial_bodies = {}
         # Create stars
         for star_name, star_props in Star_data.items():
-            star = classes.Star(**star_props)
+            star = classes.Star(star_name, **star_props)
             celestial_bodies[star_name] = star
         # Create planets
         for planet_name, planet_properties in Planet_data.items():
-            parent_body = celestial_bodies[planet_properties['PARENT_BODY']]  # Get the parent body object
-            planet = classes.Planet(parent_body=parent_body, **planet_properties)
+            planet = classes.Planet(planet_name, **planet_properties)
             celestial_bodies[planet_name] = planet
         # Create moons
         for moon_name, moon_properties in Moon_data.items():
-            parent_body = celestial_bodies[moon_properties['PARENT_BODY']]  # Get the parent body object
-            moon = classes.Planet(parent_body=parent_body, **moon_properties)
+            #parent_body = celestial_bodies[moon_properties['PARENT_BODY']]  # Get the parent body object
+            moon = classes.Planet(moon_name, **moon_properties)
             celestial_bodies[moon_name] = moon
         return celestial_bodies
 
@@ -91,5 +89,15 @@ class Widgets(ctk.CTkFrame):
         self.configure(fg_color=DEFAULT_BACKGROUND)
         self.canvas = ctk.CTkCanvas(parent, bg="black")
         self.canvas.pack(fill="both", expand=True)
+        # Create the 3D render window with vtk
+        # renderer = vtk.vtkRenderer()
+        # self.render_window = vtk.vtkRenderWindow()
+        # self.render_window.AddRenderer(renderer)
+        # self.render_window.SetSize(100, 100)
+        # renderer.SetBackground(0, 0, 0)
+        # interactor = vtk.vtkRenderWindowInteractor()
+        # interactor.SetRenderWindow(self.render_window)
+        # self.render_window.Render()
+        # interactor.Start()
 
 App()

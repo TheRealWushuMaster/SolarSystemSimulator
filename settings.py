@@ -8,6 +8,10 @@ DEFAULT_BACKGROUND = "black"
 
 ephemeris_file = "de421.bsp"
 ephemeris_url = "https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de421.bsp"
+charon_file = "plu043.bsp"
+charon_url = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/plu043.bsp"
+
+all_ephemeris_url = "https://ssd.jpl.nasa.gov/ephem.html"
 
 # =========================
 # Celestial body properties
@@ -24,14 +28,18 @@ Star_data = {
         "COLOR": "0",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,             # km
-        "ROTATIONAL_PERIOD": 0          # seconds
+        "ROTATION_PERIOD": 0,          # seconds
+        "PARENT_BODY": None,
+        "X": 0,
+        "Y": 0,
+        "Z": 0
     }
 }
 calculate_additional_properties(Star_data, color=True)
 
 Planet_data = {
     "Mercury": {
-        "TYPE": "Rocky",
+        "PLANET_TYPE": "Rocky",
         "RADIUS": 2440,
         "MASS": 3.3e23,
         "TEMPERATURE": 440,
@@ -39,11 +47,17 @@ Planet_data = {
         "COLOR": "#BEBEBE",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
-        "ROTATIONAL_PERIOD": 0,
-        "RINGS": None
+        "ROTATION_PERIOD": 0,
+        "RINGS": 0,
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "PARENT_BODY": 'Sun',
+        "ATMOSPHERE": 0,
+        "SURFACE": 0
     },
     "Venus": {
-        "TYPE": "Rocky",
+        "PLANET_TYPE": "Rocky",
         "RADIUS": 6052,
         "MASS": 4.87e24,
         "TEMPERATURE": 737,
@@ -51,11 +65,17 @@ Planet_data = {
         "COLOR": "#FFA500",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
-        "ROTATIONAL_PERIOD": 0,
-        "RINGS": None
+        "ROTATION_PERIOD": 0,
+        "RINGS": 0,
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "PARENT_BODY": 'Sun',
+        "ATMOSPHERE": 0,
+        "SURFACE": 0
     },
     "Earth": {
-        "TYPE": "Rocky",
+        "PLANET_TYPE": "Rocky",
         "RADIUS": 6371,
         "MASS": 5.97e24,
         "TEMPERATURE": 288,
@@ -63,11 +83,17 @@ Planet_data = {
         "COLOR": "#0000FF",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
-        "ROTATIONAL_PERIOD": 0,
-        "RINGS": None
+        "ROTATION_PERIOD": 0,
+        "RINGS": 0,
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "PARENT_BODY": 'Sun',
+        "ATMOSPHERE": 0,
+        "SURFACE": 0
     },
     "Mars": {
-        "TYPE": "Rocky",
+        "PLANET_TYPE": "Rocky",
         "RADIUS": 33990,
         "MASS": 6.42e23,
         "TEMPERATURE": 210,
@@ -75,11 +101,17 @@ Planet_data = {
         "COLOR": "#FF4500",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
-        "ROTATIONAL_PERIOD": 0,
-        "RINGS": None
+        "ROTATION_PERIOD": 0,
+        "RINGS": 0,
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "PARENT_BODY": 'Sun',
+        "ATMOSPHERE": 0,
+        "SURFACE": 0
     },
     "Jupiter": {
-        "TYPE": "Gas giant",
+        "PLANET_TYPE": "Gas giant",
         "RADIUS": 69911,
         "MASS": 1.9e27,
         "TEMPERATURE": 165,
@@ -87,11 +119,17 @@ Planet_data = {
         "COLOR": "#FFD700",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
-        "ROTATIONAL_PERIOD": 0,
-        "RINGS": 2
+        "ROTATION_PERIOD": 0,
+        "RINGS": 2,
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "PARENT_BODY": 'Sun',
+        "ATMOSPHERE": 0,
+        "SURFACE": 0
     },
     "Saturn": {
-        "TYPE": "Gas giant",
+        "PLANET_TYPE": "Gas giant",
         "RADIUS": 58232,
         "MASS": 5.7e26,
         "TEMPERATURE": 134,
@@ -99,11 +137,17 @@ Planet_data = {
         "COLOR": "#DAA520",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
-        "ROTATIONAL_PERIOD": 0,
-        "RINGS": 3
+        "ROTATION_PERIOD": 0,
+        "RINGS": 3,
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "PARENT_BODY": 'Sun',
+        "ATMOSPHERE": 0,
+        "SURFACE": 0
     },
     "Uranus": {
-        "TYPE": "Ice giant",
+        "PLANET_TYPE": "Ice giant",
         "RADIUS": 25362,
         "MASS": 8.7e25,
         "TEMPERATURE": 76,
@@ -111,11 +155,17 @@ Planet_data = {
         "COLOR": "#00BFFF",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
-        "ROTATIONAL_PERIOD": 0,
-        "RINGS": 1
+        "ROTATION_PERIOD": 0,
+        "RINGS": 1,
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "PARENT_BODY": 'Sun',
+        "ATMOSPHERE": 0,
+        "SURFACE": 0
     },
     "Neptune": {
-        "TYPE": "Ice giant",
+        "PLANET_TYPE": "Ice giant",
         "RADIUS": 24622,
         "MASS": 1.02e26,
         "TEMPERATURE": 72,
@@ -123,11 +173,17 @@ Planet_data = {
         "COLOR": "#00008B",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
-        "ROTATIONAL_PERIOD": 0,
-        "RINGS": 1
+        "ROTATION_PERIOD": 0,
+        "RINGS": 1,
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "PARENT_BODY": 'Sun',
+        "ATMOSPHERE": 0,
+        "SURFACE": 0
     },
     "Pluto": {
-        "TYPE": "Dwarf",
+        "PLANET_TYPE": "Dwarf",
         "RADIUS": 1188,
         "MASS": 1.3e22,
         "TEMPERATURE": 44,
@@ -135,11 +191,17 @@ Planet_data = {
         "COLOR": "#D9D9D9",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
-        "ROTATIONAL_PERIOD": 0,
-        "RINGS": None
+        "ROTATION_PERIOD": 0,
+        "RINGS": 0,
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "PARENT_BODY": 'Sun',
+        "ATMOSPHERE": 0,
+        "SURFACE": 0
     },
     "Eris": {
-        "TYPE": "Dwarf",
+        "PLANET_TYPE": "Dwarf",
         "RADIUS": 1163,
         "MASS": 1.7e22,
         "TEMPERATURE": 30,
@@ -147,7 +209,14 @@ Planet_data = {
         "COLOR": "#D9D9D9",
         "TEXTURE": None,
         "CIRCUMFERENCE": None,
-        "RINGS": None
+        "ROTATION_PERIOD": 0,
+        "RINGS": 0,
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "PARENT_BODY": 'Sun',
+        "ATMOSPHERE": 0,
+        "SURFACE": 0
     }
 }
 calculate_additional_properties(Planet_data)
@@ -155,25 +224,39 @@ calculate_additional_properties(Planet_data)
 Moon_data = {
     "Moon": {
         "PARENT_BODY": "Earth",
-        "TYPE": "Rocky",
+        "PLANET_TYPE": "Rocky moon",
         "RADIUS": 1737.1,
         "MASS": 7.34e22,
         "TEMPERATURE": -20,
         "ROTATION_VELOCITY": 0.98,
+        "ROTATION_PERIOD": 0,
         "COLOR": "#D3D3D3",
         "TEXTURE": None,
-        "CIRCUMFERENCE": 0
+        "CIRCUMFERENCE": 0,
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "ATMOSPHERE": 0,
+        "SURFACE": 0,
+        "RINGS": 0
     },
     "Charon": {
         "PARENT_BODY": "Pluto",
-        "TYPE": "Rocky",
+        "PLANET_TYPE": "Rocky moon",
         "RADIUS": 606,
         "MASS": 1.52e21,
         "TEMPERATURE": -233,
         "ROTATION_VELOCITY": 6.38,
+        "ROTATION_PERIOD": 0,
         "COLOR": "#D3D3D3",
         "TEXTURE": None,
-        "CIRCUMFERENCE": 0
+        "CIRCUMFERENCE": 0,
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "ATMOSPHERE": 0,
+        "SURFACE": 0,
+        "RINGS": 0
     }
 }
 calculate_additional_properties(Moon_data)

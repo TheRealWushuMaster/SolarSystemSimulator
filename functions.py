@@ -18,4 +18,4 @@ def calculate_additional_properties(data_dict, color=False):
         if color:
             data["COLOR"] = color_index_to_rgb(data["COLOR_INDEX"])
         data["CIRCUMFERENCE"] = round(2*pi*data["RADIUS"], 0)
-        data["ROTATIONAL_PERIOD"] = round(data["CIRCUMFERENCE"]/data["ROTATION_VELOCITY"], 0)
+        data["ROTATION_PERIOD"] = round(data["CIRCUMFERENCE"]/data["ROTATION_VELOCITY"], 0)
