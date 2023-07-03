@@ -13,6 +13,23 @@ def color_index_to_rgb(color_index):
     color_hex = f"#{r:02x}{g:02x}{b:02x}"
     return color_hex
 
+def get_lighter_color(hex_color, lighten_factor=0.2):
+    # Remove the '#' character from the hexadecimal color string
+    hex_color = hex_color.lstrip("#")
+    
+    # Convert the hexadecimal color string to RGB values
+    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    
+    # Calculate the lighter shade of the color
+    r_lighter = int(min(255, r + (255 - r) * lighten_factor))
+    g_lighter = int(min(255, g + (255 - g) * lighten_factor))
+    b_lighter = int(min(255, b + (255 - b) * lighten_factor))
+    
+    # Convert the lighter RGB values back to a hexadecimal color string
+    hex_lighter = "#{:02x}{:02x}{:02x}".format(r_lighter, g_lighter, b_lighter)
+    
+    return hex_lighter
+
 def calculate_additional_properties(data_dict, color=False):
     for star, data in data_dict.items():
         if color:

@@ -6,11 +6,15 @@ WINDOW_SIZE = (800, 500)
 WINDOW_MIN_SIZE = (700, 400)
 DEFAULT_BACKGROUND = "black"
 
+# Representation parameters
+DISTANCE_SCALE = 1
+CENTER_POINT = (round(WINDOW_SIZE[0]/2), round(WINDOW_SIZE[1]/2))
+
+# JPL body information
 ephemeris_file = "de421.bsp"
 ephemeris_url = "https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de421.bsp"
 charon_file = "plu043.bsp"
 charon_url = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/plu043.bsp"
-
 all_ephemeris_url = "https://ssd.jpl.nasa.gov/ephem.html"
 
 # =========================
@@ -28,11 +32,12 @@ Star_data = {
         "COLOR": "0",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,             # km
-        "ROTATION_PERIOD": 0,          # seconds
+        "ROTATION_PERIOD": 0,           # seconds
         "PARENT_BODY": None,
         "X": 0,
         "Y": 0,
-        "Z": 0
+        "Z": 0,
+        "LOCATION_PATH": [0, 10]
     }
 }
 calculate_additional_properties(Star_data, color=True)
@@ -54,7 +59,8 @@ Planet_data = {
         "Z": 0,
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
-        "SURFACE": 0
+        "SURFACE": 0,
+        "LOCATION_PATH": [0, 1, 199]
     },
     "Venus": {
         "PLANET_TYPE": "Rocky",
@@ -72,7 +78,8 @@ Planet_data = {
         "Z": 0,
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
-        "SURFACE": 0
+        "SURFACE": 0,
+        "LOCATION_PATH": [0, 2, 299]
     },
     "Earth": {
         "PLANET_TYPE": "Rocky",
@@ -90,11 +97,12 @@ Planet_data = {
         "Z": 0,
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
-        "SURFACE": 0
+        "SURFACE": 0,
+        "LOCATION_PATH": [0, 3, 399]
     },
     "Mars": {
         "PLANET_TYPE": "Rocky",
-        "RADIUS": 33990,
+        "RADIUS": 3389,
         "MASS": 6.42e23,
         "TEMPERATURE": 210,
         "ROTATION_VELOCITY": 0.24,
@@ -108,7 +116,8 @@ Planet_data = {
         "Z": 0,
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
-        "SURFACE": 0
+        "SURFACE": 0,
+        "LOCATION_PATH": [0, 4, 499]
     },
     "Jupiter": {
         "PLANET_TYPE": "Gas giant",
@@ -126,7 +135,8 @@ Planet_data = {
         "Z": 0,
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
-        "SURFACE": 0
+        "SURFACE": 0,
+        "LOCATION_PATH": [0, 5]
     },
     "Saturn": {
         "PLANET_TYPE": "Gas giant",
@@ -144,7 +154,8 @@ Planet_data = {
         "Z": 0,
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
-        "SURFACE": 0
+        "SURFACE": 0,
+        "LOCATION_PATH": [0, 6]
     },
     "Uranus": {
         "PLANET_TYPE": "Ice giant",
@@ -162,7 +173,8 @@ Planet_data = {
         "Z": 0,
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
-        "SURFACE": 0
+        "SURFACE": 0,
+        "LOCATION_PATH": [0, 7]
     },
     "Neptune": {
         "PLANET_TYPE": "Ice giant",
@@ -180,7 +192,8 @@ Planet_data = {
         "Z": 0,
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
-        "SURFACE": 0
+        "SURFACE": 0,
+        "LOCATION_PATH": [0, 8]
     },
     "Pluto": {
         "PLANET_TYPE": "Dwarf",
@@ -198,26 +211,9 @@ Planet_data = {
         "Z": 0,
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
-        "SURFACE": 0
+        "SURFACE": 0,
+        "LOCATION_PATH": [0, 9]
     },
-    "Eris": {
-        "PLANET_TYPE": "Dwarf",
-        "RADIUS": 1163,
-        "MASS": 1.7e22,
-        "TEMPERATURE": 30,
-        "ROTATION_VELOCITY": 1.08,
-        "COLOR": "#D9D9D9",
-        "TEXTURE": None,
-        "CIRCUMFERENCE": None,
-        "ROTATION_PERIOD": 0,
-        "RINGS": 0,
-        "X": 0,
-        "Y": 0,
-        "Z": 0,
-        "PARENT_BODY": 'Sun',
-        "ATMOSPHERE": 0,
-        "SURFACE": 0
-    }
 }
 calculate_additional_properties(Planet_data)
 
@@ -238,7 +234,8 @@ Moon_data = {
         "Z": 0,
         "ATMOSPHERE": 0,
         "SURFACE": 0,
-        "RINGS": 0
+        "RINGS": 0,
+        "LOCATION_PATH": [0, 3, 301]
     },
     "Charon": {
         "PARENT_BODY": "Pluto",
@@ -256,7 +253,30 @@ Moon_data = {
         "Z": 0,
         "ATMOSPHERE": 0,
         "SURFACE": 0,
-        "RINGS": 0
+        "RINGS": 0,
+        "LOCATION_PATH": [0, 9]
     }
 }
 calculate_additional_properties(Moon_data)
+
+Other_bodies = {
+    "Eris": {
+        "PLANET_TYPE": "Dwarf",
+        "RADIUS": 1163,
+        "MASS": 1.7e22,
+        "TEMPERATURE": 30,
+        "ROTATION_VELOCITY": 1.08,
+        "COLOR": "#D9D9D9",
+        "TEXTURE": None,
+        "CIRCUMFERENCE": None,
+        "ROTATION_PERIOD": 0,
+        "RINGS": 0,
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "PARENT_BODY": 'Sun',
+        "ATMOSPHERE": 0,
+        "SURFACE": 0,
+        "LOCATION_PATH": [0, 1]     # Need to determine this
+    }
+}
