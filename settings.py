@@ -6,16 +6,17 @@ WINDOW_SIZE = (800, 500)
 WINDOW_MIN_SIZE = (700, 400)
 DEFAULT_BACKGROUND = "black"
 
-# Representation parameters
-DISTANCE_SCALE = 1
-CENTER_POINT = (round(WINDOW_SIZE[0]/2), round(WINDOW_SIZE[1]/2))
-
 # JPL body information
-ephemeris_file = "de421.bsp"
-ephemeris_url = "https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de421.bsp"
-charon_file = "plu043.bsp"
-charon_url = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/plu043.bsp"
-all_ephemeris_url = "https://ssd.jpl.nasa.gov/ephem.html"
+EPHEMERIS_FILE = "de421.bsp"
+EPHEMERIS_URL = "https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de421.bsp"
+CHARON_FILE = "plu043.bsp"
+CHARON_FILE_URL = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/plu043.bsp"
+MAX_JULIAN_DATE = 2471184.5
+MIN_JULIAN_DATE = 2414864.5
+ALL_EPHEMERIS_DATA_URL = "https://ssd.jpl.nasa.gov/ephem.html"
+
+# Units
+AU = 149597870.7   # km
 
 # =========================
 # Celestial body properties

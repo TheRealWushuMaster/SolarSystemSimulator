@@ -1,4 +1,5 @@
 from math import pi
+import locale
 
 def color_index_to_rgb(color_index):
     color_temp = 4600 * ((1 / ((0.92 * color_index) + 1.7)) + (1 / ((0.92 * color_index) + 0.62)))
@@ -36,3 +37,10 @@ def calculate_additional_properties(data_dict, color=False):
             data["COLOR"] = color_index_to_rgb(data["COLOR_INDEX"])
         data["CIRCUMFERENCE"] = round(2*pi*data["RADIUS"], 0)
         data["ROTATION_PERIOD"] = round(data["CIRCUMFERENCE"]/data["ROTATION_VELOCITY"], 0)
+
+def format_with_thousands_separator(number):
+    # Set the appropriate locale for formatting
+    locale.setlocale(locale.LC_ALL, '')
+    # Format the number with thousands separators
+    formatted_number = locale.format_string("%d", number, grouping=True)
+    return formatted_number

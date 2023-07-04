@@ -49,3 +49,9 @@ class Planet():
     
     def __str__(self):
         return f"Planet(name={self.name}, x={self.x}, y={self.y}, z={self.z}, radius={self.radius}, mass={self.mass}, temperature={self.temperature}, rotation_velocity={self.rotation_velocity}, rotation_period={self.rotation_period}, color={self.color}, circumference={self.circumference}, texture={self.texture}, parent_body={self.parent_body}, planet_type={self.planet_type}, atmosphere={self.atmosphere}, surface={self.surface}, rings={self.rings})"
+
+class Point():
+    def __init__(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
