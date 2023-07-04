@@ -1,5 +1,6 @@
 from settings import *
 import customtkinter as ctk
+import tkinter.font as tkfont
 import requests
 import os
 import email.utils
@@ -13,23 +14,25 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.widgets = self.configure_app_window()
+        self.configure_canvas_info_objects()
         self.bind_events()
         self.check_ephemeris_file_update()
-        self.kernel = self.load_ephemeris_data()
+        self.load_ephemeris_data()
         
         self.celestial_bodies = self.create_bodies()
-        self.following = self.celestial_bodies["Sun"]
+        self.update_following_object()
         
         self.date = datetime.datetime.now()
         self.timestamp_months = 0
         self.timestamp_years = 0
         self.timestamp = self.convert_to_julian_date()
+        self.update_time_text()
 
         self.update_all_bodies_positions()
-        #self.print_all_bodies_positions()
 
         self.modified_scale = 1.0
-        self.original_scale = self.calculate_standard_draw_scale(self.widgets.canvas.winfo_reqwidth()-4, self.widgets.canvas.winfo_reqheight()-4)
+        self.original_scale = self.calculate_standard_draw_scale(self.widgets.canvas.winfo_reqwidth(), self.widgets.canvas.winfo_reqheight())
+        self.update_scale_text()
         self.draw_celestial_bodies()
 
     def configure_app_window(self):
@@ -42,10 +45,19 @@ class App(ctk.CTk):
         widgets = Widgets(self)
         return widgets
 
+    def configure_canvas_info_objects(self):
+        self.time_text = self.widgets.canvas.create_text(10, 10, anchor="nw", fill="white", font=("Arial", TEXT_SIZE_INFO), tags="info")
+        self.scale_text = self.widgets.canvas.create_text(10, 10+INFO_TEXT_SEPARATION, anchor="nw", fill="white", text="Scale", font=("Arial", TEXT_SIZE_INFO), tags="info")
+        self.distance_text_km = self.widgets.canvas.create_text(10, 10+2*INFO_TEXT_SEPARATION, anchor="nw", fill="white", text="Distance km", font=("Arial", TEXT_SIZE_INFO), tags="info")
+        self.distance_text_au = self.widgets.canvas.create_text(10, 10+3*INFO_TEXT_SEPARATION, anchor="nw", fill="white", text="Distance AU", font=("Arial", TEXT_SIZE_INFO), tags="info")
+        self.following_object = self.widgets.canvas.create_text(10, 10+4*INFO_TEXT_SEPARATION, anchor="nw", fill="white", text="Following: ", font=("Arial", TEXT_SIZE_INFO), tags="info")
+        self.following_object_info = self.widgets.canvas.create_text(10, 10+5*INFO_TEXT_SEPARATION, anchor="nw", fill="white", text="Object info: ", font=("Arial", TEXT_SIZE_INFO), tags="info")
+
     def bind_events(self):
         self.widgets.canvas.bind("<Configure>", self.on_canvas_resize)
         self.widgets.canvas.bind("<MouseWheel>", self.handle_mousewheel)
         self.widgets.canvas.bind("<Motion>", self.mouse_hover)
+        self.widgets.canvas.bind("<Double-Button-1>", self.handle_canvas_double_click)
         self.bind("<Left>", self.handle_time_adjustment)
         self.bind("<Right>", self.handle_time_adjustment)
 
@@ -75,65 +87,110 @@ class App(ctk.CTk):
             file.write(response.content)
 
     def load_ephemeris_data(self):
-        kernel = SPK.open('de421.bsp')
-        return kernel
-    
-    def close_ephemeris_data(self, kernel):
-        kernel.close()
+        self.kernel = SPK.open('de421.bsp')
 
-    def create_bodies(self):
+    def close_ephemeris_data(self):
+        self.kernel.close()
+
+    def create_bodies(self, stars=True, planets=True, moons=True):
         celestial_bodies = {}
-        # Create stars
-        for star_name, star_properties in Star_data.items():
-            star = classes.Star(star_name, **star_properties)
-            celestial_bodies[star_name] = star
-        # Create planets
-        for planet_name, planet_properties in Planet_data.items():
-            planet = classes.Planet(planet_name, **planet_properties)
-            celestial_bodies[planet_name] = planet
-        # Create moons
-        #for moon_name, moon_properties in Moon_data.items():
-        #    moon = classes.Planet(moon_name, **moon_properties)
-        #    celestial_bodies[moon_name] = moon
+        if stars:
+            for star_name, star_properties in Star_data.items():
+                star = classes.Star(star_name, **star_properties)
+                celestial_bodies[star_name] = star
+        if planets:
+            for planet_name, planet_properties in Planet_data.items():
+                planet = classes.Planet(planet_name, **planet_properties)
+                celestial_bodies[planet_name] = planet
+        if moons:
+            for moon_name, moon_properties in Moon_data.items():
+                moon = classes.Planet(moon_name, **moon_properties)
+                celestial_bodies[moon_name] = moon
         return celestial_bodies
 
-    def calculate_standard_draw_scale(self, canvas_width, canvas_height):
-        min_x = min(body.x for body in self.celestial_bodies.values())
-        max_x = max(body.x for body in self.celestial_bodies.values())
-        min_y = min(body.y for body in self.celestial_bodies.values())
-        max_y = max(body.y for body in self.celestial_bodies.values())
-        #min_z = min(body.z for body in bodies.values())
-        #max_z = max(body.z for body in bodies.values())
-        max_width = max_x - min_x
-        max_height = max_y - min_y
-        #max_depth = max_z - min_z
-        draw_scale = min(canvas_width/max_width, canvas_height/max_height)
+    def calculate_standard_draw_scale(self, width, height):
+        if DRAW_3D:
+            # Need to adjust the scale in relation to rotation angle
+            draw_scale = min((width-CANVAS_DRAW_PADDING)/self.max_width, (height-CANVAS_DRAW_PADDING)/self.max_height, (height-CANVAS_DRAW_PADDING)/self.max_depth)
+        else:
+            draw_scale = min((width-CANVAS_DRAW_PADDING)/self.max_width, (height-CANVAS_DRAW_PADDING)/self.max_height)
         return draw_scale
 
     def canvas_center_point(self):
         return round(self.widgets.canvas.winfo_reqwidth()/2), round(self.widgets.canvas.winfo_reqheight()/2)
 
     def draw_celestial_bodies(self):
+        self.body_ids = []
         center_point_x, center_point_y = self.canvas_center_point()
         self.distance_scale = .7 * self.original_scale * self.modified_scale
-        self.widgets.canvas.delete("all")
-        time_text = f"Current date: {self.date} - adjustment {self.timestamp_months} months, {self.timestamp_years} years"
-        scale_text = f"Scale: {self.modified_scale}"
-        self.widgets.canvas.create_text(10, 10, anchor="nw", fill="white", text=time_text, font=("Arial", 8))
-        self.widgets.canvas.create_text(10, 25, anchor="nw", fill="white", text=scale_text, font=("Arial", 8))
-        self.distance_text_km = self.widgets.canvas.create_text(10, 40, anchor="nw", fill="white", text="Position: x=0, y=0 - Distance = 0 (km)", font=("Arial", 8))
-        self.distance_text_au = self.widgets.canvas.create_text(10, 55, anchor="nw", fill="white", text="Position: x=0, y=0 - Distance = 0 (AU)", font=("Arial", 8))
+        self.clear_canvas_bodies()
         for body in self.celestial_bodies.values():
             x = round(body.x * self.distance_scale + center_point_x)
             y = round(body.y * self.distance_scale + center_point_y)
             radius = round(body.radius * self.distance_scale)
             radius = max(radius, 1)
-            self.widgets.canvas.create_oval(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color))
-            self.widgets.canvas.create_text(x + radius + 10, y, anchor='w', text=body.name, fill="white", font=("Arial", 8))
+            body_id = self.widgets.canvas.create_oval(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color), tags='object')
+            text_id = self.place_body_names(x, y, radius, body.name)
+            if radius > 3 and body.rings > 0:
+                self.draw_planetary_rings(x, y, radius, body.rings)
+                self.widgets.canvas.create_arc(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color), start=0, extent=180, tags='object')
+                self.widgets.canvas.create_arc(x-(radius-1), y-(radius-1), x + (radius-1), y + (radius-1), fill=body.color, outline=body.color, start=0, extent=180, tags='object')
+            self.body_ids.append((body.name, body_id, text_id))
+
+    def clear_canvas_bodies(self):
+        for tag in ('object', 'object_text', 'planet_rings'):
+            objects = self.widgets.canvas.find_withtag(tag)
+            for obj in objects:
+                self.widgets.canvas.delete(obj)
+
+    def get_text_size(self, text, font_size):
+        font = tkfont.Font(family="Arial", size=font_size)
+        text_width = font.measure(text)
+        text_height = font.metrics("linespace")
+        return text_width, text_height
+
+    def place_body_names(self, x, y, radius, name):
+        # To DO
+        coso = self.get_text_size(name, TEXT_SIZE_NAME)
+        print(coso)
+        text_id = self.widgets.canvas.create_text(x + radius + 10, y, anchor='w', text=name, fill=BODY_NAME_COLOR, font=("Arial", TEXT_SIZE_NAME), tags='object_text')
+        return text_id
+
+    def draw_planetary_rings(self, x, y, planet_radius, ring_value):
+        ring_size = planet_radius * 1.5
+        ring_thickness = max(round(planet_radius/30*ring_value*2), 1)
+        if ring_value == 3:
+            ring_colors = ['white', 'light gray', 'gray', 'dark gray']
+            for i, color in enumerate(ring_colors):
+                self.draw_one_ring(x, y, planet_radius, ring_size+i*ring_thickness, color, ring_thickness)
+        else:
+            self.draw_one_ring(x, y, planet_radius, ring_size, "white", ring_thickness)
+
+    def draw_one_ring(self, x, y, planet_radius, ring_size, ring_color, ring_thickness):
+        self.widgets.canvas.create_oval(x - ring_size,
+                                        y - round(planet_radius/2),
+                                        x + ring_size,
+                                        y + round(planet_radius/2),
+                                        outline=ring_color,
+                                        width=ring_thickness,
+                                        tags='planet_rings')
+
+    def update_following_object(self, object_name="Sun"):
+        self.following = self.celestial_bodies[object_name]
+        following_text = f"Following: {self.following.name}"
+        properties_to_exclude = ["name", "x", "y", "z", "location_path", "texture", "rings", "surface", "atmosphere"]
+        property_lines = []
+        for property_name, property_value in vars(self.following).items():
+            if not (property_name in properties_to_exclude):
+                line = f"    - {property_name}: {property_value}"
+                property_lines.append(line)
+        object_properties_text = "Information:\n" + "\n".join(property_lines)
+        self.widgets.canvas.itemconfigure(self.following_object, text=following_text)
+        self.widgets.canvas.itemconfigure(self.following_object_info, text=object_properties_text)
 
     def on_canvas_resize(self, event):
-        new_width = event.width-4
-        new_height = event.height-4
+        new_width = event.width - CANVAS_DRAW_PADDING
+        new_height = event.height - CANVAS_DRAW_PADDING
         self.widgets.canvas.configure(width=new_width, height=new_height)
         self.original_scale = self.calculate_standard_draw_scale(new_width, new_height)
         self.draw_celestial_bodies()
@@ -146,19 +203,29 @@ class App(ctk.CTk):
                 scale_factor = -0.1  # Decrease scale by 0.1 for fine-grained zoom out
         elif event.state & 0x4: # Check if Ctrl key is pressed
             if event.delta > 0:
-                scale_factor = 10.0  # Increase scale by 0.1 for fine-grained zoom in
+                scale_factor = self.modified_scale  # Increase scale by 0.1 for fine-grained zoom in
             else:
-                scale_factor = -10.0  # Decrease scale by 0.1 for fine-grained zoom out
+                scale_factor = -self.modified_scale/2  # Decrease scale by 0.1 for fine-grained zoom out
         else:
             if event.delta > 0:
                 scale_factor = 1.0  # Increase scale by 1 for regular zoom in
             else:
                 scale_factor = -1.0  # Decrease scale by 1 for regular zoom out
-        # Apply the scale factor to adjust the scale of the representation
         self.modified_scale = round(self.modified_scale + scale_factor, 1)
         if self.modified_scale < 0.1:
             self.modified_scale = 0.1
+        self.update_scale_text()
         self.draw_celestial_bodies()
+
+    def handle_canvas_double_click(self, event):
+        clicked_body_ids = self.widgets.canvas.find_overlapping(event.x, event.y, event.x, event.y)
+        for object_name, body_id, text_id in self.body_ids:
+            if body_id in clicked_body_ids or text_id in clicked_body_ids:
+                self.update_following_object(object_name)
+                self.update_all_bodies_positions()
+                self.original_scale = self.calculate_standard_draw_scale(self.widgets.canvas.winfo_reqwidth(), self.widgets.canvas.winfo_reqheight())
+                self.draw_celestial_bodies()
+                break
 
     def mouse_hover(self, event):
         center_point_x, center_point_y = self.canvas_center_point()
@@ -172,9 +239,7 @@ class App(ctk.CTk):
         self.widgets.canvas.itemconfigure(self.distance_text_au, text=cursor_position_text_au)
 
     def handle_time_adjustment(self, event):
-        # Check if the Shift key is pressed
-        fine_adjustment = event.state & 0x1
-        # Update the timestamp based on the time step
+        fine_adjustment = event.state & 0x1     # Check if the Shift key is pressed
         if event.keysym == "Left":
             if fine_adjustment:
                 self.timestamp_months -= 1
@@ -185,15 +250,21 @@ class App(ctk.CTk):
                 self.timestamp_months += 1
             else:
                 self.timestamp_years += 1
-        # Recalculate the positions of celestial bodies based on the updated timestamp
         self.timestamp = self.convert_to_julian_date()
+        self.update_time_text()
         self.update_all_bodies_positions()
-        # Redraw the canvas
         self.draw_celestial_bodies()
+
+    def update_time_text(self):
+        time_text = f"Current date: {self.date} - adjustment {self.timestamp_months} months, {self.timestamp_years} years"
+        self.widgets.canvas.itemconfigure(self.time_text, text=time_text)
+
+    def update_scale_text(self):
+        scale_text = f"Scale: {self.modified_scale}"
+        self.widgets.canvas.itemconfigure(self.scale_text, text=scale_text)
 
     def body_position(self, body):
         position = [0, 0, 0]
-        #print(body.location_path)
         for index in range(len(body.location_path) - 1):
             index1 = body.location_path[index]
             index2 = body.location_path[index + 1]
@@ -217,6 +288,16 @@ class App(ctk.CTk):
             self.celestial_bodies[body_name].x = position[0] - origin.x
             self.celestial_bodies[body_name].y = position[1] - origin.y
             self.celestial_bodies[body_name].z = position[2] - origin.z
+        min_x = min(body.x for body in self.celestial_bodies.values())
+        max_x = max(body.x for body in self.celestial_bodies.values())
+        min_y = min(body.y for body in self.celestial_bodies.values())
+        max_y = max(body.y for body in self.celestial_bodies.values())
+        self.max_width = max_x - min_x
+        self.max_height = max_y - min_y
+        if DRAW_3D:
+            min_z = min(body.z for body in self.celestial_bodies.values())
+            max_z = max(body.z for body in self.celestial_bodies.values())
+            self.max_depth = max_z - min_z
 
     def convert_to_julian_date(self, date=None, d=None, m=None, y=None):
         if date is None:
@@ -253,4 +334,5 @@ class Widgets(ctk.CTkFrame):
 
 root = App()
 root.mainloop()
+root.close_ephemeris_data()
 root.destroy

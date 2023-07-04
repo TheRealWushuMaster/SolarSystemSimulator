@@ -15,20 +15,12 @@ def color_index_to_rgb(color_index):
     return color_hex
 
 def get_lighter_color(hex_color, lighten_factor=0.2):
-    # Remove the '#' character from the hexadecimal color string
     hex_color = hex_color.lstrip("#")
-    
-    # Convert the hexadecimal color string to RGB values
     r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-    
-    # Calculate the lighter shade of the color
     r_lighter = int(min(255, r + (255 - r) * lighten_factor))
     g_lighter = int(min(255, g + (255 - g) * lighten_factor))
     b_lighter = int(min(255, b + (255 - b) * lighten_factor))
-    
-    # Convert the lighter RGB values back to a hexadecimal color string
     hex_lighter = "#{:02x}{:02x}{:02x}".format(r_lighter, g_lighter, b_lighter)
-    
     return hex_lighter
 
 def calculate_additional_properties(data_dict, color=False):
@@ -39,8 +31,6 @@ def calculate_additional_properties(data_dict, color=False):
         data["ROTATION_PERIOD"] = round(data["CIRCUMFERENCE"]/data["ROTATION_VELOCITY"], 0)
 
 def format_with_thousands_separator(number):
-    # Set the appropriate locale for formatting
     locale.setlocale(locale.LC_ALL, '')
-    # Format the number with thousands separators
     formatted_number = locale.format_string("%d", number, grouping=True)
     return formatted_number
