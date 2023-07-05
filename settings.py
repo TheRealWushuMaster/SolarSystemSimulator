@@ -17,7 +17,6 @@ ALL_EPHEMERIS_DATA_URL = "https://ssd.jpl.nasa.gov/ephem.html"
 
 # Units
 AU = 149597870.7   # Astronomical unit in km
-RETAIN_DECIMALS = -1
 
 # Graphical information
 DRAW_3D = False
@@ -250,6 +249,7 @@ Moon_data = {
 }
 calculate_additional_properties(Moon_data)
 
+# Info on other bodies for future representation
 Other_bodies = {
     "Eris": {
         "PLANET_TYPE": "Dwarf",
@@ -268,14 +268,14 @@ Other_bodies = {
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
         "SURFACE": 0,
-        "LOCATION_PATH": [0, 1]     # Need to determine this
+        "LOCATION_PATH": [0, 0]
     },
     "Charon": {
         "PARENT_BODY": "Pluto",
         "PLANET_TYPE": "Rocky moon",
         "RADIUS": 606,
         "MASS": 1.52e21,
-        "TEMPERATURE": -233,
+        "TEMPERATURE": 53,
         "ROTATION_VELOCITY": 6.38,
         "ROTATION_PERIOD": 0,
         "COLOR": "#8E8D8B",
@@ -287,6 +287,25 @@ Other_bodies = {
         "ATMOSPHERE": 0,
         "SURFACE": 0,
         "RINGS": 0,
-        "LOCATION_PATH": [0, 9]
+        "LOCATION_PATH": [0, 9, 901]
+    },
+    "Ceres": {
+        "PARENT_BODY": "Sun",
+        "PLANET_TYPE": "Dwarf",
+        "RADIUS": 939,
+        "MASS": 9.38392e20,
+        "TEMPERATURE": 172,
+        "ROTATION_VELOCITY": 0.09261,
+        "ROTATION_PERIOD": 0,
+        "COLOR": "#8E8D8B",
+        "TEXTURE": None,
+        "CIRCUMFERENCE": 0,
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "ATMOSPHERE": 0,
+        "SURFACE": 0,
+        "RINGS": 0,
+        "LOCATION_PATH": [0, 0]
     }
 }

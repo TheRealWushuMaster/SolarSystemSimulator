@@ -180,16 +180,17 @@ class App(ctk.CTk):
         self.following = self.celestial_bodies[object_name]
         following_text = f"Following: {self.following.name}"
         properties_to_exclude = ["name", "x", "y", "z", "location_path", "texture", "rings", "surface", "atmosphere"]
-        properties_to_format_and_round = ["luminosity", "radius", "mass", "temperature", "rotation_velocity", "color_index",
-                                          "circumference", "rotation_period"]
+        properties_to_format = ["luminosity", "radius", "mass", "temperature", "rotation_velocity", "color_index"]
+        properties_to_round = ["rotation_period", "circumference"]
         property_lines = []
         for property_name, property_value in vars(self.following).items():
             if not (property_name in properties_to_exclude):
                 property_print_name, units = property_name_and_units(property_name)
-                if property_name in properties_to_format_and_round:
-                    line = f"    - {property_print_name}: {format_with_thousands_separator(property_value)} {units}"
-                else:
-                    line = f"    - {property_print_name}: {property_value} {units}"
+                if property_name in properties_to_round:
+                    property_value = format_with_thousands_separator(property_value, 0)
+                if property_name in properties_to_format:
+                    property_value = format_with_thousands_separator(property_value)
+                line = f"    - {property_print_name}: {property_value} {units}"
                 property_lines.append(line)
         object_properties_text = "Information:\n" + "\n".join(property_lines)
         self.widgets.canvas.itemconfigure(self.following_object, text=following_text)
