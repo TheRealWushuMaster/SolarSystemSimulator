@@ -11,7 +11,7 @@ def color_index_to_rgb(color_index):
         r = max(0, min(255, int((color_temp - 6000) / 25)))
         g = max(0, min(255, int((color_temp - 4000) / 15)))
         b = max(0, min(255, int((color_temp - 2000) / 6)))
-    color_hex = f"#{r:02x}{g:02x}{b:02x}"
+    color_hex = f"#{r:02x}{g:02x}{b:02x}".upper()
     return color_hex
 
 def get_lighter_color(hex_color, lighten_factor=0.2):
@@ -30,7 +30,72 @@ def calculate_additional_properties(data_dict, color=False):
         data["CIRCUMFERENCE"] = round(2*pi*data["RADIUS"], 0)
         data["ROTATION_PERIOD"] = round(data["CIRCUMFERENCE"]/data["ROTATION_VELOCITY"], 0)
 
-def format_with_thousands_separator(number):
+def format_with_thousands_separator(number, num_decimals=-1):
     locale.setlocale(locale.LC_ALL, '')
-    formatted_number = locale.format_string("%d", number, grouping=True)
+    if 'e' in str(number).lower():
+        coeff, exponent = str(number).split('e')
+        coeff = float(coeff)
+    else:
+        coeff = number
+        exponent = 0
+    if num_decimals == -1:
+        decimal_symbol = locale.localeconv()['decimal_point']
+        try:
+            integer_part, decimal_part = str(coeff).split(".")
+        except:
+            integer_part = number
+            decimal_part = ""
+            decimal_symbol = ""
+        formatted_integer_part = locale.format_string("%d", int(integer_part), grouping=True)
+        formatted_number = f"{formatted_integer_part}{decimal_symbol}{decimal_part}"
+    else:
+        rounded_number = round(coeff, ndigits=num_decimals)
+        if num_decimals in (None, 0):
+            formatted_number = locale.format_string("%d", rounded_number, grouping=True)
+        else:
+            formatted_number = locale.format_string(f'%.{num_decimals}f', rounded_number, grouping=True)
+    if exponent != 0:
+        formatted_number = f"{formatted_number}e{exponent}"
     return formatted_number
+
+def property_name_and_units(property_name):
+    if property_name in ("radius", "circumference"):
+        units = "km"
+        if property_name == "radius":
+            print_name = "Radius"
+        else:
+            print_name = "Circumference"
+    elif property_name == "luminosity":
+        units = "W"
+        print_name = "Luminosity"
+    elif property_name == "mass":
+        units = "kg"
+        print_name = "Mass"
+    elif property_name == "temperature":
+        units = "K"
+        print_name = "Temperature"
+    elif property_name == "rotation_velocity":
+        units = "km/s"
+        print_name = "Rotation velocity"
+    elif property_name == "rotation_period":
+        units = "s"
+        print_name = "Rotation period"
+    elif property_name == "star_type":
+        units = ""
+        print_name = "Star type"
+    elif property_name == "parent_body":
+        units = ""
+        print_name = "Parent body"
+    elif property_name == "color_index":
+        units = ""
+        print_name = "Color index"
+    elif property_name == "color":
+        units = ""
+        print_name = "Color"
+    elif property_name == "planet_type":
+        units = ""
+        print_name = "Planet type"
+    else:
+        units = ""
+        print_name = property_name
+    return print_name, units

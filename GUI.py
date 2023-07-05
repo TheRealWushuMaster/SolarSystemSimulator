@@ -7,7 +7,7 @@ import email.utils
 import classes
 from jplephem.spk import SPK
 import datetime
-from functions import get_lighter_color, format_with_thousands_separator
+from functions import get_lighter_color, format_with_thousands_separator, property_name_and_units
 from math import sqrt
 
 class App(ctk.CTk):
@@ -18,7 +18,7 @@ class App(ctk.CTk):
         self.bind_events()
         self.check_ephemeris_file_update()
         self.load_ephemeris_data()
-        
+
         self.celestial_bodies = self.create_bodies()
         self.update_following_object()
         
@@ -130,11 +130,11 @@ class App(ctk.CTk):
             radius = round(body.radius * self.distance_scale)
             radius = max(radius, 1)
             body_id = self.widgets.canvas.create_oval(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color), tags='object')
-            text_id = self.place_body_names(x, y, radius, body.name)
             if radius > 3 and body.rings > 0:
                 self.draw_planetary_rings(x, y, radius, body.rings)
                 self.widgets.canvas.create_arc(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color), start=0, extent=180, tags='object')
                 self.widgets.canvas.create_arc(x-(radius-1), y-(radius-1), x + (radius-1), y + (radius-1), fill=body.color, outline=body.color, start=0, extent=180, tags='object')
+            text_id = self.place_body_names(x, y, radius, body.name)
             self.body_ids.append((body.name, body_id, text_id))
 
     def clear_canvas_bodies(self):
@@ -152,19 +152,20 @@ class App(ctk.CTk):
     def place_body_names(self, x, y, radius, name):
         # To DO
         coso = self.get_text_size(name, TEXT_SIZE_NAME)
-        print(coso)
         text_id = self.widgets.canvas.create_text(x + radius + 10, y, anchor='w', text=name, fill=BODY_NAME_COLOR, font=("Arial", TEXT_SIZE_NAME), tags='object_text')
         return text_id
 
     def draw_planetary_rings(self, x, y, planet_radius, ring_value):
         ring_size = planet_radius * 1.5
-        ring_thickness = max(round(planet_radius/30*ring_value*2), 1)
+        ring_thickness = max(round(planet_radius/30*ring_value), 1)
         if ring_value == 3:
-            ring_colors = ['white', 'light gray', 'gray', 'dark gray']
+            ring_thickness *= 2
+            #ring_colors = ['white', 'lightgray', 'darkgray', 'gray']
+            ring_colors = ['#1a1917', '#5c5344', '#232220', '#4e473f']
             for i, color in enumerate(ring_colors):
                 self.draw_one_ring(x, y, planet_radius, ring_size+i*ring_thickness, color, ring_thickness)
         else:
-            self.draw_one_ring(x, y, planet_radius, ring_size, "white", ring_thickness)
+            self.draw_one_ring(x, y, planet_radius, ring_size, "lightgray", ring_thickness)
 
     def draw_one_ring(self, x, y, planet_radius, ring_size, ring_color, ring_thickness):
         self.widgets.canvas.create_oval(x - ring_size,
@@ -179,10 +180,16 @@ class App(ctk.CTk):
         self.following = self.celestial_bodies[object_name]
         following_text = f"Following: {self.following.name}"
         properties_to_exclude = ["name", "x", "y", "z", "location_path", "texture", "rings", "surface", "atmosphere"]
+        properties_to_format_and_round = ["luminosity", "radius", "mass", "temperature", "rotation_velocity", "color_index",
+                                          "circumference", "rotation_period"]
         property_lines = []
         for property_name, property_value in vars(self.following).items():
             if not (property_name in properties_to_exclude):
-                line = f"    - {property_name}: {property_value}"
+                property_print_name, units = property_name_and_units(property_name)
+                if property_name in properties_to_format_and_round:
+                    line = f"    - {property_print_name}: {format_with_thousands_separator(property_value)} {units}"
+                else:
+                    line = f"    - {property_print_name}: {property_value} {units}"
                 property_lines.append(line)
         object_properties_text = "Information:\n" + "\n".join(property_lines)
         self.widgets.canvas.itemconfigure(self.following_object, text=following_text)
@@ -233,8 +240,8 @@ class App(ctk.CTk):
         y = (event.y - center_point_y) / self.distance_scale
         distance = sqrt(x**2 + y**2)
         self.widgets.canvas.delete("cursor_distance_text")
-        cursor_position_text_km = f"Position: x={format_with_thousands_separator(round(x))}, y={format_with_thousands_separator(round(y))} | Distance = {format_with_thousands_separator(round(distance))} (km)"
-        cursor_position_text_au = f"Position: x={round(x/AU, 4)}, y={round(y/AU, 4)} | Distance = {round(distance/AU, 4)} (AU)"
+        cursor_position_text_km = f"Position: x = {format_with_thousands_separator(x, 0)} | y = {format_with_thousands_separator(y, 0)} | Distance = {format_with_thousands_separator(distance, 0)} (km)"
+        cursor_position_text_au = f"Position: x = {format_with_thousands_separator(x/AU, 4)} | y = {format_with_thousands_separator(y/AU, 4)} | Distance = {format_with_thousands_separator(distance/AU, 4)} (AU)"
         self.widgets.canvas.itemconfigure(self.distance_text_km, text=cursor_position_text_km)
         self.widgets.canvas.itemconfigure(self.distance_text_au, text=cursor_position_text_au)
 

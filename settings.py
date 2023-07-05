@@ -1,5 +1,5 @@
 from math import pi
-from functions import color_index_to_rgb, calculate_additional_properties
+from functions import calculate_additional_properties
 
 # Window settings
 WINDOW_SIZE = (800, 500)
@@ -17,6 +17,7 @@ ALL_EPHEMERIS_DATA_URL = "https://ssd.jpl.nasa.gov/ephem.html"
 
 # Units
 AU = 149597870.7   # Astronomical unit in km
+RETAIN_DECIMALS = -1
 
 # Graphical information
 DRAW_3D = False
@@ -58,7 +59,7 @@ Planet_data = {
         "MASS": 3.3e23,
         "TEMPERATURE": 440,
         "ROTATION_VELOCITY": 1.5,
-        "COLOR": "#BEBEBE",
+        "COLOR": "#8C8887",    #"#BEBEBE",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
         "ROTATION_PERIOD": 0,
@@ -77,7 +78,7 @@ Planet_data = {
         "MASS": 4.87e24,
         "TEMPERATURE": 737,
         "ROTATION_VELOCITY": 1.2,
-        "COLOR": "#FFA500",
+        "COLOR": "#EEF0E8",    #"#FFA500",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
         "ROTATION_PERIOD": 0,
@@ -96,7 +97,7 @@ Planet_data = {
         "MASS": 5.97e24,
         "TEMPERATURE": 288,
         "ROTATION_VELOCITY": 0.465,
-        "COLOR": "#0000FF",
+        "COLOR": "#2B5182",    #"#0000FF",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
         "ROTATION_PERIOD": 0,
@@ -115,7 +116,7 @@ Planet_data = {
         "MASS": 6.42e23,
         "TEMPERATURE": 210,
         "ROTATION_VELOCITY": 0.24,
-        "COLOR": "#FF4500",
+        "COLOR": "#E19E68",    #"#FF4500",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
         "ROTATION_PERIOD": 0,
@@ -134,11 +135,11 @@ Planet_data = {
         "MASS": 1.9e27,
         "TEMPERATURE": 165,
         "ROTATION_VELOCITY": 12.6,
-        "COLOR": "#FFD700",
+        "COLOR": "#BFA189",    #"#FFD700",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
         "ROTATION_PERIOD": 0,
-        "RINGS": 2,
+        "RINGS": 1,
         "X": 0,
         "Y": 0,
         "Z": 0,
@@ -153,7 +154,7 @@ Planet_data = {
         "MASS": 5.7e26,
         "TEMPERATURE": 134,
         "ROTATION_VELOCITY": 9.9,
-        "COLOR": "#DAA520",
+        "COLOR": "#C6A16D", #"#E5C73C",    #DAA520",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
         "ROTATION_PERIOD": 0,
@@ -172,7 +173,7 @@ Planet_data = {
         "MASS": 8.7e25,
         "TEMPERATURE": 76,
         "ROTATION_VELOCITY": 2.6,
-        "COLOR": "#00BFFF",
+        "COLOR": "#A7B7C4",    #"#00BFFF",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
         "ROTATION_PERIOD": 0,
@@ -191,7 +192,7 @@ Planet_data = {
         "MASS": 1.02e26,
         "TEMPERATURE": 72,
         "ROTATION_VELOCITY": 2.1,
-        "COLOR": "#00008B",
+        "COLOR": "#85A7D4",    #"#00008B",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
         "ROTATION_PERIOD": 0,
@@ -210,7 +211,7 @@ Planet_data = {
         "MASS": 1.3e22,
         "TEMPERATURE": 44,
         "ROTATION_VELOCITY": 6.4,
-        "COLOR": "#D9D9D9",
+        "COLOR": "#E4D5C0",    #"#D9D9D9",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
         "ROTATION_PERIOD": 0,
@@ -230,12 +231,12 @@ Moon_data = {
     "Moon": {
         "PARENT_BODY": "Earth",
         "PLANET_TYPE": "Rocky moon",
-        "RADIUS": 1737.1,
+        "RADIUS": 1737,
         "MASS": 7.34e22,
         "TEMPERATURE": -20,
         "ROTATION_VELOCITY": 0.98,
         "ROTATION_PERIOD": 0,
-        "COLOR": "#D3D3D3",
+        "COLOR": "#656160",    #"#D3D3D3",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
         "X": 0,
@@ -256,7 +257,7 @@ Other_bodies = {
         "MASS": 1.7e22,
         "TEMPERATURE": 30,
         "ROTATION_VELOCITY": 1.08,
-        "COLOR": "#D9D9D9",
+        "COLOR": "#E0E0E0",
         "TEXTURE": None,
         "CIRCUMFERENCE": None,
         "ROTATION_PERIOD": 0,
@@ -277,7 +278,7 @@ Other_bodies = {
         "TEMPERATURE": -233,
         "ROTATION_VELOCITY": 6.38,
         "ROTATION_PERIOD": 0,
-        "COLOR": "#D3D3D3",
+        "COLOR": "#8E8D8B",
         "TEXTURE": None,
         "CIRCUMFERENCE": 0,
         "X": 0,
