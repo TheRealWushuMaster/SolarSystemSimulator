@@ -31,7 +31,7 @@ def calculate_additional_properties(data_dict, color=False):
             data["COLOR"] = color_index_to_rgb(data["COLOR_INDEX"])
         data["CIRCUMFERENCE"] = round(2*pi*data["RADIUS"], 0)
         data["ROTATION_PERIOD"] = round(data["CIRCUMFERENCE"]/data["ROTATION_VELOCITY"], 0)
-        data["ORBIT"] = []
+        data["ORBIT_POINTS"] = []
 
 def format_with_thousands_separator(number, num_decimals=-1):
     locale.setlocale(locale.LC_ALL, '')
@@ -98,6 +98,12 @@ def property_name_and_units(property_name):
     elif property_name == "planet_type":
         units = ""
         print_name = "Planet type"
+    elif property_name == "average_orbital_speed":
+        units = "km/s"
+        print_name = "Average orbital speed"
+    elif property_name == "orbital_period":
+        units = "days"
+        print_name = "Orbital period"
     else:
         units = ""
         print_name = property_name
