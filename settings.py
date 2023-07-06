@@ -17,6 +17,10 @@ ALL_EPHEMERIS_DATA_URL = "https://ssd.jpl.nasa.gov/ephem.html"
 
 # Units
 AU = 149597870.7   # Astronomical unit in km
+JULIAN_DATE_YEAR = 365.25
+JULIAN_DATE_MONTH = 365.25/12
+JULIAN_DATE_WEEK = 7
+JULIAN_DATE_DAY = 1
 
 # Graphical information
 DRAW_3D = False
@@ -46,7 +50,10 @@ Star_data = {
         "X": 0,
         "Y": 0,
         "Z": 0,
-        "LOCATION_PATH": [0, 10]
+        "LOCATION_PATH": [0, 10],
+        "ORBITAL_PERIOD": 1,
+        "ORBIT_STEP": JULIAN_DATE_WEEK,
+        "NUM_ORBIT_STEPS": 1
     }
 }
 calculate_additional_properties(Star_data, color=True)
@@ -69,7 +76,10 @@ Planet_data = {
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
         "SURFACE": 0,
-        "LOCATION_PATH": [0, 1, 199]
+        "LOCATION_PATH": [0, 1, 199],
+        "ORBITAL_PERIOD": 87.9691,
+        "ORBIT_STEP": JULIAN_DATE_WEEK,
+        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
     },
     "Venus": {
         "PLANET_TYPE": "Rocky",
@@ -88,7 +98,10 @@ Planet_data = {
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
         "SURFACE": 0,
-        "LOCATION_PATH": [0, 2, 299]
+        "LOCATION_PATH": [0, 2, 299],
+        "ORBITAL_PERIOD": 224.701,
+        "ORBIT_STEP": JULIAN_DATE_WEEK,
+        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
     },
     "Earth": {
         "PLANET_TYPE": "Rocky",
@@ -107,7 +120,10 @@ Planet_data = {
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
         "SURFACE": 0,
-        "LOCATION_PATH": [0, 3, 399]
+        "LOCATION_PATH": [0, 3, 399],
+        "ORBITAL_PERIOD": 365.2563,
+        "ORBIT_STEP": JULIAN_DATE_WEEK,
+        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
     },
     "Mars": {
         "PLANET_TYPE": "Rocky",
@@ -126,7 +142,10 @@ Planet_data = {
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
         "SURFACE": 0,
-        "LOCATION_PATH": [0, 4, 499]
+        "LOCATION_PATH": [0, 4, 499],
+        "ORBITAL_PERIOD": 686.98,
+        "ORBIT_STEP": JULIAN_DATE_WEEK,
+        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
     },
     "Jupiter": {
         "PLANET_TYPE": "Gas giant",
@@ -145,7 +164,10 @@ Planet_data = {
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
         "SURFACE": 0,
-        "LOCATION_PATH": [0, 5]
+        "LOCATION_PATH": [0, 5],
+        "ORBITAL_PERIOD": 4332.59,
+        "ORBIT_STEP": JULIAN_DATE_WEEK,
+        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
     },
     "Saturn": {
         "PLANET_TYPE": "Gas giant",
@@ -164,7 +186,10 @@ Planet_data = {
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
         "SURFACE": 0,
-        "LOCATION_PATH": [0, 6]
+        "LOCATION_PATH": [0, 6],
+        "ORBITAL_PERIOD": 10759.22,
+        "ORBIT_STEP": JULIAN_DATE_WEEK,
+        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
     },
     "Uranus": {
         "PLANET_TYPE": "Ice giant",
@@ -183,7 +208,10 @@ Planet_data = {
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
         "SURFACE": 0,
-        "LOCATION_PATH": [0, 7]
+        "LOCATION_PATH": [0, 7],
+        "ORBITAL_PERIOD": 30688.5,
+        "ORBIT_STEP": JULIAN_DATE_WEEK,
+        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
     },
     "Neptune": {
         "PLANET_TYPE": "Ice giant",
@@ -202,7 +230,10 @@ Planet_data = {
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
         "SURFACE": 0,
-        "LOCATION_PATH": [0, 8]
+        "LOCATION_PATH": [0, 8],
+        "ORBITAL_PERIOD": 60195,
+        "ORBIT_STEP": JULIAN_DATE_WEEK,
+        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
     },
     "Pluto": {
         "PLANET_TYPE": "Dwarf",
@@ -221,7 +252,10 @@ Planet_data = {
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
         "SURFACE": 0,
-        "LOCATION_PATH": [0, 9]
+        "LOCATION_PATH": [0, 9],
+        "ORBITAL_PERIOD": 90560,
+        "ORBIT_STEP": JULIAN_DATE_WEEK,
+        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
     },
 }
 calculate_additional_properties(Planet_data)
@@ -244,7 +278,10 @@ Moon_data = {
         "ATMOSPHERE": 0,
         "SURFACE": 0,
         "RINGS": 0,
-        "LOCATION_PATH": [0, 3, 301]
+        "LOCATION_PATH": [0, 3, 301],
+        "ORBITAL_PERIOD": 27.3217,
+        "ORBIT_STEP": JULIAN_DATE_WEEK,
+        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
     }
 }
 calculate_additional_properties(Moon_data)
@@ -268,7 +305,10 @@ Other_bodies = {
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
         "SURFACE": 0,
-        "LOCATION_PATH": [0, 0]
+        "LOCATION_PATH": [0, 0],
+        "ORBITAL_PERIOD": 204199,
+        "ORBIT_STEP": JULIAN_DATE_WEEK,
+        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
     },
     "Charon": {
         "PARENT_BODY": "Pluto",
@@ -287,7 +327,10 @@ Other_bodies = {
         "ATMOSPHERE": 0,
         "SURFACE": 0,
         "RINGS": 0,
-        "LOCATION_PATH": [0, 9, 901]
+        "LOCATION_PATH": [0, 9, 901],
+        "ORBITAL_PERIOD": 6.387,
+        "ORBIT_STEP": JULIAN_DATE_WEEK,
+        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
     },
     "Ceres": {
         "PARENT_BODY": "Sun",
@@ -306,6 +349,9 @@ Other_bodies = {
         "ATMOSPHERE": 0,
         "SURFACE": 0,
         "RINGS": 0,
-        "LOCATION_PATH": [0, 0]
+        "LOCATION_PATH": [0, 0],
+        "ORBITAL_PERIOD": 1680,
+        "ORBIT_STEP": JULIAN_DATE_WEEK,
+        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
     }
 }

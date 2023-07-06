@@ -1,5 +1,7 @@
 from math import pi
 import locale
+#from settings import MAX_JULIAN_DATE, MIN_JULIAN_DATE
+import settings
 
 def color_index_to_rgb(color_index):
     color_temp = 4600 * ((1 / ((0.92 * color_index) + 1.7)) + (1 / ((0.92 * color_index) + 0.62)))
@@ -24,11 +26,12 @@ def get_lighter_color(hex_color, lighten_factor=0.2):
     return hex_lighter
 
 def calculate_additional_properties(data_dict, color=False):
-    for star, data in data_dict.items():
+    for item, data in data_dict.items():
         if color:
             data["COLOR"] = color_index_to_rgb(data["COLOR_INDEX"])
         data["CIRCUMFERENCE"] = round(2*pi*data["RADIUS"], 0)
         data["ROTATION_PERIOD"] = round(data["CIRCUMFERENCE"]/data["ROTATION_VELOCITY"], 0)
+        data["ORBIT"] = []
 
 def format_with_thousands_separator(number, num_decimals=-1):
     locale.setlocale(locale.LC_ALL, '')
@@ -99,3 +102,20 @@ def property_name_and_units(property_name):
         units = ""
         print_name = property_name
     return print_name, units
+
+def calculate_orbit_parameters(name):
+    max_orbits = 10
+    max_step_size = {
+        "Mercury": 5,
+        "Venus": 10,
+        "Earth": 15,
+        "Mars": 20,
+        "Jupiter": 30,
+        "Saturn": 40,
+        "Uranus": 50,
+        "Neptune": 60,
+        "Pluto": 70
+    }
+    step_size = max_step_size.get(name, 1)
+    num_orbits = min(int((settings.MAX_JULIAN_DATE - settings.MIN_JULIAN_DATE) / step_size), max_orbits)
+    return step_size, num_orbits
