@@ -51,7 +51,6 @@ class Planet():
         self.surface = SURFACE
         self.rings = RINGS
         self.location_path = LOCATION_PATH
-        self.orbit = ORBIT
         self.orbital_period = ORBITAL_PERIOD
         self.orbit_step = ORBIT_STEP
         self.num_orbit_steps = NUM_ORBIT_STEPS
