@@ -1,8 +1,8 @@
 class Star():
     def __init__(self, NAME, X, Y, Z, RADIUS, MASS, TEMPERATURE, STAR_TYPE, LUMINOSITY,
                  ROTATION_PERIOD, ROTATION_VELOCITY, COLOR_INDEX, COLOR, CIRCUMFERENCE,
-                 LOCATION_PATH, AVERAGE_ORBITAL_SPEED, ORBITAL_PERIOD, ORBIT_RESOLUTION,
-                 NUM_ORBIT_STEPS, ORBIT_POINTS, TEXTURE=None, PARENT_BODY=None, RINGS=0):
+                 LOCATION_PATH, AVERAGE_ORBITAL_SPEED, ORBITAL_PERIOD,ORBIT_POINTS,
+                 TEXTURE=None, PARENT_BODY=None, RINGS=0):
         self.name = NAME
         self.x = X
         self.y = Y
@@ -23,8 +23,6 @@ class Star():
         self.rings = RINGS
         self.average_orbital_speed = AVERAGE_ORBITAL_SPEED
         self.orbital_period = ORBITAL_PERIOD
-        self.orbit_resolution = ORBIT_RESOLUTION
-        self.num_orbit_steps = NUM_ORBIT_STEPS
         self.orbit_points = ORBIT_POINTS
 
     def __str__(self):
@@ -36,8 +34,8 @@ class Star():
 class Planet():
     def __init__(self, NAME, X, Y, Z, RADIUS, MASS, TEMPERATURE, PARENT_BODY, PLANET_TYPE,
                  LOCATION_PATH, ROTATION_VELOCITY, ROTATION_PERIOD, COLOR, CIRCUMFERENCE, 
-                 AVERAGE_ORBITAL_SPEED, ORBITAL_PERIOD, ORBIT_RESOLUTION, NUM_ORBIT_STEPS,
-                 ORBIT_POINTS, TEXTURE=None, ATMOSPHERE=None, SURFACE=None, RINGS=0):
+                 AVERAGE_ORBITAL_SPEED, ORBITAL_PERIOD, ORBIT_POINTS,
+                 TEXTURE=None, ATMOSPHERE=None, SURFACE=None, RINGS=0):
         self.name = NAME
         self.x = X
         self.y = Y
@@ -58,8 +56,6 @@ class Planet():
         self.location_path = LOCATION_PATH
         self.average_orbital_speed = AVERAGE_ORBITAL_SPEED
         self.orbital_period = ORBITAL_PERIOD
-        self.orbit_resolution = ORBIT_RESOLUTION
-        self.num_orbit_steps = NUM_ORBIT_STEPS
         self.orbit_points = ORBIT_POINTS
     
     def __str__(self):

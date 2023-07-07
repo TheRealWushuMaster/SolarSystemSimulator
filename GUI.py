@@ -7,7 +7,7 @@ import email.utils
 import classes
 from jplephem.spk import SPK
 import datetime
-from functions import get_lighter_color, format_with_thousands_separator, property_name_and_units, calculate_orbit_parameters
+from functions import get_lighter_color, format_with_thousands_separator, property_name_and_units
 from math import sqrt
 
 class App(ctk.CTk):
@@ -20,7 +20,6 @@ class App(ctk.CTk):
         self.load_ephemeris_data()
 
         self.celestial_bodies = self.create_bodies()
-        self.update_following_object()
         
         self.date = datetime.datetime.now()
         self.timestamp_months = 0
@@ -28,6 +27,7 @@ class App(ctk.CTk):
         self.timestamp = self.convert_to_julian_date()
         self.update_time_text()
 
+        self.update_following_object()
         self.load_orbits()
         self.update_all_bodies_positions()
         self.update_boundaries()
@@ -123,9 +123,8 @@ class App(ctk.CTk):
         self.clear_canvas_bodies()
         self.draw_orbits()
         for body in self.celestial_bodies.values():
-            x, y, z = self.transform_coordinates_to_pixels(body.x, body.y, body.z)
-            radius = round(body.radius * self.distance_scale)
-            radius = max(radius, 1)
+            x, y, z = self.transform_coordinates_to_pixels(body.x - self.origin.x, body.y - self.origin.y, body.z - self.origin.z)
+            radius = max(round(body.radius * self.distance_scale), 1)
             if not DRAW_3D:
                 body_id = self.widgets.canvas.create_oval(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color), tags='object')
                 if radius > 3 and body.rings > 0:
@@ -189,6 +188,7 @@ class App(ctk.CTk):
 
     def update_following_object(self, object_name="Sun"):
         self.following = self.celestial_bodies[object_name]
+        self.origin = self.position_following()
         following_text = f"Following: {self.following.name}"
         properties_to_exclude = ["name", "x", "y", "z", "location_path", "texture", "rings", "surface",
                                  "atmosphere", "orbit_points", "orbit_resolution", "num_orbit_steps"]
@@ -249,8 +249,8 @@ class App(ctk.CTk):
         for object_name, body_id, text_id in self.body_ids:
             if body_id in clicked_body_ids or text_id in clicked_body_ids:
                 self.update_following_object(object_name)
-                self.update_all_bodies_positions()
-                self.update_standard_draw_scale(self.widgets.canvas.winfo_reqwidth(), self.widgets.canvas.winfo_reqheight())
+                #self.update_all_bodies_positions()
+                self.update_standard_draw_scale(self.widgets.canvas.winfo_width(), self.widgets.canvas.winfo_height())
                 self.draw_celestial_bodies()
                 break
 
@@ -278,8 +278,27 @@ class App(ctk.CTk):
                 self.timestamp_years += 1
         self.timestamp = self.convert_to_julian_date()
         self.update_time_text()
+        last_positions = self.save_positions()
         self.update_all_bodies_positions()
+        position_changes = self.calculate_change_vectors(last_positions)
+        self.update_orbits(position_changes)
         self.draw_celestial_bodies()
+
+    def save_positions(self):
+        positions = {}
+        for body_name, body_obj in self.celestial_bodies.items():
+            positions[body_name] = {"x": body_obj.x,
+                                    "y": body_obj.y,
+                                    "z": body_obj.z}
+        return positions
+
+    def calculate_change_vectors(self, last_positions):
+        change_vectors = {}
+        for body_name, body_obj in self.celestial_bodies.items():
+            change_vectors[body_name] = {"x": body_obj.x - last_positions[body_name]["x"],
+                                         "y": body_obj.y - last_positions[body_name]["y"],
+                                         "z": body_obj.z - last_positions[body_name]["z"]}
+        return change_vectors
 
     def update_time_text(self):
         time_text = f"Current date: {self.date} - adjustment {self.timestamp_months} months, {self.timestamp_years} years"
@@ -309,32 +328,38 @@ class App(ctk.CTk):
         origin = classes.Point(position[0], position[1], position[2])
         return origin
 
-    def load_orbits(self, increment=JULIAN_DATE_MONTH):
+    def load_orbits(self, resolution=50):
         for body_name, body_obj in self.celestial_bodies.items():
-            step_size, num_steps = calculate_orbit_parameters(body_name)
-            for i in range(num_steps):
-                date = int(MIN_JULIAN_DATE+0.5 + (i * step_size))
-                position = self.body_position(body_obj.location_path, date)
-                if not DRAW_3D:
-                    body_obj.orbit_points.append((position[0], position[1]))
-                else:
-                    body_obj.orbit_points.append((position[0], position[1], position[2]))
-            # date = MIN_JULIAN_DATE
-            # while date <= MAX_JULIAN_DATE:
-            #     position = self.body_position(body_obj, date)
-            #     if not DRAW_3D:
-            #         body_obj.orbit.append((position[0], position[1]))
-            #     else:
-            #         body_obj.orbit.append((position[0], position[1], position[2]))
-            #     date += increment
+            body_obj.orbit_points = []
+            period = body_obj.orbital_period
+            if period > 0:
+                time_step = period/resolution*JULIAN_DATE_DAY
+                num_steps = round(period/time_step)
+                parent_body = self.celestial_bodies.get(body_obj.parent_body)
+                for i in range(num_steps+1):
+                    date = MIN_JULIAN_DATE + i * time_step
+                    if date <= MAX_JULIAN_DATE:
+                        position = self.body_position(body_obj.location_path, date) - self.body_position(parent_body.location_path, date) + self.body_position(parent_body.location_path)
+                        if not DRAW_3D:
+                            body_obj.orbit_points.append((position[0], position[1]))
+                        else:
+                            body_obj.orbit_points.append((position[0], position[1], position[2]))
 
+    def update_orbits(self, change_vectors):
+        for body_name, body_obj in self.celestial_bodies.items():
+            if body_obj.parent_body in change_vectors and not body_obj=="Sun":
+                change_vector = change_vectors[body_name]
+                for i in range(len(body_obj.orbit_points)):
+                    body_obj.orbit_points[i] = (body_obj.orbit_points[i][0] + change_vector["x"],
+                                                body_obj.orbit_points[i][1] + change_vector["y"],
+                                                body_obj.orbit_points[i][2] + change_vector["z"] if DRAW_3D else 0)
     def draw_orbits(self):
         for body_name, body in self.celestial_bodies.items():
             for i in range(len(body.orbit_points)-1):
                 if not DRAW_3D:
                     x1, y1, z1 = self.transform_coordinates_to_pixels(x=body.orbit_points[i][0]-self.origin.x, y=body.orbit_points[i][1]-self.origin.y, z=0)
                     x2, y2, z2 = self.transform_coordinates_to_pixels(x=body.orbit_points[i+1][0]-self.origin.x, y=body.orbit_points[i+1][1]-self.origin.y, z=0)
-                    self.widgets.canvas.create_line(x1, y1, x2, y2, fill="white", dash=(1, 1), tags='orbit')
+                    self.widgets.canvas.create_line(x1, y1, x2, y2, fill="dimgray", dash=(2, 2), tags='orbit')
                 else:
                     x1, y1, z1 = self.transform_coordinates_to_pixels(x=body.orbit_points[i][0], y=body.orbit_points[i][1], z=body.orbit_points[i][2])
                     x2, y2, z2 = self.transform_coordinates_to_pixels(x=body.orbit_points[i+1][0], y=body.orbit_points[i+1][1], z=body.orbit_points[i+1][2])
@@ -343,14 +368,12 @@ class App(ctk.CTk):
         self.origin = self.position_following()
         for body_name, body_obj in self.celestial_bodies.items():
             position = self.body_position(body_obj.location_path)
-            self.celestial_bodies[body_name].x = position[0] - self.origin.x
-            self.celestial_bodies[body_name].y = position[1] - self.origin.y
-            self.celestial_bodies[body_name].z = position[2] - self.origin.z
+            self.celestial_bodies[body_name].x = position[0]
+            self.celestial_bodies[body_name].y = position[1]
+            self.celestial_bodies[body_name].z = position[2]
 
     def update_boundaries(self):
-        #min_x = min(abs(body.x-self.following.x) for body in self.celestial_bodies.values())
         max_x = max(abs(body.x-self.origin.x) for body in self.celestial_bodies.values())
-        #min_y = min(body.y-self.following.y for body in self.celestial_bodies.values())
         max_y = max(abs(body.y-self.origin.y) for body in self.celestial_bodies.values())
         self.max_distance_width = max_x #- min_x
         self.max_distance_height = max_y #- min_y

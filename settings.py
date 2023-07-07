@@ -53,9 +53,7 @@ Star_data = {
         "Z": 0,                         # km
         "LOCATION_PATH": [0, 10],
         "AVERAGE_ORBITAL_SPEED": 1,     # km/s
-        "ORBITAL_PERIOD": 1,            # days
-        "ORBIT_RESOLUTION": JULIAN_DATE_WEEK,
-        "NUM_ORBIT_STEPS": 1
+        "ORBITAL_PERIOD": 0             # days
     }
 }
 calculate_additional_properties(Star_data, color=True)
@@ -80,9 +78,7 @@ Planet_data = {
         "SURFACE": 0,
         "LOCATION_PATH": [0, 1, 199],
         "AVERAGE_ORBITAL_SPEED": 47.36,
-        "ORBITAL_PERIOD": 87.9691,
-        "ORBIT_RESOLUTION": 100,
-        "NUM_ORBIT_STEPS": 88
+        "ORBITAL_PERIOD": 87.9691
     },
     "Venus": {
         "PLANET_TYPE": "Rocky",
@@ -103,9 +99,7 @@ Planet_data = {
         "SURFACE": 0,
         "LOCATION_PATH": [0, 2, 299],
         "AVERAGE_ORBITAL_SPEED": 35.02,
-        "ORBITAL_PERIOD": 224.701,
-        "ORBIT_RESOLUTION": 100,
-        "NUM_ORBIT_STEPS": 226/2
+        "ORBITAL_PERIOD": 224.701
     },
     "Earth": {
         "PLANET_TYPE": "Rocky",
@@ -126,9 +120,7 @@ Planet_data = {
         "SURFACE": 0,
         "LOCATION_PATH": [0, 3, 399],
         "AVERAGE_ORBITAL_SPEED": 29.7827,
-        "ORBITAL_PERIOD": 365.2563,
-        "ORBIT_RESOLUTION": 100,
-        "NUM_ORBIT_STEPS": 366/2
+        "ORBITAL_PERIOD": 365.2563
     },
     "Mars": {
         "PLANET_TYPE": "Rocky",
@@ -149,9 +141,7 @@ Planet_data = {
         "SURFACE": 0,
         "LOCATION_PATH": [0, 4, 499],
         "AVERAGE_ORBITAL_SPEED": 24.07,
-        "ORBITAL_PERIOD": 686.98,
-        "ORBIT_RESOLUTION": 100,
-        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
+        "ORBITAL_PERIOD": 686.98
     },
     "Jupiter": {
         "PLANET_TYPE": "Gas giant",
@@ -172,9 +162,7 @@ Planet_data = {
         "SURFACE": 0,
         "LOCATION_PATH": [0, 5],
         "AVERAGE_ORBITAL_SPEED": 13.07,
-        "ORBITAL_PERIOD": 4332.59,
-        "ORBIT_RESOLUTION": 100,
-        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
+        "ORBITAL_PERIOD": 4332.59
     },
     "Saturn": {
         "PLANET_TYPE": "Gas giant",
@@ -195,9 +183,7 @@ Planet_data = {
         "SURFACE": 0,
         "LOCATION_PATH": [0, 6],
         "AVERAGE_ORBITAL_SPEED": 9.68,
-        "ORBITAL_PERIOD": 10759.22,
-        "ORBIT_RESOLUTION": 100,
-        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
+        "ORBITAL_PERIOD": 10759.22
     },
     "Uranus": {
         "PLANET_TYPE": "Ice giant",
@@ -218,9 +204,7 @@ Planet_data = {
         "SURFACE": 0,
         "LOCATION_PATH": [0, 7],
         "AVERAGE_ORBITAL_SPEED": 6.80,
-        "ORBITAL_PERIOD": 30688.5,
-        "ORBIT_RESOLUTION": 100,
-        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
+        "ORBITAL_PERIOD": 30688.5
     },
     "Neptune": {
         "PLANET_TYPE": "Ice giant",
@@ -241,9 +225,7 @@ Planet_data = {
         "SURFACE": 0,
         "LOCATION_PATH": [0, 8],
         "AVERAGE_ORBITAL_SPEED": 5.43,
-        "ORBITAL_PERIOD": 60195,
-        "ORBIT_RESOLUTION": 100,
-        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
+        "ORBITAL_PERIOD": 60195
     },
     "Pluto": {
         "PLANET_TYPE": "Dwarf",
@@ -264,9 +246,7 @@ Planet_data = {
         "SURFACE": 0,
         "LOCATION_PATH": [0, 9],
         "AVERAGE_ORBITAL_SPEED": 4.743,
-        "ORBITAL_PERIOD": 90560,
-        "ORBIT_RESOLUTION": 100,
-        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
+        "ORBITAL_PERIOD": 90560
     },
 }
 calculate_additional_properties(Planet_data)
@@ -291,9 +271,7 @@ Moon_data = {
         "RINGS": 0,
         "LOCATION_PATH": [0, 3, 301],
         "AVERAGE_ORBITAL_SPEED": 1.022,
-        "ORBITAL_PERIOD": 27.321661,
-        "ORBIT_RESOLUTION": 100,
-        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
+        "ORBITAL_PERIOD": 27.321661
     }
 }
 calculate_additional_properties(Moon_data)
@@ -319,9 +297,7 @@ Other_bodies = {
         "SURFACE": 0,
         "LOCATION_PATH": [0, 0],
         "AVERAGE_ORBITAL_SPEED": 3.434,
-        "ORBITAL_PERIOD": 204199,
-        "ORBIT_RESOLUTION": 100,
-        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
+        "ORBITAL_PERIOD": 204199
     },
     "Charon": {
         "PARENT_BODY": "Pluto",
@@ -342,9 +318,7 @@ Other_bodies = {
         "RINGS": 0,
         "LOCATION_PATH": [0, 9, 901],
         "AVERAGE_ORBITAL_SPEED": 0.21,
-        "ORBITAL_PERIOD": 6.387,
-        "ORBIT_RESOLUTION": 100,
-        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
+        "ORBITAL_PERIOD": 6.387
     },
     "Ceres": {
         "PARENT_BODY": "Sun",
@@ -365,8 +339,6 @@ Other_bodies = {
         "RINGS": 0,
         "LOCATION_PATH": [0, 0],
         "AVERAGE_ORBITAL_SPEED": 17.9,
-        "ORBITAL_PERIOD": 1680,
-        "ORBIT_RESOLUTION": 100,
-        "NUM_ORBIT_STEPS": JULIAN_DATE_WEEK/2
+        "ORBITAL_PERIOD": 1680
     }
 }
