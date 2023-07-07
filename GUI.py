@@ -14,7 +14,7 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.widgets = self.configure_app_window()
-        self.configure_canvas_info_objects()
+        self.configure_canvas_hud()
         self.bind_events()
         self.check_ephemeris_file_update()
         self.load_ephemeris_data()
@@ -48,13 +48,15 @@ class App(ctk.CTk):
         widgets = Widgets(self)
         return widgets
 
-    def configure_canvas_info_objects(self):
-        self.time_text = self.widgets.canvas.create_text(10, 10, anchor="nw", fill="white", font=("Arial", TEXT_SIZE_INFO), tags="info")
-        self.scale_text = self.widgets.canvas.create_text(10, 10+INFO_TEXT_SEPARATION, anchor="nw", fill="white", text="Scale", font=("Arial", TEXT_SIZE_INFO), tags="info")
-        self.distance_text_km = self.widgets.canvas.create_text(10, 10+2*INFO_TEXT_SEPARATION, anchor="nw", fill="white", text="Distance km", font=("Arial", TEXT_SIZE_INFO), tags="info")
-        self.distance_text_au = self.widgets.canvas.create_text(10, 10+3*INFO_TEXT_SEPARATION, anchor="nw", fill="white", text="Distance AU", font=("Arial", TEXT_SIZE_INFO), tags="info")
-        self.following_object = self.widgets.canvas.create_text(10, 10+4*INFO_TEXT_SEPARATION, anchor="nw", fill="white", text="Following: ", font=("Arial", TEXT_SIZE_INFO), tags="info")
-        self.following_object_info = self.widgets.canvas.create_text(10, 10+5*INFO_TEXT_SEPARATION, anchor="nw", fill="white", text="Object info: ", font=("Arial", TEXT_SIZE_INFO), tags="info")
+    def configure_canvas_hud(self):
+        self.time_text = self.widgets.canvas.create_text(10, 10, anchor="nw", fill=DEFAULT_FONT_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
+        self.scale_text = self.widgets.canvas.create_text(10, 10+INFO_TEXT_SEPARATION, anchor="nw", fill="yellow", text="Scale", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
+        self.distance_text_km = self.widgets.canvas.create_text(10, 10+2*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Distance km", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
+        self.distance_text_au = self.widgets.canvas.create_text(10, 10+3*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Distance AU", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
+        self.following_object = self.widgets.canvas.create_text(10, 10+4*INFO_TEXT_SEPARATION, anchor="nw", fill="green", text="Following: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
+        self.following_object_info = self.widgets.canvas.create_text(10, 10+5*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Object info: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
+        self.hud_objects = (self.time_text, self.scale_text, self.distance_text_km,
+                            self.distance_text_au, self.following_object, self.following_object_info)
 
     def bind_events(self):
         self.widgets.canvas.bind("<Configure>", self.on_canvas_resize)
@@ -70,17 +72,15 @@ class App(ctk.CTk):
         else:
             current_timestamp = 0
         response = requests.head(EPHEMERIS_URL)
-
         if 'Last-Modified' in response.headers:
             latest_timestamp = response.headers['Last-Modified']
         else:
             latest_timestamp = 0
-        
         latest_timestamp = email.utils.mktime_tz(email.utils.parsedate_tz(latest_timestamp))
-
         if current_timestamp < latest_timestamp:
             print("Downloading updated ephemeris file...")
             self.download_updated_ephemeris()
+            print("Ephemeris file has been downloaded.")
         else:
             print("Ephemeris file is up to date.")
 
@@ -98,18 +98,19 @@ class App(ctk.CTk):
     def create_bodies(self, stars=True, planets=True, moons=True):
         celestial_bodies = {}
         if stars:
-            for star_name, star_properties in Star_data.items():
-                star = classes.Star(star_name, **star_properties)
-                celestial_bodies[star_name] = star
+            celestial_bodies.update(self.create_body_of_a_class(Star_data, classes.Star))
         if planets:
-            for planet_name, planet_properties in Planet_data.items():
-                planet = classes.Planet(planet_name, **planet_properties)
-                celestial_bodies[planet_name] = planet
+            celestial_bodies.update(self.create_body_of_a_class(Planet_data, classes.Planet))
         if moons:
-            for moon_name, moon_properties in Moon_data.items():
-                moon = classes.Planet(moon_name, **moon_properties)
-                celestial_bodies[moon_name] = moon
+            celestial_bodies.update(self.create_body_of_a_class(Moon_data, classes.Planet))
         return celestial_bodies
+
+    def create_body_of_a_class(self, body_data, body_class):
+        bodies = {}
+        for name, properties in body_data.items():
+                body = body_class(name, **properties)
+                bodies[name] = body
+        return bodies
 
     def update_standard_draw_scale(self, width, height):
         if not DRAW_3D:
@@ -136,6 +137,24 @@ class App(ctk.CTk):
             else:
                 # TO DO: draw celestial bodies in 3D representation
                 pass
+        rad = 30
+        center_x = 100+rad
+        center_y = 400+rad
+        self.widgets.canvas.create_oval(100, 400, 100+2*rad, 400+2*rad, outline="red")
+        self.widgets.canvas.create_text(center_x+rad, center_y, anchor='w', text="west", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
+        self.widgets.canvas.create_text(center_x-rad, center_y, anchor='e', text="east", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
+        self.widgets.canvas.create_text(center_x, center_y+rad, anchor='n', text="north", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
+        self.widgets.canvas.create_text(center_x, center_y-rad, anchor='s', text="south", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
+        self.widgets.canvas.create_text(center_x, center_y, anchor='center', text="center", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
+        self.widgets.canvas.create_text(center_x+rad, center_y+rad, anchor='nw', text="north-west", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
+        self.widgets.canvas.create_text(center_x+rad, center_y-rad, anchor='sw', text="south-west", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
+        self.widgets.canvas.create_text(center_x-rad, center_y+rad, anchor='ne', text="north-east", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
+        self.widgets.canvas.create_text(center_x-rad, center_y-rad, anchor='se', text="south-east", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
+        self.bring_hud_to_foreground()
+
+    def bring_hud_to_foreground(self):
+        for object in self.hud_objects:
+            self.widgets.canvas.lift(object)
 
     def clear_canvas_bodies(self):
         for tag in ('object', 'object_text', 'planet_rings', 'orbit'):
@@ -153,17 +172,55 @@ class App(ctk.CTk):
             pass
         return x_p, y_p, z_p
 
-    def get_text_size(self, text, font_size):
-        font = tkfont.Font(family="Arial", size=font_size)
+    def text_object_size(self, text, font, font_size):
+        font = tkfont.Font(family=font, size=font_size)
         text_width = font.measure(text)
         text_height = font.metrics("linespace")
         return text_width, text_height
 
-    def place_body_names(self, x, y, radius, name):
+    def place_body_names(self, center_x, center_y, radius, name):
         # To DO
-        coso = self.get_text_size(name, TEXT_SIZE_NAME)
-        text_id = self.widgets.canvas.create_text(x + radius + 10, y, anchor='w', text=name, fill=BODY_NAME_COLOR, font=("Arial", TEXT_SIZE_NAME), tags='object_text')
+        x, y, anchor = self.find_name_text_position(name, center_x, center_y, radius)
+        text_id = self.widgets.canvas.create_text(x, y, anchor=anchor, text=name, fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME), tags='object_text')
         return text_id
+
+    def find_name_text_position(self, name, center_x, center_y, planet_radius, padding=10):
+        text_width, text_height = self.text_object_size(name, DEFAULT_FONT, TEXT_SIZE_NAME)
+        default_position = (center_x + planet_radius + padding, center_y, "w")  # Right
+        positions = [default_position,
+                     (center_x - planet_radius - padding, center_y, "e"),  # Left
+                     (center_x, center_y - planet_radius - padding, "s"),  # Top
+                     (center_x, center_y + planet_radius + padding, "n"),  # Bottom
+                     (center_x - planet_radius - padding, center_y - planet_radius - padding, "se"),  # Top-left
+                     (center_x - planet_radius - padding, center_y + planet_radius + padding, "ne"),  # Bottom-left
+                     (center_x + planet_radius + padding, center_y - planet_radius - padding, "sw"),  # Top-right
+                     (center_x + planet_radius + padding, center_y + planet_radius + padding, "nw")   # Bottom-right
+                     ]
+        for position in positions:
+            if not self.collision_with_other_names(text_width, text_height, position):
+                if self.text_is_within_canvas(text_width, text_height, position):
+                    return position
+        
+        return default_position
+
+    def collision_with_other_names(self, width, height, position):
+        pass
+
+    def text_is_within_canvas(self, width, height, position):
+        x, y, anchor = position
+        if "w" in anchor:    # To the right of the position
+            if not (x+width<=self.widgets.canvas.winfo_width() and round(y-height/2) >=0 and round(y+height/2) <= self.widgets.canvas.winfo_height()):
+                return False
+        if "e" in anchor:    # To the left of the position
+            if not (x-width>=0 and round(y-height/2) >=0 and round(y+height/2) <= self.widgets.canvas.winfo_height()):
+                return False
+        if "s" in anchor:    # On top the position
+            if not (y-height>=0 and round(x-width/2) >=0 and round(x+width/2) <= self.widgets.canvas.winfo_width()):
+                return False
+        if "n" in anchor:    # Below the position
+            if not (y+height<=self.widgets.canvas.winfo_height() and round(x-width/2) >=0 and round(x+width/2) <= self.widgets.canvas.winfo_width()):
+                return False
+        return True
 
     def draw_planetary_rings(self, x, y, planet_radius, ring_value):
         ring_size = planet_radius * 1.5
@@ -189,7 +246,7 @@ class App(ctk.CTk):
     def update_following_object(self, object_name="Sun"):
         self.following = self.celestial_bodies[object_name]
         self.origin = self.position_following()
-        following_text = f"Following: {self.following.name}"
+        following_text = f"Following: {self.following.name.upper()}"
         properties_to_exclude = ["name", "x", "y", "z", "location_path", "texture", "rings", "surface",
                                  "atmosphere", "orbit_points", "orbit_resolution", "num_orbit_steps"]
         properties_to_format = ["luminosity", "radius", "mass", "temperature", "rotation_velocity",
@@ -348,18 +405,19 @@ class App(ctk.CTk):
     def update_orbits(self, change_vectors):
         for body_name, body_obj in self.celestial_bodies.items():
             if body_obj.parent_body in change_vectors and not body_obj=="Sun":
-                change_vector = change_vectors[body_name]
+                change_vector = change_vectors[body_obj.parent_body]
                 for i in range(len(body_obj.orbit_points)):
                     body_obj.orbit_points[i] = (body_obj.orbit_points[i][0] + change_vector["x"],
                                                 body_obj.orbit_points[i][1] + change_vector["y"],
                                                 body_obj.orbit_points[i][2] + change_vector["z"] if DRAW_3D else 0)
+
     def draw_orbits(self):
         for body_name, body in self.celestial_bodies.items():
             for i in range(len(body.orbit_points)-1):
                 if not DRAW_3D:
                     x1, y1, z1 = self.transform_coordinates_to_pixels(x=body.orbit_points[i][0]-self.origin.x, y=body.orbit_points[i][1]-self.origin.y, z=0)
                     x2, y2, z2 = self.transform_coordinates_to_pixels(x=body.orbit_points[i+1][0]-self.origin.x, y=body.orbit_points[i+1][1]-self.origin.y, z=0)
-                    self.widgets.canvas.create_line(x1, y1, x2, y2, fill="dimgray", dash=(2, 2), tags='orbit')
+                    self.widgets.canvas.create_line(x1, y1, x2, y2, fill=ORBIT_FILL_COLOR, dash=(2, 2), tags='orbit')
                 else:
                     x1, y1, z1 = self.transform_coordinates_to_pixels(x=body.orbit_points[i][0], y=body.orbit_points[i][1], z=body.orbit_points[i][2])
                     x2, y2, z2 = self.transform_coordinates_to_pixels(x=body.orbit_points[i+1][0], y=body.orbit_points[i+1][1], z=body.orbit_points[i+1][2])
