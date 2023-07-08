@@ -137,19 +137,6 @@ class App(ctk.CTk):
             else:
                 # TO DO: draw celestial bodies in 3D representation
                 pass
-        rad = 30
-        center_x = 100+rad
-        center_y = 400+rad
-        self.widgets.canvas.create_oval(100, 400, 100+2*rad, 400+2*rad, outline="red")
-        self.widgets.canvas.create_text(center_x+rad, center_y, anchor='w', text="west", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
-        self.widgets.canvas.create_text(center_x-rad, center_y, anchor='e', text="east", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
-        self.widgets.canvas.create_text(center_x, center_y+rad, anchor='n', text="north", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
-        self.widgets.canvas.create_text(center_x, center_y-rad, anchor='s', text="south", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
-        self.widgets.canvas.create_text(center_x, center_y, anchor='center', text="center", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
-        self.widgets.canvas.create_text(center_x+rad, center_y+rad, anchor='nw', text="north-west", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
-        self.widgets.canvas.create_text(center_x+rad, center_y-rad, anchor='sw', text="south-west", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
-        self.widgets.canvas.create_text(center_x-rad, center_y+rad, anchor='ne', text="north-east", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
-        self.widgets.canvas.create_text(center_x-rad, center_y-rad, anchor='se', text="south-east", fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME))
         self.bring_hud_to_foreground()
 
     def bring_hud_to_foreground(self):
@@ -179,7 +166,6 @@ class App(ctk.CTk):
         return text_width, text_height
 
     def place_body_names(self, center_x, center_y, radius, name):
-        # To DO
         x, y, anchor = self.find_name_text_position(name, center_x, center_y, radius)
         text_id = self.widgets.canvas.create_text(x, y, anchor=anchor, text=name, fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME), tags='object_text')
         return text_id
@@ -200,11 +186,21 @@ class App(ctk.CTk):
             if not self.collision_with_other_names(text_width, text_height, position):
                 if self.text_is_within_canvas(text_width, text_height, position):
                     return position
-        
         return default_position
 
     def collision_with_other_names(self, width, height, position):
-        pass
+        x_new, y_new, a = position
+        for body_name, body_id, text_id in self.body_ids:
+            text_bbox = self.widgets.canvas.bbox(text_id)
+            if self.intersects_with_bbox(x_new, y_new, width, height, text_bbox):
+                return True
+        return False
+
+    def intersects_with_bbox(self, x1, y1, width, height, other_bbox):
+        x2, y2, x2w, y2h = other_bbox
+        x_overlap = (x1 <= x2 <= x1 + width) or (x2 <= x1 <= x2w)
+        y_overlap = (y1 <= y2 <= y1 + height) or (y2 <= y1 <= y2h)
+        return x_overlap and y_overlap
 
     def text_is_within_canvas(self, width, height, position):
         x, y, anchor = position
