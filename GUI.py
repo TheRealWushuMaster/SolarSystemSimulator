@@ -22,6 +22,7 @@ class App(ctk.CTk):
         self.celestial_bodies = self.create_bodies()
         
         self.date = datetime.datetime.now()
+        self.timestamp_days = 0
         self.timestamp_months = 0
         self.timestamp_years = 0
         self.timestamp = self.convert_to_julian_date()
@@ -170,7 +171,7 @@ class App(ctk.CTk):
         text_id = self.widgets.canvas.create_text(x, y, anchor=anchor, text=name, fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME), tags='object_text')
         return text_id
 
-    def find_name_text_position(self, name, center_x, center_y, planet_radius, padding=10):
+    def find_name_text_position(self, name, center_x, center_y, planet_radius, padding=DEFAULT_NAME_TEXT_PADDING):
         text_width, text_height = self.text_object_size(name, DEFAULT_FONT, TEXT_SIZE_NAME)
         default_position = (center_x + planet_radius + padding, center_y, "w")  # Right
         positions = [default_position,
@@ -183,12 +184,12 @@ class App(ctk.CTk):
                      (center_x + planet_radius + padding, center_y + planet_radius + padding, "nw")   # Bottom-right
                      ]
         for position in positions:
-            if not self.collision_with_other_names(text_width, text_height, position):
+            if not self.collision_with_other_body_names(text_width, text_height, position):
                 if self.text_is_within_canvas(text_width, text_height, position):
                     return position
         return default_position
 
-    def collision_with_other_names(self, width, height, position):
+    def collision_with_other_body_names(self, width, height, position):
         x_new, y_new, a = position
         for body_name, body_id, text_id in self.body_ids:
             text_bbox = self.widgets.canvas.bbox(text_id)
@@ -198,8 +199,8 @@ class App(ctk.CTk):
 
     def intersects_with_bbox(self, x1, y1, width, height, other_bbox):
         x2, y2, x2w, y2h = other_bbox
-        x_overlap = (x1 <= x2 <= x1 + width) or (x2 <= x1 <= x2w)
-        y_overlap = (y1 <= y2 <= y1 + height) or (y2 <= y1 <= y2h)
+        x_overlap = (x1 < x2 < x1 + width) or (x2 < x1 < x2w)
+        y_overlap = (y1 < y2 < y1 + height) or (y2 < y1 < y2h)
         return x_overlap and y_overlap
 
     def text_is_within_canvas(self, width, height, position):
@@ -319,16 +320,21 @@ class App(ctk.CTk):
 
     def handle_time_adjustment(self, event):
         fine_adjustment = event.state & 0x1     # Check if the Shift key is pressed
+        coarse_adjustment = event.state & 0x4   # Check if the Ctrl key is pressed
         if event.keysym == "Left":
             if fine_adjustment:
-                self.timestamp_months -= 1
-            else:
+                self.timestamp_days -= 1
+            elif coarse_adjustment:
                 self.timestamp_years -= 1
+            else:
+                self.timestamp_months -= 1
         elif event.keysym == "Right":
             if fine_adjustment:
-                self.timestamp_months += 1
-            else:
+                self.timestamp_days += 1
+            elif coarse_adjustment:
                 self.timestamp_years += 1
+            else:
+                self.timestamp_months += 1
         self.timestamp = self.convert_to_julian_date()
         self.update_time_text()
         last_positions = self.save_positions()
@@ -354,7 +360,7 @@ class App(ctk.CTk):
         return change_vectors
 
     def update_time_text(self):
-        time_text = f"Current date: {self.date} - adjustment {self.timestamp_months} months, {self.timestamp_years} years"
+        time_text = f"Current date: {self.date} - adjustment {self.timestamp_days} days, {self.timestamp_months} months, {self.timestamp_years} years"
         self.widgets.canvas.itemconfigure(self.time_text, text=time_text)
 
     def update_scale_text(self):
@@ -443,7 +449,7 @@ class App(ctk.CTk):
             dt = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
         year = dt.year + self.timestamp_years
         month = dt.month + self.timestamp_months
-        day = dt.day
+        day = dt.day + self.timestamp_days
         hour= dt.hour
         minute = dt.minute
         second = dt.second
