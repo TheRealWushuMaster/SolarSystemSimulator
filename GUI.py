@@ -53,10 +53,10 @@ class App(ctk.CTk):
 
     def configure_canvas_hud(self):
         self.time_text = self.widgets.canvas.create_text(10, 10, anchor="nw", fill=DEFAULT_FONT_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
-        self.scale_text = self.widgets.canvas.create_text(10, 10+INFO_TEXT_SEPARATION, anchor="nw", fill="yellow", text="Scale", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
+        self.scale_text = self.widgets.canvas.create_text(10, 10+INFO_TEXT_SEPARATION, anchor="nw", fill=SCALE_TEXT_COLOR, text="Scale", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
         self.distance_text_km = self.widgets.canvas.create_text(10, 10+2*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Distance km", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
         self.distance_text_au = self.widgets.canvas.create_text(10, 10+3*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Distance AU", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
-        self.following_object = self.widgets.canvas.create_text(10, 10+4*INFO_TEXT_SEPARATION, anchor="nw", fill="green", text="Following: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
+        self.following_object = self.widgets.canvas.create_text(10, 10+4*INFO_TEXT_SEPARATION, anchor="nw", fill=FOLLOWING_OBJECT_TEXT_COLOR, text="Following: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
         self.following_object_info = self.widgets.canvas.create_text(10, 10+5*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Object info: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
         self.hud_objects = (self.time_text, self.scale_text, self.distance_text_km,
                             self.distance_text_au, self.following_object, self.following_object_info)
@@ -69,6 +69,7 @@ class App(ctk.CTk):
         self.widgets.canvas.bind("<ButtonPress-1>", self.start_mouse_drag)
         self.widgets.canvas.bind("<B1-Motion>", self.on_mouse_drag)
         self.widgets.canvas.bind("<ButtonRelease-1>", self.release_mouse_drag)
+        self.bind("<Escape>", self.reset_view)
         self.bind("<Left>", self.handle_time_adjustment)
         self.bind("<Right>", self.handle_time_adjustment)
 
@@ -143,6 +144,12 @@ class App(ctk.CTk):
 
     def release_mouse_drag(self, event):
         self.mouse_drag_starting_point = None
+
+    def reset_view(self, event):
+        self.rotation_matrix = eye(3)
+        self.modified_scale = 1.0
+        self.update_distance_scale()
+        self.draw_celestial_bodies()
 
     def update_standard_draw_scale(self, width, height):
         if not DRAW_3D:
@@ -239,6 +246,8 @@ class App(ctk.CTk):
         for body_name, body_id, text_id in self.body_ids:
             text_bbox = self.widgets.canvas.bbox(text_id)
             body_bbox = self.widgets.canvas.bbox(body_id)
+            if text_bbox == None or body_bbox == None:
+                return 0
             overlap = max(self.overlap_with_bbox(x, y, width, height, text_bbox), self.overlap_with_bbox(x, y, width, height, body_bbox))
             if overlap > max_overlap:
                 max_overlap = overlap
@@ -353,7 +362,7 @@ class App(ctk.CTk):
         self.draw_celestial_bodies()
 
     def update_distance_scale(self):
-        self.distance_scale = SCALE_MODIFIER * self.standard_draw_scale * self.modified_scale
+        self.distance_scale = self.standard_draw_scale * self.modified_scale
         self.update_scale_text()
 
     def handle_canvas_double_click(self, event):
@@ -445,7 +454,7 @@ class App(ctk.CTk):
         origin = classes.Point(position[0], position[1], position[2])
         return origin
 
-    def load_orbits(self, resolution=50):
+    def load_orbits(self, resolution=ORBIT_RESOLUTION):
         for body_name, body_obj in self.celestial_bodies.items():
             body_obj.orbit_points = []
             period = body_obj.orbital_period
