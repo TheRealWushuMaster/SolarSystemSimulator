@@ -9,7 +9,7 @@ from jplephem.spk import SPK
 import datetime
 from functions import get_lighter_color, format_with_thousands_separator, property_name_and_units
 from math import sqrt
-import random
+from numpy import array, eye, sin, cos
 
 class App(ctk.CTk):
     def __init__(self):
@@ -38,6 +38,7 @@ class App(ctk.CTk):
         self.center_point_x, self.center_point_y = round(self.widgets.canvas.winfo_reqwidth()/2), round(self.widgets.canvas.winfo_reqheight()/2)
         self.update_standard_draw_scale(self.widgets.canvas.winfo_reqwidth(), self.widgets.canvas.winfo_reqheight())
         self.update_distance_scale()
+        self.rotation_matrix = eye(3)
         self.draw_celestial_bodies()
 
     def configure_app_window(self):
@@ -65,6 +66,9 @@ class App(ctk.CTk):
         self.widgets.canvas.bind("<MouseWheel>", self.modify_zoom_level)
         self.widgets.canvas.bind("<Motion>", self.mouse_hover)
         self.widgets.canvas.bind("<Double-Button-1>", self.handle_canvas_double_click)
+        self.widgets.canvas.bind("<ButtonPress-1>", self.start_mouse_drag)
+        self.widgets.canvas.bind("<B1-Motion>", self.on_mouse_drag)
+        self.widgets.canvas.bind("<ButtonRelease-1>", self.release_mouse_drag)
         self.bind("<Left>", self.handle_time_adjustment)
         self.bind("<Right>", self.handle_time_adjustment)
 
@@ -114,6 +118,32 @@ class App(ctk.CTk):
                 bodies[name] = body
         return bodies
 
+    def start_mouse_drag(self, event):
+        self.mouse_drag_starting_point = (event.x, event.y)
+
+    def on_mouse_drag(self, event):
+        if self.mouse_drag_starting_point is None:
+            return
+        delta_x = event.x - self.mouse_drag_starting_point[0]
+        delta_y = event.y - self.mouse_drag_starting_point[1]
+        rotation_angle_x = delta_y * 0.01  # Adjust sensitivity as needed
+        rotation_angle_z = delta_x * 0.01  # Adjust sensitivity as needed
+        rotation_matrix_x = array([[1, 0, 0],
+                                   [0, cos(rotation_angle_x), -sin(rotation_angle_x)],
+                                   [0, sin(rotation_angle_x), cos(rotation_angle_x)]])
+        rotation_matrix_y = array([[cos(rotation_angle_z), 0, sin(rotation_angle_z)],
+                                   [0, 1, 0],
+                                   [-sin(rotation_angle_z), 0, cos(rotation_angle_z)]])
+        rotation_matrix_z = array([[cos(rotation_angle_z), -sin(rotation_angle_z), 0],
+                                   [sin(rotation_angle_z), cos(rotation_angle_z), 0],
+                                   [0, 0, 1]])
+        self.rotation_matrix = rotation_matrix_x @ rotation_matrix_z @ self.rotation_matrix
+        self.mouse_drag_starting_point = (event.x, event.y)
+        self.draw_celestial_bodies()
+
+    def release_mouse_drag(self, event):
+        self.mouse_drag_starting_point = None
+
     def update_standard_draw_scale(self, width, height):
         if not DRAW_3D:
             self.standard_draw_scale = min((width-CANVAS_DRAW_PADDING)/self.max_distance_width, (height-CANVAS_DRAW_PADDING)/self.max_distance_height)/2
@@ -126,19 +156,18 @@ class App(ctk.CTk):
         self.clear_canvas_bodies()
         self.draw_orbits()
         for body in self.celestial_bodies.values():
-            x, y, z = self.transform_coordinates_to_pixels(body.x - self.origin.x, body.y - self.origin.y, body.z - self.origin.z)
+            x, y, z = body.x - self.origin.x, body.y - self.origin.y, body.z - self.origin.z
             radius = max(round(body.radius * self.distance_scale), 1)
-            if not DRAW_3D:
-                body_id = self.widgets.canvas.create_oval(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color), tags='object')
-                if radius > 3 and body.rings > 0:
-                    self.draw_planetary_rings(x, y, radius, body.rings)
-                    self.widgets.canvas.create_arc(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color), start=0, extent=180, tags='object')
-                    self.widgets.canvas.create_arc(x-(radius-1), y-(radius-1), x + (radius-1), y + (radius-1), fill=body.color, outline=body.color, start=0, extent=180, tags='object')
-                text_id = self.place_body_names(x, y, radius, body.name)
-                self.body_ids.append((body.name, body_id, text_id))
-            else:
-                # TO DO: draw celestial bodies in 3D representation
-                pass
+            if DRAW_3D:
+                (x, y, z) = (x, y, z) @ self.rotation_matrix
+            x, y = self.transform_coordinates_to_pixels(x, y)
+            body_id = self.widgets.canvas.create_oval(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color), tags='object')
+            if radius > 3 and body.rings > 0:
+                self.draw_planetary_rings(x, y, radius, body.rings)
+                self.widgets.canvas.create_arc(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color), start=0, extent=180, tags='object')
+                self.widgets.canvas.create_arc(x-(radius-1), y-(radius-1), x + (radius-1), y + (radius-1), fill=body.color, outline=body.color, start=0, extent=180, tags='object')
+            text_id = self.place_body_names(x, y, radius, body.name)
+            self.body_ids.append((body.name, body_id, text_id))
         self.bring_hud_to_foreground()
 
     def bring_hud_to_foreground(self):
@@ -151,15 +180,10 @@ class App(ctk.CTk):
             for obj in objects:
                 self.widgets.canvas.delete(obj)
 
-    def transform_coordinates_to_pixels(self, x, y, z):
+    def transform_coordinates_to_pixels(self, x, y):
         x_p = round(x * self.distance_scale + self.center_point_x)
         y_p = round(y * self.distance_scale + self.center_point_y)
-        if not DRAW_3D:
-            z_p = 0
-        else:
-            #z_p = round(z * self.distance_scale + center_point_y)
-            pass
-        return x_p, y_p, z_p
+        return x_p, y_p
 
     def text_object_size(self, text, font, font_size):
         font = tkfont.Font(family=font, size=font_size)
@@ -450,13 +474,16 @@ class App(ctk.CTk):
     def draw_orbits(self):
         for body_name, body in self.celestial_bodies.items():
             for i in range(len(body.orbit_points)-1):
-                if not DRAW_3D:
-                    x1, y1, z1 = self.transform_coordinates_to_pixels(x=body.orbit_points[i][0]-self.origin.x, y=body.orbit_points[i][1]-self.origin.y, z=0)
-                    x2, y2, z2 = self.transform_coordinates_to_pixels(x=body.orbit_points[i+1][0]-self.origin.x, y=body.orbit_points[i+1][1]-self.origin.y, z=0)
-                    self.widgets.canvas.create_line(x1, y1, x2, y2, fill=ORBIT_FILL_COLOR, dash=(2, 2), tags='orbit')
-                else:
-                    x1, y1, z1 = self.transform_coordinates_to_pixels(x=body.orbit_points[i][0], y=body.orbit_points[i][1], z=body.orbit_points[i][2])
-                    x2, y2, z2 = self.transform_coordinates_to_pixels(x=body.orbit_points[i+1][0], y=body.orbit_points[i+1][1], z=body.orbit_points[i+1][2])
+                x1, y1 = body.orbit_points[i][0]-self.origin.x, body.orbit_points[i][1]-self.origin.y
+                x2, y2 = body.orbit_points[i+1][0]-self.origin.x, body.orbit_points[i+1][1]-self.origin.y
+                if DRAW_3D:
+                    z1 = body.orbit_points[i][2]-self.origin.z
+                    z2 = body.orbit_points[i+1][2]-self.origin.z
+                    (x1, y1, z1) = (x1, y1, z1) @ self.rotation_matrix
+                    (x2, y2, z2) = (x2, y2, z2) @ self.rotation_matrix
+                x1, y1 = self.transform_coordinates_to_pixels(x1, y1)
+                x2, y2 = self.transform_coordinates_to_pixels(x2, y2)
+                self.widgets.canvas.create_line(x1, y1, x2, y2, fill=ORBIT_FILL_COLOR, dash=(2, 2), tags='orbit')
 
     def update_all_bodies_positions(self):
         self.origin = self.position_following()

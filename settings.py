@@ -24,7 +24,7 @@ JULIAN_DATE_DAY = 1
 
 # Graphical information
 SCALE_MODIFIER = 1
-DRAW_3D = False
+DRAW_3D = True
 CANVAS_DRAW_PADDING = 20
 DEFAULT_FONT = "Arial"
 TEXT_SIZE_INFO = 10
@@ -34,6 +34,7 @@ DEFAULT_FONT_COLOR = "white"
 INFO_TEXT_SEPARATION = 20
 BODY_NAME_COLOR = "white"
 ORBIT_FILL_COLOR = "#222222"
+ORTHOGRAPHIC_3D = True
 
 # =========================
 # Celestial body properties
