@@ -187,7 +187,7 @@ class App(ctk.CTk):
         least_overlap = -1
         least_overlap_position = default_position
         for position in positions:
-            overlap = self.collision_with_other_body_names(text_width, text_height, position, name)
+            overlap = self.collision_with_other_body_names(text_width, text_height, position)
             if overlap > 0:
                 if least_overlap > -1:
                     if least_overlap > overlap:
@@ -201,7 +201,7 @@ class App(ctk.CTk):
                     return position
         return least_overlap_position
 
-    def collision_with_other_body_names(self, width, height, position, name):
+    def collision_with_other_body_names(self, width, height, position):
         x_new, y_new, a = position
         if a=="w":      x = x_new;                  y = y_new - round(height/2)
         elif a=="e":    x = x_new - width;          y = y_new - round(height/2)
@@ -214,7 +214,8 @@ class App(ctk.CTk):
         max_overlap = 0
         for body_name, body_id, text_id in self.body_ids:
             text_bbox = self.widgets.canvas.bbox(text_id)
-            overlap = self.overlap_with_bbox(x, y, width, height, text_bbox)
+            body_bbox = self.widgets.canvas.bbox(body_id)
+            overlap = max(self.overlap_with_bbox(x, y, width, height, text_bbox), self.overlap_with_bbox(x, y, width, height, body_bbox))
             if overlap > max_overlap:
                 max_overlap = overlap
         return max_overlap
