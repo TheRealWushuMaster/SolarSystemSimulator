@@ -9,6 +9,7 @@ from jplephem.spk import SPK
 import datetime
 from functions import get_lighter_color, format_with_thousands_separator, property_name_and_units
 from math import sqrt
+import random
 
 class App(ctk.CTk):
     def __init__(self):
@@ -183,25 +184,57 @@ class App(ctk.CTk):
                      (center_x + planet_radius + padding, center_y - planet_radius - padding, "sw"),  # Top-right
                      (center_x + planet_radius + padding, center_y + planet_radius + padding, "nw")   # Bottom-right
                      ]
+        least_overlap = -1
+        least_overlap_position = default_position
         for position in positions:
-            if not self.collision_with_other_body_names(text_width, text_height, position):
+            overlap = self.collision_with_other_body_names(text_width, text_height, position, name)
+            if overlap > 0:
+                if least_overlap > -1:
+                    if least_overlap > overlap:
+                        least_overlap_position = position
+                        least_overlap = overlap
+                else:
+                    least_overlap = overlap
+                    least_overlap_position = position
+            else:
                 if self.text_is_within_canvas(text_width, text_height, position):
                     return position
-        return default_position
+        return least_overlap_position
 
-    def collision_with_other_body_names(self, width, height, position):
+    def collision_with_other_body_names(self, width, height, position, name):
         x_new, y_new, a = position
+        if a=="w":      x = x_new;                  y = y_new - round(height/2)
+        elif a=="e":    x = x_new - width;          y = y_new - round(height/2)
+        elif a=="s":    x = x_new - round(width/2); y = y_new - height
+        elif a=="n":    x = x_new - round(width/2); y = y_new
+        elif a=="se":   x = x_new - width;          y = y_new - height
+        elif a=="ne":   x = x_new - width;          y = y_new
+        elif a=="sw":   x = x_new;                  y = y_new - height
+        elif a=="nw":   x = x_new;                  y = y_new
+        max_overlap = 0
         for body_name, body_id, text_id in self.body_ids:
             text_bbox = self.widgets.canvas.bbox(text_id)
-            if self.intersects_with_bbox(x_new, y_new, width, height, text_bbox):
-                return True
-        return False
+            overlap = self.overlap_with_bbox(x, y, width, height, text_bbox)
+            if overlap > max_overlap:
+                max_overlap = overlap
+        return max_overlap
 
-    def intersects_with_bbox(self, x1, y1, width, height, other_bbox):
+    def overlap_with_bbox(self, x1, y1, width, height, other_bbox):
         x2, y2, x2w, y2h = other_bbox
-        x_overlap = (x1 < x2 < x1 + width) or (x2 < x1 < x2w)
-        y_overlap = (y1 < y2 < y1 + height) or (y2 < y1 < y2h)
-        return x_overlap and y_overlap
+        Cx1 = x1 <= x2 <= x1 + width
+        Cx2 = x2 <= x1 <= x2w
+        Cy1 = y1 <= y2 <= y1 + height
+        Cy2 = y2 <= y1 <= y2h
+        if Cx1 and Cy1:
+            return min((x2 - (x1+width)), x2w-x2, width) * min((y2 - (y1 + height)), y2h, height)
+        elif Cx1 and Cy2:
+            return min((x2 - (x1+width)), x2w-x2, width) * min((y1 - y2h), y2h, height)
+        elif Cx2 and Cy1:
+            return min((x1 - x2w), x2w-x2, width) * min((y2 - (y1 + height)), y2h, height)
+        elif Cx2 and Cy2:
+            return min((x1 - x2w), x2w-x2, width) * min((y1 - y2h), y2h, height)
+        else:
+            return 0
 
     def text_is_within_canvas(self, width, height, position):
         x, y, anchor = position
