@@ -29,7 +29,7 @@ Pressing the *escape* key will reset the view to its default state (*scale=1.0* 
 ## Future improvements
 * Add additional bodies for representation
 * Calculate and represent spaceship trajectories between two objects, solving for fast travel or less fuel usage
-* Represent real spaceships' trajectories (e.g. Voyager probes)
+* Represent real spaceships' mission trajectories (e.g. Voyager probes)
 ## Trivia
 * Even though Pluto is no longer considered a planet (thanks to @plutokiller), it's represented for nostalgia's sake
 * The orbits of Pluto and Neptune do not cross (check it out for yourself)
