@@ -37,7 +37,7 @@ BODY_NAME_COLOR = "white"
 ORBIT_FILL_COLOR = "#222222"
 #ORTHOGRAPHIC_3D = True
 ORBIT_RESOLUTION = 50
-ROTATION_SENSITIVITY = 0.01
+ROTATION_SENSITIVITY = 0.005
 
 # =========================
 # Celestial body properties

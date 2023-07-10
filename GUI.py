@@ -39,6 +39,9 @@ class App(ctk.CTk):
         self.update_standard_draw_scale(self.widgets.canvas.winfo_reqwidth(), self.widgets.canvas.winfo_reqheight())
         self.update_distance_scale()
         self.rotation_matrix = eye(3)
+        self.pitch_angle = 0
+        self.roll_angle = 0
+        self.yaw_angle = 0
         self.draw_celestial_bodies()
 
     def configure_app_window(self):
@@ -67,8 +70,11 @@ class App(ctk.CTk):
         self.widgets.canvas.bind("<Motion>", self.mouse_hover)
         self.widgets.canvas.bind("<Double-Button-1>", self.handle_canvas_double_click)
         self.widgets.canvas.bind("<ButtonPress-1>", self.start_mouse_drag)
+        self.widgets.canvas.bind("<ButtonPress-3>", self.start_mouse_drag)
         self.widgets.canvas.bind("<B1-Motion>", self.on_mouse_drag)
+        self.widgets.canvas.bind("<B3-Motion>", self.on_mouse_drag)
         self.widgets.canvas.bind("<ButtonRelease-1>", self.release_mouse_drag)
+        self.widgets.canvas.bind("<ButtonRelease-3>", self.release_mouse_drag)
         self.bind("<Escape>", self.reset_view)
         self.bind("<Left>", self.handle_time_adjustment)
         self.bind("<Right>", self.handle_time_adjustment)
@@ -127,18 +133,21 @@ class App(ctk.CTk):
             return
         delta_x = event.x - self.mouse_drag_starting_point[0]
         delta_y = event.y - self.mouse_drag_starting_point[1]
-        rotation_angle_x = delta_y * ROTATION_SENSITIVITY
-        rotation_angle_z = delta_x * ROTATION_SENSITIVITY
-        rotation_matrix_x = array([[1, 0, 0],
-                                   [0, cos(rotation_angle_x), -sin(rotation_angle_x)],
-                                   [0, sin(rotation_angle_x), cos(rotation_angle_x)]])
-        rotation_matrix_y = array([[cos(rotation_angle_z), 0, sin(rotation_angle_z)],
-                                   [0, 1, 0],
-                                   [-sin(rotation_angle_z), 0, cos(rotation_angle_z)]])
-        rotation_matrix_z = array([[cos(rotation_angle_z), -sin(rotation_angle_z), 0],
-                                   [sin(rotation_angle_z), cos(rotation_angle_z), 0],
-                                   [0, 0, 1]])
-        self.rotation_matrix = rotation_matrix_x @ rotation_matrix_z @ self.rotation_matrix
+        if event.state == 264:
+            self.yaw_angle += delta_x * ROTATION_SENSITIVITY
+            self.roll_angle += delta_y * ROTATION_SENSITIVITY
+        elif event.state == 1032:
+            self.pitch_angle += -delta_x * ROTATION_SENSITIVITY
+        rotation_matrix_yaw = array([[cos(self.yaw_angle), -sin(self.yaw_angle), 0],
+                                     [sin(self.yaw_angle), cos(self.yaw_angle), 0],
+                                     [0, 0, 1]])
+        rotation_matrix_pitch = array([[cos(self.pitch_angle), 0, sin(self.pitch_angle)],
+                                       [0, 1, 0],
+                                       [-sin(self.pitch_angle), 0, cos(self.pitch_angle)]])
+        rotation_matrix_roll = array([[1, 0, 0],
+                                     [0, cos(self.roll_angle), -sin(self.roll_angle)],
+                                     [0, sin(self.roll_angle), cos(self.roll_angle)]])
+        self.rotation_matrix = rotation_matrix_yaw @ rotation_matrix_pitch @ rotation_matrix_roll
         self.mouse_drag_starting_point = (event.x, event.y)
         self.draw_celestial_bodies()
 
@@ -148,6 +157,9 @@ class App(ctk.CTk):
     def reset_view(self, event):
         self.rotation_matrix = eye(3)
         self.modified_scale = 1.0
+        self.yaw_angle = 0
+        self.roll_angle = 0
+        self.pitch_angle = 0
         self.update_distance_scale()
         self.draw_celestial_bodies()
 
