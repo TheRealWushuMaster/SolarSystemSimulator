@@ -2,7 +2,7 @@
 This program creates a representation of the Solar System and its main celestial bodies using JPL ephemeris data. Its objective is to provide an accurate simulation that respects distances and sizes.
 ## How to use
 ### 1. Center view
-You can double click on an object or its name to refocus the simulation on the object.
+Double click on any object or its name to focus the simulation on it.
 ### 2. Adjust scale
 By default, the scale is calculated so that all objects will be visible at *scale=1.0*. The scale is adjusted using the mouse wheel, with three levels of granularity:
 * **Shift + mouse wheel**: adjusts the scale in 0.1 increments
@@ -13,13 +13,13 @@ The minimum scale is *0.1*.
 ### 3. Rotate view
 By default, the simulation is viewed straight down from the z axis. Drag the window using the left mouse button to adjust *yaw* and *roll*, or using the right mouse button to adjust *pitch*.
 ### 4. Time adjustment
-You can use the left or right keys to adjust the time backwards or forwards respectively, with the following modifiers:
+Use the left or right keys to adjust the time backwards or forwards respectively, with the following modifiers:
 * **Shift**: adjust time in days
 * **No modifier**: adjust time in months
 * **Ctrl**: adjust time in years
 The date range is roughly between the years 1900 and 2050.
 ### 5. Reset view and scale
-Pressing the *escape* key will reset the view to its default state (*scale=1.0* viewed from above)
+Use the *escape* key to reset the view to its default state (*scale=1.0* viewed from above)
 ## HUD information
 * **Current date**: shows the current time and the adjustments applied
 * **Scale**: shows the scale being applied
