@@ -127,8 +127,8 @@ class App(ctk.CTk):
             return
         delta_x = event.x - self.mouse_drag_starting_point[0]
         delta_y = event.y - self.mouse_drag_starting_point[1]
-        rotation_angle_x = delta_y * 0.01  # Adjust sensitivity as needed
-        rotation_angle_z = delta_x * 0.01  # Adjust sensitivity as needed
+        rotation_angle_x = delta_y * ROTATION_SENSITIVITY
+        rotation_angle_z = delta_x * ROTATION_SENSITIVITY
         rotation_matrix_x = array([[1, 0, 0],
                                    [0, cos(rotation_angle_x), -sin(rotation_angle_x)],
                                    [0, sin(rotation_angle_x), cos(rotation_angle_x)]])
@@ -155,7 +155,6 @@ class App(ctk.CTk):
         if not DRAW_3D:
             self.standard_draw_scale = min((width-CANVAS_DRAW_PADDING)/self.max_distance_width, (height-CANVAS_DRAW_PADDING)/self.max_distance_height)/2
         else:
-            # TO DO: adjust the scale in relation to rotation angle
             self.standard_draw_scale = min((width-CANVAS_DRAW_PADDING)/self.max_distance_width, (height-CANVAS_DRAW_PADDING)/self.max_distance_height, (height-CANVAS_DRAW_PADDING)/self.max_distance_depth)/2
 
     def draw_celestial_bodies(self):
