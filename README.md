@@ -1,5 +1,5 @@
-# ☀🌎🪐⭐☄ Solar System Simulator
-This program creates a representation of the Solar System and its main celestial bodies using JPL ephemeris data. Its objective is to provide an accurate simulation that respects distances and sizes.
+# ☀🌎🪐⭐☄ SOLARA: Solar System Simulator
+This program creates a representation of the Solar System and its main celestial bodies using NASA's JPL ephemeris data. Its objective is to provide an accurate simulation that respects distances and sizes.
 ## How to use
 ### 1. Center view
 Double click on any object or its name to focus the simulation on it.
