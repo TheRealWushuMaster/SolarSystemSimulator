@@ -7,12 +7,12 @@ WINDOW_MIN_SIZE = (700, 400)
 DEFAULT_BACKGROUND = "black"
 
 # JPL body information
-EPHEMERIS_FILE = "de421.bsp"
-EPHEMERIS_URL = "https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de421.bsp"
+EPHEMERIS_FILE = "de440s.bsp" #"de421.bsp"
+EPHEMERIS_URL = "https://naif.jpl.nasa.gov/pub/naif/JUNO/kernels/spk/de440s.bsp" #"https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de421.bsp"
 CHARON_FILE = "plu043.bsp"
 CHARON_FILE_URL = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/plu043.bsp"
-MAX_JULIAN_DATE = 2471184.5
-MIN_JULIAN_DATE = 2414864.5
+MAX_JULIAN_DATE = 2506352.5 #2471184.5
+MIN_JULIAN_DATE = 2396752.5 #2414864.5
 ALL_EPHEMERIS_DATA_URL = "https://ssd.jpl.nasa.gov/ephem.html"
 
 # Units
@@ -147,7 +147,7 @@ Planet_data = {
         "PARENT_BODY": 'Sun',
         "ATMOSPHERE": 0,
         "SURFACE": 0,
-        "LOCATION_PATH": [0, 4, 499],
+        "LOCATION_PATH": [0, 4], #, 499],
         "AVERAGE_ORBITAL_SPEED": 24.07,
         "ORBITAL_PERIOD": 686.98
     },
