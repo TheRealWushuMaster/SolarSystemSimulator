@@ -45,7 +45,7 @@ class App(ctk.CTk):
         self.draw_celestial_bodies()
 
     def configure_app_window(self):
-        self.title("Solar System Simulator")
+        self.title("SOLARA: Solar System Simulator")
         self.geometry(f"{WINDOW_SIZE[0]}x{WINDOW_SIZE[1]}")
         self.resizable=(True, True)
         self.minsize(WINDOW_MIN_SIZE[0], WINDOW_MIN_SIZE[1])
