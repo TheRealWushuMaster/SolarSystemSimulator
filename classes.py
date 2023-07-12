@@ -1,3 +1,5 @@
+from math import sqrt
+
 class Star():
     def __init__(self, NAME, X, Y, Z, RADIUS, MASS, TEMPERATURE, STAR_TYPE, LUMINOSITY,
                  ROTATION_PERIOD, ROTATION_VELOCITY, COLOR_INDEX, COLOR, CIRCUMFERENCE,
@@ -69,3 +71,89 @@ class Point():
         self.x = x
         self.y = y
         self.z = z
+
+class Spaceship():
+    def __init__(self, structure_mass, fuel_mass, payload_mass,
+                 propulsion_system, radiation_reflectivity, surface_area,
+                 x=0, y=0, z=0, velocity_x=0, velocity_y=0, velocity_z=0,
+                 acceleration_x=0, acceleration_y=0, acceleration_z=0):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.velocity_x = velocity_x
+        self.velocity_y = velocity_y
+        self.velocity_z = velocity_z
+        self.acceleration_x = acceleration_x
+        self.acceleration_y = acceleration_y
+        self.acceleration_z = acceleration_z
+        self.total_mass = structure_mass + fuel_mass + payload_mass
+        self.structure_mass = structure_mass
+        self.fuel_mass = fuel_mass
+        self.payload_mass = payload_mass
+        self.propulsion_system = propulsion_system
+        self.radiation_reflectivity = radiation_reflectivity
+        self.surface_area = surface_area
+        self.positions = []
+        self.velocities = []
+        self.accelerations = []
+        self.thrusts = []
+        self.fuel_masses = []
+    
+    def update_status(self, thrust_x, thrust_y, thrust_z, time_step,
+                      gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z):
+        self.update_acceleration(thrust_x, thrust_y, thrust_z,
+                                 gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z)
+        self.update_mass(thrust_x, thrust_y, thrust_z, time_step)
+        self.update_velocity(time_step)
+        self.update_position(time_step)
+        self.store_values(thrust_x, thrust_y, thrust_z)
+
+    def store_values(self, thrust_x, thrust_y, thrust_z):
+        self.positions.append((self.x, self.y, self.z))
+        self.velocities.append((self.velocity_x, self.velocity_y, self.velocity_z))
+        self.accelerations.append((self.acceleration_x, self.acceleration_y, self.acceleration_z))
+        self.thrusts.append((thrust_x, thrust_y, thrust_z))
+        
+
+    def update_mass(self, thrust_x, thrust_y, thrust_z, time_step):
+        thrust = sqrt(thrust_x**2 + thrust_y**2 + thrust_z**2)
+        fuel_consumed = self.propulsion_system.calculate_fuel_consumption(thrust, time_step)
+        if self.fuel_mass > fuel_consumed:
+            self.fuel_mass -= fuel_consumed
+            self.total_mass -= fuel_consumed
+        else:
+            self.fuel_mass = 0
+            self.total_mass = self.structure_mass + self.payload_mass
+
+    def update_acceleration(self, thrust_x, thrust_y, thrust_z,
+                            gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z):
+        self.acceleration_x = thrust_x / self.total_mass + gravitational_acceleration_x
+        self.acceleration_y = thrust_y / self.total_mass + gravitational_acceleration_y
+        self.acceleration_z = thrust_z / self.total_mass + gravitational_acceleration_z
+
+    def update_velocity(self, time_step):
+        self.velocity_x += self.acceleration_x * time_step
+        self.velocity_y += self.acceleration_y * time_step
+        self.velocity_z += self.acceleration_z * time_step
+
+    def update_position(self, time_step):
+        self.x += self.velocity_x * time_step
+        self.y += self.velocity_y * time_step
+        self.z += self.velocity_z * time_step
+
+class PropulsionSystem():
+    def __init__(self, max_thrust, specific_impulse, exhaust_velocity):
+        self.max_thrust = max_thrust
+        self.specific_impulse = specific_impulse
+        self.exhaust_velocity = exhaust_velocity
+        
+    def calculate_thrust(self, throttle):
+        if throttle >= 1.0:
+            return self.max_thrust
+        elif throttle <= 0.0:
+            return 0
+        else:
+            return self.max_thrust * throttle
+    
+    def calculate_fuel_consumption(self, thrust, time_step):
+        return thrust / self.exhaust_velocity / self.specific_impulse * time_step

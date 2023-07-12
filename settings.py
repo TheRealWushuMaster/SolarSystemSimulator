@@ -1,4 +1,4 @@
-from math import pi
+from math import pi, cos
 from functions import calculate_additional_properties
 
 # Window settings
@@ -38,6 +38,13 @@ ORBIT_FILL_COLOR = "#222222"
 #ORTHOGRAPHIC_3D = True
 ORBIT_RESOLUTION = 50
 ROTATION_SENSITIVITY = 0.005
+
+# Simulation parameters
+G = 6.674e-11
+ARRIVAL_DISTANCE = 2    # Number of radiuses from the planet
+AVERAGE_RADIATION_ANGLE = 45
+c = 299792458
+DEFAULT_TIME_STEP = round(JULIAN_DATE_DAY/24)
 
 # =========================
 # Celestial body properties
