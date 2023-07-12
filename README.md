@@ -18,7 +18,7 @@ Use the left or right keys to adjust the time backwards or forwards respectively
 * **No modifier**: adjust time in months
 * **Ctrl**: adjust time in years
 
-The date range is roughly between the years 1900 and 2050.
+The date range is roughly between the years 1850 and 2150.
 ### 5. Reset view and scale
 Use the *escape* key to reset the view to its default state (*scale=1.0* viewed from above)
 ## HUD information
