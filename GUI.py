@@ -103,7 +103,7 @@ class App(ctk.CTk):
             file.write(response.content)
 
     def load_ephemeris_data(self):
-        self.kernel = SPK.open('de421.bsp')
+        self.kernel = SPK.open(EPHEMERIS_FILE)
 
     def close_ephemeris_data(self):
         self.kernel.close()
