@@ -18,7 +18,11 @@ Use the left or right keys to adjust the time backwards or forwards respectively
 * **No modifier**: adjust time in months
 * **Ctrl**: adjust time in years
 
+<<<<<<< HEAD
 The date range is roughly between the years 1550 and 2650 (from the *de440t.bsp* ephemeris).
+=======
+The date range is roughly between the years 1850 and 2150.
+>>>>>>> 4017eeffc690af24f174613399f24bfdcb47963d
 ### 5. Reset view and scale
 Use the *escape* key to reset the view to its default state (*scale=1.0* viewed from above)
 ## HUD information
