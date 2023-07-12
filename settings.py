@@ -7,21 +7,12 @@ WINDOW_MIN_SIZE = (700, 400)
 DEFAULT_BACKGROUND = "black"
 
 # JPL body information
-<<<<<<< HEAD
 EPHEMERIS_FILE = "de440t.bsp"
 EPHEMERIS_URL = "https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de440t.bsp"
 CHARON_FILE = "plu043.bsp"
 CHARON_FILE_URL = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/plu043.bsp"
 MAX_JULIAN_DATE = 2688976.5 # 2650-01-25 00:00:00
 MIN_JULIAN_DATE = 2287184.5 # 1549-12-21 00:00:00
-=======
-EPHEMERIS_FILE = "de440s.bsp" #"de421.bsp"
-EPHEMERIS_URL = "https://naif.jpl.nasa.gov/pub/naif/JUNO/kernels/spk/de440s.bsp" #"https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de421.bsp"
-CHARON_FILE = "plu043.bsp"
-CHARON_FILE_URL = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/plu043.bsp"
-MAX_JULIAN_DATE = 2506352.5 #2471184.5
-MIN_JULIAN_DATE = 2396752.5 #2414864.5
->>>>>>> 4017eeffc690af24f174613399f24bfdcb47963d
 ALL_EPHEMERIS_DATA_URL = "https://ssd.jpl.nasa.gov/ephem.html"
 
 # Units
