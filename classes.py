@@ -1,4 +1,6 @@
 from math import sqrt
+from settings import G
+#from orbital_functions import calculate_total_gravitational_acceleration
 
 class Star():
     def __init__(self, NAME, X, Y, Z, RADIUS, MASS, TEMPERATURE, STAR_TYPE, LUMINOSITY,
@@ -76,7 +78,7 @@ class Spaceship():
     def __init__(self, structure_mass, fuel_mass, payload_mass,
                  propulsion_system, radiation_reflectivity, surface_area,
                  x=0, y=0, z=0, velocity_x=0, velocity_y=0, velocity_z=0,
-                 acceleration_x=0, acceleration_y=0, acceleration_z=0):
+                 acceleration_x=0, acceleration_y=0, acceleration_z=0, size=0.1):
         self.x = x
         self.y = y
         self.z = z
@@ -93,6 +95,7 @@ class Spaceship():
         self.propulsion_system = propulsion_system
         self.radiation_reflectivity = radiation_reflectivity
         self.surface_area = surface_area
+        self.size = size
         self.reset_values()
     
     def reset_values(self):
@@ -103,12 +106,13 @@ class Spaceship():
         self.throttles = []
         self.fuel_masses = []
 
-    def update_status(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step,
-                      gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z):
+    def update_status(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step, bodies):
         thrust_module = self.propulsion_system.calculate_thrust(throttle)
         thrust_x = thrust_vector_x * thrust_module
         thrust_y = thrust_vector_y * thrust_module
         thrust_z = thrust_vector_z * thrust_module
+        print(thrust_x, thrust_y, thrust_z)
+        gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z = self.calculate_total_gravitational_acceleration(self, bodies)
         self.update_acceleration(thrust_x, thrust_y, thrust_z,
                                  gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z)
         self.update_mass(thrust_module, time_step)
@@ -148,6 +152,31 @@ class Spaceship():
         self.x += self.velocity_x * time_step
         self.y += self.velocity_y * time_step
         self.z += self.velocity_z * time_step
+
+    def calculate_total_gravitational_acceleration(self, spaceship, bodies):
+        total_x = 0
+        total_y = 0
+        total_z = 0
+        for body_name, body_obj in bodies.items():
+            acceleration_x, acceleration_y, acceleration_z = self.calculate_gravitational_acceleration_from_body(spaceship, body_obj)
+            total_x += acceleration_x
+            total_y += acceleration_y
+            total_z += acceleration_z
+        #print(total_x, total_y, total_z)
+        return total_x, total_y, total_z
+
+    def calculate_gravitational_acceleration_from_body(self, spaceship, body):
+        x = body.x - spaceship.x
+        y = body.y - spaceship.y
+        z = body.z - spaceship.z
+        distance_squared = x**2 + y**2 + z**2
+        distance = sqrt(distance_squared)
+        gravitational_acceleration = G * body.mass / distance_squared
+        acceleration_x = gravitational_acceleration * x / distance
+        acceleration_y = gravitational_acceleration * y / distance
+        acceleration_z = gravitational_acceleration * z / distance
+        print(f"{body.name}, distance={distance}, gravity_x={acceleration_x}, gravity_y={acceleration_y}, gravity_z={acceleration_z}")
+        return acceleration_x, acceleration_y, acceleration_z
 
 class PropulsionSystem():
     def __init__(self, max_thrust, specific_impulse, exhaust_velocity):

@@ -10,6 +10,7 @@ import datetime
 from functions import get_lighter_color, format_with_thousands_separator, property_name_and_units
 from math import sqrt
 from numpy import array, eye, sin, cos
+import orbital_functions
 
 class App(ctk.CTk):
     def __init__(self):
@@ -31,6 +32,7 @@ class App(ctk.CTk):
 
         self.update_following_object()
         self.load_orbits()
+        self.spaceship = orbital_functions.create_test_spaceship()
         self.update_all_bodies_positions()
         self.update_boundaries()
 
@@ -184,8 +186,11 @@ class App(ctk.CTk):
                 self.draw_planetary_rings(x, y, radius, body.rings)
                 self.widgets.canvas.create_arc(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color), start=0, extent=180, tags='object')
                 self.widgets.canvas.create_arc(x-(radius-1), y-(radius-1), x + (radius-1), y + (radius-1), fill=body.color, outline=body.color, start=0, extent=180, tags='object')
-            text_id = self.place_body_names(x, y, radius, body.name)
+            text_id = self.place_name(x, y, radius, body.name)
             self.body_ids.append((body.name, body_id, text_id))
+        if self.spaceship!=None:
+                spaceship_id, text_id = self.draw_spaceship()
+                self.body_ids.append(("Spaceship", spaceship_id, text_id))
         self.bring_hud_to_foreground()
 
     def bring_hud_to_foreground(self):
@@ -193,7 +198,7 @@ class App(ctk.CTk):
             self.widgets.canvas.lift(object)
 
     def clear_canvas_bodies(self):
-        for tag in ('object', 'object_text', 'planet_rings', 'orbit'):
+        for tag in ('object', 'object_text', 'planet_rings', 'orbit', 'spaceship'):
             objects = self.widgets.canvas.find_withtag(tag)
             for obj in objects:
                 self.widgets.canvas.delete(obj)
@@ -203,13 +208,23 @@ class App(ctk.CTk):
         y_p = round(y * self.distance_scale + self.center_point_y)
         return x_p, y_p
 
+    def draw_spaceship(self):
+        x, y, z = self.spaceship.x - self.origin.x, self.spaceship.y - self.origin.y, self.spaceship.z - self.origin.z
+        if DRAW_3D:
+            (x, y, z) = (x, y, z) @ self.rotation_matrix
+        x, y = self.transform_coordinates_to_pixels(x, y)
+        radius = max(round(self.spaceship.size * self.distance_scale), 1)
+        spaceship_id = self.widgets.canvas.create_oval(x-radius, y-radius, x + radius, y + radius, fill=SPACESHIP_COLOR, outline=SPACESHIP_BORDER, tags='spaceship')
+        text_id = self.place_name(x, y, radius, "Spaceship")
+        return spaceship_id, text_id
+
     def text_object_size(self, text, font, font_size):
         font = tkfont.Font(family=font, size=font_size)
         text_width = font.measure(text)
         text_height = font.metrics("linespace")
         return text_width, text_height
 
-    def place_body_names(self, center_x, center_y, radius, name):
+    def place_name(self, center_x, center_y, radius, name):
         x, y, anchor = self.find_name_text_position(name, center_x, center_y, radius)
         text_id = self.widgets.canvas.create_text(x, y, anchor=anchor, text=name, fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME), tags='object_text')
         return text_id
@@ -319,25 +334,31 @@ class App(ctk.CTk):
                                         tags='planet_rings')
 
     def update_following_object(self, object_name="Sun"):
-        self.following = self.celestial_bodies[object_name]
-        self.origin = self.position_following()
-        following_text = f"Following: {self.following.name.upper()}"
-        properties_to_exclude = ["name", "x", "y", "z", "location_path", "texture", "rings", "surface",
-                                 "atmosphere", "orbit_points", "orbit_resolution", "num_orbit_steps"]
-        properties_to_format = ["luminosity", "radius", "mass", "temperature", "rotation_velocity",
-                                "color_index", "average_orbital_speed", "orbital_period"]
-        properties_to_round = ["rotation_period", "circumference"]
-        property_lines = []
-        for property_name, property_value in vars(self.following).items():
-            if not (property_name in properties_to_exclude):
-                property_print_name, units = property_name_and_units(property_name)
-                if property_name in properties_to_round:
-                    property_value = format_with_thousands_separator(property_value, 0)
-                if property_name in properties_to_format:
-                    property_value = format_with_thousands_separator(property_value)
-                line = f"    - {property_print_name}: {property_value} {units}"
-                property_lines.append(line)
-        object_properties_text = "Information:\n" + "\n".join(property_lines)
+        if object_name!="Spaceship":
+            self.following = self.celestial_bodies[object_name]
+            self.origin = self.position_following()
+            following_text = f"Following: {self.following.name.upper()}"
+            properties_to_exclude = ["name", "x", "y", "z", "location_path", "texture", "rings", "surface",
+                                    "atmosphere", "orbit_points", "orbit_resolution", "num_orbit_steps"]
+            properties_to_format = ["luminosity", "radius", "mass", "temperature", "rotation_velocity",
+                                    "color_index", "average_orbital_speed", "orbital_period"]
+            properties_to_round = ["rotation_period", "circumference"]
+            property_lines = []
+            for property_name, property_value in vars(self.following).items():
+                if not (property_name in properties_to_exclude):
+                    property_print_name, units = property_name_and_units(property_name)
+                    if property_name in properties_to_round:
+                        property_value = format_with_thousands_separator(property_value, 0)
+                    if property_name in properties_to_format:
+                        property_value = format_with_thousands_separator(property_value)
+                    line = f"    - {property_print_name}: {property_value} {units}"
+                    property_lines.append(line)
+            object_properties_text = "Information:\n" + "\n".join(property_lines)
+        else:
+            self.following = self.spaceship
+            self.origin = classes.Point(self.spaceship.x, self.spaceship.y, self.spaceship.z)
+            following_text = "Following: SPACESHIP"
+            object_properties_text = "Test spaceship"
         self.widgets.canvas.itemconfigure(self.following_object, text=following_text)
         self.widgets.canvas.itemconfigure(self.following_object_info, text=object_properties_text)
 
@@ -381,7 +402,6 @@ class App(ctk.CTk):
         for object_name, body_id, text_id in self.body_ids:
             if body_id in clicked_body_ids or text_id in clicked_body_ids:
                 self.update_following_object(object_name)
-                #self.update_all_bodies_positions()
                 self.update_standard_draw_scale(self.widgets.canvas.winfo_width(), self.widgets.canvas.winfo_height())
                 self.draw_celestial_bodies()
                 break
@@ -419,6 +439,10 @@ class App(ctk.CTk):
         self.update_all_bodies_positions()
         position_changes = self.calculate_change_vectors(last_positions)
         self.update_orbits(position_changes)
+        if self.spaceship!=None:
+            self.spaceship.update_status(0, 1, 0, 0, JULIAN_DATE_DAY, self.celestial_bodies)
+            if self.following == self.spaceship:
+                self.origin = self. position_following(True)
         self.draw_celestial_bodies()
 
     def save_positions(self):
@@ -460,8 +484,11 @@ class App(ctk.CTk):
         for body_name, body_obj in self.celestial_bodies.items():
             print(f"{body_name}: ({body_obj.x}, {body_obj.y}, {body_obj.z})")
 
-    def position_following(self):
-        position = self.body_position(self.following.location_path)
+    def position_following(self, spaceship=False):
+        if not spaceship:
+            position = self.body_position(self.following.location_path)
+        else:
+            position = self.spaceship.x, self.spaceship.y, self.spaceship.z
         origin = classes.Point(position[0], position[1], position[2])
         return origin
 
@@ -506,7 +533,7 @@ class App(ctk.CTk):
                 self.widgets.canvas.create_line(x1, y1, x2, y2, fill=ORBIT_FILL_COLOR, dash=(2, 2), tags='orbit')
 
     def update_all_bodies_positions(self):
-        self.origin = self.position_following()
+        self.origin = self.position_following(self.following==self.spaceship)
         for body_name, body_obj in self.celestial_bodies.items():
             position = self.body_position(body_obj.location_path)
             self.celestial_bodies[body_name].x = position[0]

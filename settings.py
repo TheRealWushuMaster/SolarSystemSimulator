@@ -47,6 +47,8 @@ c = 299792458
 DEFAULT_TIME_STEP = JULIAN_DATE_DAY/24  # 1 hour
 BOOST_TIME_STEP = JULIAN_DATE_DAY/24/60 # 1 minute
 COAST_TIME_STEP = JULIAN_DATE_DAY/24/6  # 10 minutes
+SPACESHIP_COLOR = "gray"
+SPACESHIP_BORDER = "white"
 
 # =========================
 # Celestial body properties
