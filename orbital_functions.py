@@ -16,8 +16,6 @@ def calculate_gravitational_acceleration_from_body(spaceship, body):
     dz = body.z - spaceship.z
     distance_squared = dx**2 + dy**2 + dz**2
     distance = sqrt(distance_squared)
-    if distance == body.radius:
-        return 0
     gravitational_acceleration = G * body.mass / distance_squared
     acceleration_x = gravitational_acceleration * dx / distance
     acceleration_y = gravitational_acceleration * dy / distance
@@ -28,13 +26,13 @@ def calculate_radiation_pressure(luminosity, distance, reflectivity):
     return (1+reflectivity)*luminosity/4/pi/c * (cos(AVERAGE_RADIATION_ANGLE)*AU/distance)**2
 
 def create_test_spaceship():
-    propulsion_system = PropulsionSystem(max_thrust=50000,
-                                         specific_impulse=300,
-                                         exhaust_velocity=3000)
+    test_propulsion_system = PropulsionSystem(max_thrust=50000,
+                                              specific_impulse=300,
+                                              exhaust_velocity=3000)
     test_spaceship = Spaceship(structure_mass=5000,
                                fuel_mass=2000,
                                payload_mass=1000,
-                               propulsion_system=propulsion_system,
+                               propulsion_system=test_propulsion_system,
                                radiation_reflectivity=0.5,
                                surface_area=100)
     return test_spaceship

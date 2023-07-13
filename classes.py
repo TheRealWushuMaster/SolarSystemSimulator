@@ -93,31 +93,39 @@ class Spaceship():
         self.propulsion_system = propulsion_system
         self.radiation_reflectivity = radiation_reflectivity
         self.surface_area = surface_area
+        self.reset_values()
+    
+    def reset_values(self):
         self.positions = []
         self.velocities = []
         self.accelerations = []
-        self.thrusts = []
+        self.thrust_vectors = []
+        self.throttles = []
         self.fuel_masses = []
-    
-    def update_status(self, thrust_x, thrust_y, thrust_z, time_step,
+
+    def update_status(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step,
                       gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z):
+        thrust_module = self.propulsion_system.calculate_thrust(throttle)
+        thrust_x = thrust_vector_x * thrust_module
+        thrust_y = thrust_vector_y * thrust_module
+        thrust_z = thrust_vector_z * thrust_module
         self.update_acceleration(thrust_x, thrust_y, thrust_z,
                                  gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z)
-        self.update_mass(thrust_x, thrust_y, thrust_z, time_step)
+        self.update_mass(thrust_module, time_step)
         self.update_velocity(time_step)
         self.update_position(time_step)
-        self.store_values(thrust_x, thrust_y, thrust_z)
+        self.store_values(throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z)
 
-    def store_values(self, thrust_x, thrust_y, thrust_z):
+    def store_values(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z):
         self.positions.append((self.x, self.y, self.z))
         self.velocities.append((self.velocity_x, self.velocity_y, self.velocity_z))
         self.accelerations.append((self.acceleration_x, self.acceleration_y, self.acceleration_z))
-        self.thrusts.append((thrust_x, thrust_y, thrust_z))
-        
+        self.thrust_vectors.append((thrust_vector_x, thrust_vector_y, thrust_vector_z))
+        self.throttles.append(throttle)
+        self.fuel_masses.append(self.fuel_mass)
 
-    def update_mass(self, thrust_x, thrust_y, thrust_z, time_step):
-        thrust = sqrt(thrust_x**2 + thrust_y**2 + thrust_z**2)
-        fuel_consumed = self.propulsion_system.calculate_fuel_consumption(thrust, time_step)
+    def update_mass(self, thrust_module, time_step):
+        fuel_consumed = self.propulsion_system.calculate_fuel_consumption(thrust_module, time_step)
         if self.fuel_mass > fuel_consumed:
             self.fuel_mass -= fuel_consumed
             self.total_mass -= fuel_consumed
@@ -146,7 +154,7 @@ class PropulsionSystem():
         self.max_thrust = max_thrust
         self.specific_impulse = specific_impulse
         self.exhaust_velocity = exhaust_velocity
-        
+
     def calculate_thrust(self, throttle):
         if throttle >= 1.0:
             return self.max_thrust
@@ -154,6 +162,6 @@ class PropulsionSystem():
             return 0
         else:
             return self.max_thrust * throttle
-    
-    def calculate_fuel_consumption(self, thrust, time_step):
-        return thrust / self.exhaust_velocity / self.specific_impulse * time_step
+
+    def calculate_fuel_consumption(self, thrust_module, time_step):
+        return thrust_module / self.exhaust_velocity / self.specific_impulse * time_step

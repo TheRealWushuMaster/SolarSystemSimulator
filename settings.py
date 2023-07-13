@@ -41,10 +41,12 @@ ROTATION_SENSITIVITY = 0.005
 
 # Simulation parameters
 G = 6.674e-11
-ARRIVAL_DISTANCE = 2    # Number of radiuses from the planet
+ARRIVAL_DISTANCE = 2    # Number of radiuses from the planet to consider "arrived" at the planet
 AVERAGE_RADIATION_ANGLE = 45
 c = 299792458
-DEFAULT_TIME_STEP = round(JULIAN_DATE_DAY/24)
+DEFAULT_TIME_STEP = JULIAN_DATE_DAY/24  # 1 hour
+BOOST_TIME_STEP = JULIAN_DATE_DAY/24/60 # 1 minute
+COAST_TIME_STEP = JULIAN_DATE_DAY/24/6  # 10 minutes
 
 # =========================
 # Celestial body properties
