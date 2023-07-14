@@ -21,7 +21,7 @@ class App(ctk.CTk):
         self.check_ephemeris_file_update()
         self.load_ephemeris_data()
 
-        self.celestial_bodies = self.create_bodies()
+        self.celestial_bodies = self.create_bodies(moons=False)
         
         self.date = datetime.datetime.now()
         self.timestamp_days = 0
@@ -440,7 +440,7 @@ class App(ctk.CTk):
         position_changes = self.calculate_change_vectors(last_positions)
         self.update_orbits(position_changes)
         if self.spaceship!=None:
-            self.spaceship.update_status(0, 1, 0, 0, JULIAN_DATE_DAY, self.celestial_bodies)
+            self.spaceship.update_status(1, 1, 0, 0, COAST_TIME_STEP, self.celestial_bodies)
             if self.following == self.spaceship:
                 self.origin = self. position_following(True)
         self.draw_celestial_bodies()
