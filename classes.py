@@ -111,16 +111,12 @@ class Spaceship():
         thrust_x = thrust_vector_x * thrust_module
         thrust_y = thrust_vector_y * thrust_module
         thrust_z = thrust_vector_z * thrust_module
-        #print(thrust_vector_x, thrust_vector_y, thrust_vector_z)
         gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z = self.calculate_total_gravitational_acceleration(self, bodies)
         self.update_acceleration(thrust_x, thrust_y, thrust_z,
                                  gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z)
         self.update_mass(thrust_module, time_step)
         self.update_velocity(time_step)
         self.update_position(time_step)
-        #print(thrust_module, self.acceleration_x, self.acceleration_y, self.acceleration_z)
-        #print(self.x, self.y, self.z)
-        #self.store_values(throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z)
 
     def store_values(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z):
         self.positions.append((self.x, self.y, self.z))
@@ -149,8 +145,6 @@ class Spaceship():
         self.velocity_x += self.acceleration_x * time_step
         self.velocity_y += self.acceleration_y * time_step
         self.velocity_z += self.acceleration_z * time_step
-        #print(self.velocity_x, self.velocity_y, self.velocity_z)
-        #print("==================")
 
     def update_position(self, time_step):
         self.x += self.velocity_x * time_step
@@ -162,7 +156,6 @@ class Spaceship():
         total_y = 0
         total_z = 0
         for body_name, body_obj in bodies.items():
-            #print(body_name)
             acceleration_x, acceleration_y, acceleration_z = self.calculate_gravitational_acceleration_from_body(spaceship, body_obj)
             total_x += acceleration_x
             total_y += acceleration_y
@@ -181,11 +174,6 @@ class Spaceship():
         acceleration_x = gravitational_acceleration * x / distance
         acceleration_y = gravitational_acceleration * y / distance
         acceleration_z = gravitational_acceleration * z / distance
-        # if body.name=="Sun":
-        #     print(f"Body_x={body.x}\tBody_y={body.y}\tBody_z={body.z}")
-        #     print(f"Spaceship_x={spaceship.x}\tSpaceship_y={spaceship.y}\tSpaceship_z={spaceship.z}")
-        #     print(f"Spaceship_vel_x={spaceship.velocity_x}\tSpaceship_vel_y={spaceship.velocity_y}\tSpaceship_vel_z={spaceship.velocity_z}")
-        #     print(f"{body.name}\tdistance={distance}\tgravity_x={acceleration_x}\tgravity_y={acceleration_y}\tgravity_z={acceleration_z}")
         return acceleration_x, acceleration_y, acceleration_z
 
 class PropulsionSystem():

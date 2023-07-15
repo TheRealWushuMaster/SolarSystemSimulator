@@ -11,6 +11,7 @@ from functions import get_lighter_color, format_with_thousands_separator, proper
 from math import sqrt
 from numpy import array, eye, sin, cos
 import orbital_functions
+import threading
 
 class App(ctk.CTk):
     def __init__(self):
@@ -28,6 +29,8 @@ class App(ctk.CTk):
         self.timestamp_months = 0
         self.timestamp_years = 0
         self.timestamp = self.convert_to_julian_date()
+        self.simulation_step_index = 0
+        #self.time_step = list(simulation_steps.items())[self.simulation_step_index]
         self.update_time_text()
 
         self.update_following_object()
@@ -45,6 +48,8 @@ class App(ctk.CTk):
         self.roll_angle = 0
         self.yaw_angle = 0
         self.draw_celestial_bodies()
+        self.auto_play = False
+        self.update_auto_play_text()
 
     def configure_app_window(self):
         self.title("SOLARA: Solar System Simulator")
@@ -58,12 +63,13 @@ class App(ctk.CTk):
 
     def configure_canvas_hud(self):
         self.time_text = self.widgets.canvas.create_text(10, 10, anchor="nw", fill=DEFAULT_FONT_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
-        self.scale_text = self.widgets.canvas.create_text(10, 10+INFO_TEXT_SEPARATION, anchor="nw", fill=SCALE_TEXT_COLOR, text="Scale", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
-        self.distance_text_km = self.widgets.canvas.create_text(10, 10+2*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Distance km", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
-        self.distance_text_au = self.widgets.canvas.create_text(10, 10+3*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Distance AU", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
-        self.following_object = self.widgets.canvas.create_text(10, 10+4*INFO_TEXT_SEPARATION, anchor="nw", fill=FOLLOWING_OBJECT_TEXT_COLOR, text="Following: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
-        self.following_object_info = self.widgets.canvas.create_text(10, 10+5*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Object info: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
-        self.hud_objects = (self.time_text, self.scale_text, self.distance_text_km,
+        self.auto_play_text = self.widgets.canvas.create_text(10, 10+INFO_TEXT_SEPARATION, anchor="nw", fill=SCALE_TEXT_COLOR, text="Auto run: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
+        self.scale_text = self.widgets.canvas.create_text(10, 10+2*INFO_TEXT_SEPARATION, anchor="nw", fill=SCALE_TEXT_COLOR, text="Scale", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
+        self.distance_text_km = self.widgets.canvas.create_text(10, 10+3*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Distance km", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
+        self.distance_text_au = self.widgets.canvas.create_text(10, 10+4*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Distance AU", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
+        self.following_object = self.widgets.canvas.create_text(10, 10+5*INFO_TEXT_SEPARATION, anchor="nw", fill=FOLLOWING_OBJECT_TEXT_COLOR, text="Following: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
+        self.following_object_info = self.widgets.canvas.create_text(10, 10+6*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Object info: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
+        self.hud_objects = (self.time_text, self.auto_play_text, self.scale_text, self.distance_text_km,
                             self.distance_text_au, self.following_object, self.following_object_info)
 
     def bind_events(self):
@@ -80,6 +86,9 @@ class App(ctk.CTk):
         self.bind("<Escape>", self.reset_view)
         self.bind("<Left>", self.handle_time_adjustment)
         self.bind("<Right>", self.handle_time_adjustment)
+        self.bind("<Up>", self.change_time_step)
+        self.bind("<Down>", self.change_time_step)
+        self.bind("<space>", self.pause_resume_simulation)
 
     def check_ephemeris_file_update(self):
         if os.path.exists(EPHEMERIS_FILE):
@@ -170,6 +179,23 @@ class App(ctk.CTk):
             self.standard_draw_scale = min((width-CANVAS_DRAW_PADDING)/self.max_distance_width, (height-CANVAS_DRAW_PADDING)/self.max_distance_height)/2
         else:
             self.standard_draw_scale = min((width-CANVAS_DRAW_PADDING)/self.max_distance_width, (height-CANVAS_DRAW_PADDING)/self.max_distance_height, (height-CANVAS_DRAW_PADDING)/self.max_distance_depth)/2
+
+    def pause_resume_simulation(self, event):
+        if self.auto_play:
+            self.auto_play = False
+            for id in self.after_ids:
+                self.after_cancel(id)
+        else:
+            self.after_ids = []
+            self.auto_play = True
+            after_id = self.after(MILISECONDS_PER_FRAME, self.advance_step)
+            self.after_ids.append(after_id)
+        self.update_auto_play_text()
+
+    def advance_step(self):
+        if self.auto_play:
+            self.handle_time_adjustment(auto_play=True)
+            self.after(MILISECONDS_PER_FRAME, self.advance_step)
 
     def draw_celestial_bodies(self):
         self.body_ids = []
@@ -416,23 +442,20 @@ class App(ctk.CTk):
         self.widgets.canvas.itemconfigure(self.distance_text_km, text=cursor_position_text_km)
         self.widgets.canvas.itemconfigure(self.distance_text_au, text=cursor_position_text_au)
 
-    def handle_time_adjustment(self, event):
-        fine_adjustment = event.state & 0x1     # Check if the Shift key is pressed
-        coarse_adjustment = event.state & 0x4   # Check if the Ctrl key is pressed
-        if event.keysym == "Left":
-            if fine_adjustment:
-                self.timestamp_days -= 1
-            elif coarse_adjustment:
-                self.timestamp_years -= 1
-            else:
-                self.timestamp_months -= 1
-        elif event.keysym == "Right":
-            if fine_adjustment:
-                self.timestamp_days += 1
-            elif coarse_adjustment:
-                self.timestamp_years += 1
-            else:
-                self.timestamp_months += 1
+    def handle_time_adjustment(self, event=None, auto_play=False):
+        number = list(simulation_steps.items())[self.simulation_step_index][1]
+        if self.simulation_step_index <= 1:
+            time_step = datetime.timedelta(seconds=number)
+        elif self.simulation_step_index <= 4:
+            time_step = datetime.timedelta(minutes=number)
+        elif self.simulation_step_index <= 6:
+            time_step = datetime.timedelta(hours=number)
+        else:
+            time_step = datetime.timedelta(days=number)
+        if auto_play or event.keysym == "Right":
+            self.date += time_step
+        elif event.keysym == "Left":
+            self.date -= time_step
         self.timestamp = self.convert_to_julian_date()
         self.update_time_text()
         last_positions = self.save_positions()
@@ -444,6 +467,15 @@ class App(ctk.CTk):
             if self.following == self.spaceship:
                 self.origin = self. position_following(True)
         self.draw_celestial_bodies()
+
+    def change_time_step(self, event):
+        if event.keysym=="Up":
+            if self.simulation_step_index < len(simulation_steps)-1:
+                self.simulation_step_index += 1
+        elif event.keysym=="Down":
+            if self.simulation_step_index > 0:
+                self.simulation_step_index -= 1
+        self.update_time_text()
 
     def save_positions(self):
         positions = {}
@@ -461,8 +493,14 @@ class App(ctk.CTk):
                                          "z": body_obj.z - last_positions[body_name]["z"]}
         return change_vectors
 
+    def update_auto_play_text(self):
+        auto_play_text = f"Auto run: {'Running' if self.auto_play else 'Stopped'}"
+        self.widgets.canvas.itemconfigure(self.auto_play_text, text=auto_play_text, fill=AUTO_RUN_TEXT_COLOR_RUN if self.auto_play else AUTO_RUN_TEXT_COLOR_STOP)
+
     def update_time_text(self):
-        time_text = f"Current date: {self.date} - adjustment {self.timestamp_days} days, {self.timestamp_months} months, {self.timestamp_years} years"
+        time_step_name = list(simulation_steps.items())[self.simulation_step_index][0]
+        show_date = self.date.strftime('%Y-%m-%d %H:%M:%S')
+        time_text = f"Current date: {show_date} - Time step = {time_step_name}"
         self.widgets.canvas.itemconfigure(self.time_text, text=time_text)
 
     def update_scale_text(self):
