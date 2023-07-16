@@ -11,7 +11,6 @@ from functions import get_lighter_color, format_with_thousands_separator, proper
 from math import sqrt
 from numpy import array, eye, sin, cos
 import orbital_functions
-import threading
 
 class App(ctk.CTk):
     def __init__(self):
@@ -30,7 +29,6 @@ class App(ctk.CTk):
         self.timestamp_years = 0
         self.timestamp = self.convert_to_julian_date()
         self.simulation_step_index = 0
-        #self.time_step = list(simulation_steps.items())[self.simulation_step_index]
         self.update_time_text()
 
         self.update_following_object()
@@ -467,6 +465,9 @@ class App(ctk.CTk):
             if self.following == self.spaceship:
                 self.origin = self. position_following(True)
         self.draw_celestial_bodies()
+
+    def simulate_spaceship_trajectory(self, start_timestamp, end_timestamp):
+        pass
 
     def change_time_step(self, event):
         if event.keysym=="Up":
