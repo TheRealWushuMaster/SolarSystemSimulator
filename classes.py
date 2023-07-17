@@ -108,6 +108,8 @@ class Spaceship():
         self.thrust_vectors = []
         self.throttles = []
         self.fuel_masses = []
+        self.takeoff_fuel_masses = []
+        self.time_steps = []
 
     def update_status(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step, bodies):
         if self.takeoff_jettisoned:
@@ -123,14 +125,21 @@ class Spaceship():
         self.update_mass(thrust_module, time_step)
         self.update_velocity(time_step)
         self.update_position(time_step)
+        self.store_values(throttle=throttle,
+                          thrust_vector_x=thrust_vector_x,
+                          thrust_vector_y=thrust_vector_y,
+                          thrust_vector_z=thrust_vector_z,
+                          time_step=time_step)
 
-    def store_values(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z):
+    def store_values(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step):
         self.positions.append((self.x, self.y, self.z))
-        self.velocities.append((self.velocity_x, self.velocity_y, self.velocity_z))
-        self.accelerations.append((self.acceleration_x, self.acceleration_y, self.acceleration_z))
-        self.thrust_vectors.append((thrust_vector_x, thrust_vector_y, thrust_vector_z))
-        self.throttles.append(throttle)
-        self.fuel_masses.append(self.fuel_mass)
+        # self.velocities.append((self.velocity_x, self.velocity_y, self.velocity_z))
+        # self.accelerations.append((self.acceleration_x, self.acceleration_y, self.acceleration_z))
+        # self.thrust_vectors.append((thrust_vector_x, thrust_vector_y, thrust_vector_z))
+        # self.throttles.append(throttle)
+        # self.fuel_masses.append(self.fuel_mass)
+        # self.takeoff_fuel_masses.append(self.takeoff_propulsion_system.fuel_mass)
+        self.time_steps.append(time_step)
 
     def update_mass(self, thrust_module, time_step):
         if self.takeoff_jettisoned:

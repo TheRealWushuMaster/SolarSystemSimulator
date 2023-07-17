@@ -24,9 +24,6 @@ class App(ctk.CTk):
         self.celestial_bodies = self.create_bodies(moons=False)
         
         self.date = datetime.datetime.now()
-        self.timestamp_days = 0
-        self.timestamp_months = 0
-        self.timestamp_years = 0
         self.timestamp = self.convert_to_julian_date()
         self.simulation_step_index = 0
         self.update_time_text()
@@ -34,6 +31,9 @@ class App(ctk.CTk):
         self.update_following_object()
         self.load_orbits()
         self.spaceship = orbital_functions.create_test_spaceship()
+        self.spaceship.x = 0
+        self.spaceship.y = 0
+        self.spaceship.z = 0
         self.update_all_bodies_positions()
         self.update_boundaries()
 
@@ -48,6 +48,10 @@ class App(ctk.CTk):
         self.draw_celestial_bodies()
         self.auto_play = False
         self.update_auto_play_text()
+        test_input_vector = []
+        for i in range(100):
+            test_input_vector.append((1, 1, 0, 0, 1))
+        self.simulate_spaceship_trajectory(self.date, test_input_vector)
 
     def configure_app_window(self):
         self.title("SOLARA: Solar System Simulator")
@@ -461,13 +465,25 @@ class App(ctk.CTk):
         position_changes = self.calculate_change_vectors(last_positions)
         self.update_orbits(position_changes)
         if self.spaceship!=None:
-            self.spaceship.update_status(1, 1, 0, 0, COAST_TIME_STEP, self.celestial_bodies)
+            #self.spaceship.update_status(1, 1, 0, 0, COAST_TIME_STEP, self.celestial_bodies)
             if self.following == self.spaceship:
-                self.origin = self. position_following(True)
+                self.origin = self.position_following(True)
         self.draw_celestial_bodies()
 
-    def simulate_spaceship_trajectory(self, start_timestamp, end_timestamp):
-        pass
+    def simulate_spaceship_trajectory(self, start_time, input_vector):
+        for i, iteration in enumerate(input_vector):
+            throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step = iteration
+            simulation_time = start_time + datetime.timedelta(minutes=i*time_step)
+            self.timestamp = self.convert_to_julian_date(simulation_time)
+            self.update_all_bodies_positions()
+            self.spaceship.update_status(throttle=throttle,
+                                         thrust_vector_x=thrust_vector_x,
+                                         thrust_vector_y=thrust_vector_y,
+                                         thrust_vector_z=thrust_vector_z,
+                                         time_step=time_step,
+                                         bodies=self.celestial_bodies)
+        self.timestamp = self.convert_to_julian_date(start_time)
+        self.update_all_bodies_positions()
 
     def change_time_step(self, event):
         if event.keysym=="Up":
@@ -589,23 +605,24 @@ class App(ctk.CTk):
             max_z = max(body.z for body in self.celestial_bodies.values())
             self.max_distance_depth = max_z - min_z
 
-    def convert_to_julian_date(self, date=None, d=None, m=None, y=None):
+    def convert_to_julian_date(self, date=None, seconds=None, minutes=None,
+                               hours=None, days=None, months=None, years=None):
         if date is None:
-            dt = self.date
-        else:
-            dt = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
-        year = dt.year + self.timestamp_years
-        month = dt.month + self.timestamp_months
-        day = dt.day + self.timestamp_days
-        hour= dt.hour
-        minute = dt.minute
-        second = dt.second
-        if not d is None:
-            day += d
-        if not m is None:
-            month += m
-        if not y is None:
-            year += y
+            if self.date is None:
+                self.date = datetime.datetime.now()
+            date = self.date
+        year = date.year
+        month = date.month
+        day = date.day
+        hour= date.hour
+        minute = date.minute
+        second = date.second
+        if seconds is not None: second += seconds
+        if minutes is not None: minute += minutes
+        if hours is not None: hour += hours
+        if days is not None: day += days
+        if months is not None: month += months
+        if years is not None: year += years
         julian_date = 367 * year - (7 * (year + ((month + 9) // 12))) // 4 + (275 * month) // 9 + day + 1721013.5
         julian_date += (hour + (minute / 60) + (second / 3600)) / 24
         if julian_date < MIN_JULIAN_DATE:
