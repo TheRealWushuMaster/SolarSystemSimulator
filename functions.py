@@ -1,5 +1,5 @@
-from math import pi
 import locale
+from math import pi
 
 def color_index_to_rgb(color_index):
     color_temp = 4600 * ((1 / ((0.92 * color_index) + 1.7)) + (1 / ((0.92 * color_index) + 0.62)))

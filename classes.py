@@ -1,5 +1,6 @@
 from math import sqrt
 from settings import G
+from orbital_functions import calculate_total_gravitational_acceleration
 
 class Star():
     def __init__(self, NAME, X, Y, Z, RADIUS, MASS, TEMPERATURE, STAR_TYPE, LUMINOSITY,
@@ -119,7 +120,7 @@ class Spaceship():
         thrust_x = thrust_vector_x * thrust_module
         thrust_y = thrust_vector_y * thrust_module
         thrust_z = thrust_vector_z * thrust_module
-        gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z = self.calculate_total_gravitational_acceleration(self, bodies)
+        gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z = calculate_total_gravitational_acceleration(self, bodies)
         self.update_acceleration(thrust_x, thrust_y, thrust_z,
                                  gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z)
         self.update_mass(thrust_module, time_step)
@@ -173,31 +174,6 @@ class Spaceship():
         self.x += self.velocity_x * time_step
         self.y += self.velocity_y * time_step
         self.z += self.velocity_z * time_step
-
-    def calculate_total_gravitational_acceleration(self, spaceship, bodies):
-        total_x = 0
-        total_y = 0
-        total_z = 0
-        for body_name, body_obj in bodies.items():
-            acceleration_x, acceleration_y, acceleration_z = self.calculate_gravitational_acceleration_from_body(spaceship, body_obj)
-            total_x += acceleration_x
-            total_y += acceleration_y
-            total_z += acceleration_z
-        return total_x, total_y, total_z
-
-    def calculate_gravitational_acceleration_from_body(self, spaceship, body):
-        x = body.x - spaceship.x
-        y = body.y - spaceship.y
-        z = body.z - spaceship.z
-        distance_squared = x**2 + y**2 + z**2
-        distance = sqrt(distance_squared)
-        if distance<=body.radius:
-            return 0, 0, 0
-        gravitational_acceleration = G * body.mass / distance_squared
-        acceleration_x = gravitational_acceleration * x / distance
-        acceleration_y = gravitational_acceleration * y / distance
-        acceleration_z = gravitational_acceleration * z / distance
-        return acceleration_x, acceleration_y, acceleration_z
 
 class PropulsionSystem():
     def __init__(self, max_thrust=0, specific_impulse=0, exhaust_velocity=0, structure_mass=0, fuel_mass=0):

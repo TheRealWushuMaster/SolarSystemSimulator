@@ -11,8 +11,8 @@ EPHEMERIS_FILE = "de440t.bsp"
 EPHEMERIS_URL = "https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de440t.bsp"
 CHARON_FILE = "plu043.bsp"
 CHARON_FILE_URL = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/plu043.bsp"
-MAX_JULIAN_DATE = 2688976.5 # 2650-01-25 00:00:00
-MIN_JULIAN_DATE = 2287184.5 # 1549-12-21 00:00:00
+MAX_JULIAN_DATE = 2688976.5
+MIN_JULIAN_DATE = 2287184.5
 ALL_EPHEMERIS_DATA_URL = "https://ssd.jpl.nasa.gov/ephem.html"
 
 # Units
@@ -28,14 +28,11 @@ JULIAN_DATE_15_MINUTES = JULIAN_DATE_30_MINUTES/2
 JULIAN_DATE_MINUTE = JULIAN_DATE_15_MINUTES/15
 JULIAN_DATE_10_SECONDS = JULIAN_DATE_MINUTE/6
 JULIAN_DATE_SECOND = JULIAN_DATE_10_SECONDS/10
-# simulation_steps_julian = {"Seconds": JULIAN_DATE_SECOND, "10 seconds": JULIAN_DATE_10_SECONDS, "Minutes": JULIAN_DATE_MINUTE,
-#                            "15 minutes": JULIAN_DATE_15_MINUTES, "30 minutes": JULIAN_DATE_30_MINUTES, "Hours": JULIAN_DATE_HOUR,
-#                            "12 hours": JULIAN_DATE_12_HOURS, "Days": JULIAN_DATE_DAY, "Weeks": JULIAN_DATE_WEEK,
-#                            "Months": JULIAN_DATE_MONTH, "Years": JULIAN_DATE_YEAR}
 simulation_steps = {"Seconds": 1, "10 seconds": 10, "Minutes": 1,
                     "15 minutes": 15, "30 minutes": 30, "Hours": 1,
                     "12 hours": 12, "Days": 1, "Weeks": 7,
                     "Months": 30, "Years": 365}
+
 # Graphical information
 DRAW_3D = True
 CANVAS_DRAW_PADDING = 20

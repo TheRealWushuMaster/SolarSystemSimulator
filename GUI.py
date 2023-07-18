@@ -1,16 +1,15 @@
 from settings import *
 import customtkinter as ctk
-import tkinter.font as tkfont
-import requests
-import os
-import email.utils
 import classes
-from jplephem.spk import SPK
 import datetime
-from functions import get_lighter_color, format_with_thousands_separator, property_name_and_units
+from functions import format_with_thousands_separator, property_name_and_units
 from math import sqrt
 from numpy import array, eye, sin, cos
-import orbital_functions
+from creators import create_bodies, create_test_spaceship
+from ephemeris_data import check_ephemeris_file_update, load_ephemeris_data, close_ephemeris_data
+from creators import *
+from graphics import draw_celestial_bodies, update_standard_draw_scale, update_distance_scale
+from orbital_functions import simulate_spaceship_trajectory
 
 class App(ctk.CTk):
     def __init__(self):
@@ -18,11 +17,13 @@ class App(ctk.CTk):
         self.widgets = self.configure_app_window()
         self.configure_canvas_hud()
         self.bind_events()
-        self.check_ephemeris_file_update()
-        self.load_ephemeris_data()
+        check_ephemeris_file_update(self)
+        load_ephemeris_data(self)
 
-        self.celestial_bodies = self.create_bodies(moons=False)
-        
+        self.celestial_bodies = create_bodies(star_data=Star_data,
+                                              planet_data=Planet_data,
+                                              moon_data=None)
+
         self.date = datetime.datetime.now()
         self.timestamp = self.convert_to_julian_date()
         self.simulation_step_index = 0
@@ -30,7 +31,14 @@ class App(ctk.CTk):
 
         self.update_following_object()
         self.load_orbits()
-        self.spaceship = orbital_functions.create_test_spaceship()
+
+        self.iterations = 100
+        self.current_iteration = 0
+        self.spaceship = create_test_spaceship()
+        test_input_vector = []
+        for i in range(self.iterations):
+            test_input_vector.append((0, 1, 0, 0, 1))
+        simulate_spaceship_trajectory(self, self.date, test_input_vector)
         self.spaceship.x = 0
         self.spaceship.y = 0
         self.spaceship.z = 0
@@ -39,19 +47,15 @@ class App(ctk.CTk):
 
         self.modified_scale = 1.0
         self.center_point_x, self.center_point_y = round(self.widgets.canvas.winfo_reqwidth()/2), round(self.widgets.canvas.winfo_reqheight()/2)
-        self.update_standard_draw_scale(self.widgets.canvas.winfo_reqwidth(), self.widgets.canvas.winfo_reqheight())
-        self.update_distance_scale()
+        update_standard_draw_scale(self, self.widgets.canvas.winfo_reqwidth(), self.widgets.canvas.winfo_reqheight())
+        update_distance_scale(self)
         self.rotation_matrix = eye(3)
         self.pitch_angle = 0
         self.roll_angle = 0
         self.yaw_angle = 0
-        self.draw_celestial_bodies()
+        draw_celestial_bodies(self)
         self.auto_play = False
         self.update_auto_play_text()
-        test_input_vector = []
-        for i in range(100):
-            test_input_vector.append((1, 1, 0, 0, 1))
-        self.simulate_spaceship_trajectory(self.date, test_input_vector)
 
     def configure_app_window(self):
         self.title("SOLARA: Solar System Simulator")
@@ -92,52 +96,6 @@ class App(ctk.CTk):
         self.bind("<Down>", self.change_time_step)
         self.bind("<space>", self.pause_resume_simulation)
 
-    def check_ephemeris_file_update(self):
-        if os.path.exists(EPHEMERIS_FILE):
-            current_timestamp = os.path.getmtime(EPHEMERIS_FILE)
-        else:
-            current_timestamp = 0
-        response = requests.head(EPHEMERIS_URL)
-        if 'Last-Modified' in response.headers:
-            latest_timestamp = response.headers['Last-Modified']
-        else:
-            latest_timestamp = 0
-        latest_timestamp = email.utils.mktime_tz(email.utils.parsedate_tz(latest_timestamp))
-        if current_timestamp < latest_timestamp:
-            print("Downloading updated ephemeris file...")
-            self.download_updated_ephemeris()
-            print("Ephemeris file has been downloaded.")
-        else:
-            print("Ephemeris file is up to date.")
-
-    def download_updated_ephemeris(self):
-        response = requests.get(EPHEMERIS_URL)
-        with open(EPHEMERIS_FILE, "wb") as file:
-            file.write(response.content)
-
-    def load_ephemeris_data(self):
-        self.kernel = SPK.open(EPHEMERIS_FILE)
-
-    def close_ephemeris_data(self):
-        self.kernel.close()
-
-    def create_bodies(self, stars=True, planets=True, moons=True):
-        celestial_bodies = {}
-        if stars:
-            celestial_bodies.update(self.create_body_of_a_class(Star_data, classes.Star))
-        if planets:
-            celestial_bodies.update(self.create_body_of_a_class(Planet_data, classes.Planet))
-        if moons:
-            celestial_bodies.update(self.create_body_of_a_class(Moon_data, classes.Planet))
-        return celestial_bodies
-
-    def create_body_of_a_class(self, body_data, body_class):
-        bodies = {}
-        for name, properties in body_data.items():
-                body = body_class(name, **properties)
-                bodies[name] = body
-        return bodies
-
     def start_mouse_drag(self, event):
         self.mouse_drag_starting_point = (event.x, event.y)
 
@@ -162,7 +120,7 @@ class App(ctk.CTk):
                                      [0, sin(self.roll_angle), cos(self.roll_angle)]])
         self.rotation_matrix = rotation_matrix_yaw @ rotation_matrix_pitch @ rotation_matrix_roll
         self.mouse_drag_starting_point = (event.x, event.y)
-        self.draw_celestial_bodies()
+        draw_celestial_bodies(self)
 
     def release_mouse_drag(self, event):
         self.mouse_drag_starting_point = None
@@ -173,14 +131,8 @@ class App(ctk.CTk):
         self.yaw_angle = 0
         self.roll_angle = 0
         self.pitch_angle = 0
-        self.update_distance_scale()
-        self.draw_celestial_bodies()
-
-    def update_standard_draw_scale(self, width, height):
-        if not DRAW_3D:
-            self.standard_draw_scale = min((width-CANVAS_DRAW_PADDING)/self.max_distance_width, (height-CANVAS_DRAW_PADDING)/self.max_distance_height)/2
-        else:
-            self.standard_draw_scale = min((width-CANVAS_DRAW_PADDING)/self.max_distance_width, (height-CANVAS_DRAW_PADDING)/self.max_distance_height, (height-CANVAS_DRAW_PADDING)/self.max_distance_depth)/2
+        update_distance_scale(self)
+        draw_celestial_bodies(self)
 
     def pause_resume_simulation(self, event):
         if self.auto_play:
@@ -198,168 +150,6 @@ class App(ctk.CTk):
         if self.auto_play:
             self.handle_time_adjustment(auto_play=True)
             self.after(MILISECONDS_PER_FRAME, self.advance_step)
-
-    def draw_celestial_bodies(self):
-        self.body_ids = []
-        self.clear_canvas_bodies()
-        self.draw_orbits()
-        for body in self.celestial_bodies.values():
-            x, y, z = body.x - self.origin.x, body.y - self.origin.y, body.z - self.origin.z
-            radius = max(round(body.radius * self.distance_scale), 1)
-            if DRAW_3D:
-                (x, y, z) = (x, y, z) @ self.rotation_matrix
-            x, y = self.transform_coordinates_to_pixels(x, y)
-            body_id = self.widgets.canvas.create_oval(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color), tags='object')
-            if radius > 3 and body.rings > 0:
-                self.draw_planetary_rings(x, y, radius, body.rings)
-                self.widgets.canvas.create_arc(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color), start=0, extent=180, tags='object')
-                self.widgets.canvas.create_arc(x-(radius-1), y-(radius-1), x + (radius-1), y + (radius-1), fill=body.color, outline=body.color, start=0, extent=180, tags='object')
-            text_id = self.place_name(x, y, radius, body.name)
-            self.body_ids.append((body.name, body_id, text_id))
-        if self.spaceship!=None:
-                spaceship_id, text_id = self.draw_spaceship()
-                self.body_ids.append(("Spaceship", spaceship_id, text_id))
-        self.bring_hud_to_foreground()
-
-    def bring_hud_to_foreground(self):
-        for object in self.hud_objects:
-            self.widgets.canvas.lift(object)
-
-    def clear_canvas_bodies(self):
-        for tag in ('object', 'object_text', 'planet_rings', 'orbit', 'spaceship'):
-            objects = self.widgets.canvas.find_withtag(tag)
-            for obj in objects:
-                self.widgets.canvas.delete(obj)
-
-    def transform_coordinates_to_pixels(self, x, y):
-        x_p = round(x * self.distance_scale + self.center_point_x)
-        y_p = round(y * self.distance_scale + self.center_point_y)
-        return x_p, y_p
-
-    def draw_spaceship(self):
-        x, y, z = self.spaceship.x - self.origin.x, self.spaceship.y - self.origin.y, self.spaceship.z - self.origin.z
-        if DRAW_3D:
-            (x, y, z) = (x, y, z) @ self.rotation_matrix
-        x, y = self.transform_coordinates_to_pixels(x, y)
-        radius = max(round(self.spaceship.size * self.distance_scale), 1)
-        spaceship_id = self.widgets.canvas.create_oval(x-radius, y-radius, x + radius, y + radius, fill=SPACESHIP_COLOR, outline=SPACESHIP_BORDER, tags='spaceship')
-        text_id = self.place_name(x, y, radius, "Spaceship")
-        return spaceship_id, text_id
-
-    def text_object_size(self, text, font, font_size):
-        font = tkfont.Font(family=font, size=font_size)
-        text_width = font.measure(text)
-        text_height = font.metrics("linespace")
-        return text_width, text_height
-
-    def place_name(self, center_x, center_y, radius, name):
-        x, y, anchor = self.find_name_text_position(name, center_x, center_y, radius)
-        text_id = self.widgets.canvas.create_text(x, y, anchor=anchor, text=name, fill=BODY_NAME_COLOR, font=(DEFAULT_FONT, TEXT_SIZE_NAME), tags='object_text')
-        return text_id
-
-    def find_name_text_position(self, name, center_x, center_y, planet_radius, padding=DEFAULT_NAME_TEXT_PADDING):
-        text_width, text_height = self.text_object_size(name, DEFAULT_FONT, TEXT_SIZE_NAME)
-        default_position = (center_x + planet_radius + padding, center_y, "w")  # Right
-        positions = [default_position,
-                     (center_x - planet_radius - padding, center_y, "e"),  # Left
-                     (center_x, center_y - planet_radius - padding, "s"),  # Top
-                     (center_x, center_y + planet_radius + padding, "n"),  # Bottom
-                     (center_x - planet_radius - padding, center_y - planet_radius - padding, "se"),  # Top-left
-                     (center_x - planet_radius - padding, center_y + planet_radius + padding, "ne"),  # Bottom-left
-                     (center_x + planet_radius + padding, center_y - planet_radius - padding, "sw"),  # Top-right
-                     (center_x + planet_radius + padding, center_y + planet_radius + padding, "nw")   # Bottom-right
-                     ]
-        least_overlap = -1
-        least_overlap_position = default_position
-        for position in positions:
-            overlap = self.collision_with_other_body_names(text_width, text_height, position)
-            if overlap > 0:
-                if least_overlap > -1:
-                    if least_overlap > overlap:
-                        least_overlap_position = position
-                        least_overlap = overlap
-                else:
-                    least_overlap = overlap
-                    least_overlap_position = position
-            else:
-                if self.text_is_within_canvas(text_width, text_height, position):
-                    return position
-        return least_overlap_position
-
-    def collision_with_other_body_names(self, width, height, position):
-        x_new, y_new, a = position
-        if a=="w":      x = x_new;                  y = y_new - round(height/2)
-        elif a=="e":    x = x_new - width;          y = y_new - round(height/2)
-        elif a=="s":    x = x_new - round(width/2); y = y_new - height
-        elif a=="n":    x = x_new - round(width/2); y = y_new
-        elif a=="se":   x = x_new - width;          y = y_new - height
-        elif a=="ne":   x = x_new - width;          y = y_new
-        elif a=="sw":   x = x_new;                  y = y_new - height
-        elif a=="nw":   x = x_new;                  y = y_new
-        max_overlap = 0
-        for body_name, body_id, text_id in self.body_ids:
-            text_bbox = self.widgets.canvas.bbox(text_id)
-            body_bbox = self.widgets.canvas.bbox(body_id)
-            if text_bbox == None or body_bbox == None:
-                return 0
-            overlap = max(self.overlap_with_bbox(x, y, width, height, text_bbox), self.overlap_with_bbox(x, y, width, height, body_bbox))
-            if overlap > max_overlap:
-                max_overlap = overlap
-        return max_overlap
-
-    def overlap_with_bbox(self, x1, y1, width, height, other_bbox):
-        x2, y2, x2w, y2h = other_bbox
-        Cx1 = x1 <= x2 <= x1 + width
-        Cx2 = x2 <= x1 <= x2w
-        Cy1 = y1 <= y2 <= y1 + height
-        Cy2 = y2 <= y1 <= y2h
-        if Cx1 and Cy1:
-            return min((x2 - (x1+width)), x2w-x2, width) * min((y2 - (y1 + height)), y2h, height)
-        elif Cx1 and Cy2:
-            return min((x2 - (x1+width)), x2w-x2, width) * min((y1 - y2h), y2h, height)
-        elif Cx2 and Cy1:
-            return min((x1 - x2w), x2w-x2, width) * min((y2 - (y1 + height)), y2h, height)
-        elif Cx2 and Cy2:
-            return min((x1 - x2w), x2w-x2, width) * min((y1 - y2h), y2h, height)
-        else:
-            return 0
-
-    def text_is_within_canvas(self, width, height, position):
-        x, y, anchor = position
-        if "w" in anchor:    # To the right of the position
-            if not (x+width<=self.widgets.canvas.winfo_width() and round(y-height/2) >=0 and round(y+height/2) <= self.widgets.canvas.winfo_height()):
-                return False
-        if "e" in anchor:    # To the left of the position
-            if not (x-width>=0 and round(y-height/2) >=0 and round(y+height/2) <= self.widgets.canvas.winfo_height()):
-                return False
-        if "s" in anchor:    # On top the position
-            if not (y-height>=0 and round(x-width/2) >=0 and round(x+width/2) <= self.widgets.canvas.winfo_width()):
-                return False
-        if "n" in anchor:    # Below the position
-            if not (y+height<=self.widgets.canvas.winfo_height() and round(x-width/2) >=0 and round(x+width/2) <= self.widgets.canvas.winfo_width()):
-                return False
-        return True
-
-    def draw_planetary_rings(self, x, y, planet_radius, ring_value):
-        ring_size = planet_radius * 1.5
-        ring_thickness = max(round(planet_radius/30*ring_value), 1)
-        if ring_value == 3:
-            ring_thickness *= 2
-            #ring_colors = ['white', 'lightgray', 'darkgray', 'gray']
-            ring_colors = ['#1a1917', '#5c5344', '#232220', '#4e473f']
-            for i, color in enumerate(ring_colors):
-                self.draw_one_ring(x, y, planet_radius, ring_size+i*ring_thickness, color, ring_thickness)
-        else:
-            self.draw_one_ring(x, y, planet_radius, ring_size, "lightgray", ring_thickness)
-
-    def draw_one_ring(self, x, y, planet_radius, ring_size, ring_color, ring_thickness):
-        self.widgets.canvas.create_oval(x - ring_size,
-                                        y - round(planet_radius/2),
-                                        x + ring_size,
-                                        y + round(planet_radius/2),
-                                        outline=ring_color,
-                                        width=ring_thickness,
-                                        tags='planet_rings')
 
     def update_following_object(self, object_name="Sun"):
         if object_name!="Spaceship":
@@ -395,43 +185,17 @@ class App(ctk.CTk):
         new_height = event.height
         self.widgets.canvas.configure(width=new_width, height=new_height)
         self.center_point_x, self.center_point_y = round(new_width/2), round(new_height/2)
-        self.update_standard_draw_scale(new_width, new_height)
-        self.update_distance_scale()
-        self.draw_celestial_bodies()
-
-    def modify_zoom_level(self, event):
-        if event.state & 0x1:  # Check if Shift key is pressed
-            if event.delta > 0:
-                scale_factor = 0.1  # Increase scale by 0.1 for fine-grained zoom in
-            else:
-                scale_factor = -0.1  # Decrease scale by 0.1 for fine-grained zoom out
-        elif event.state & 0x4: # Check if Ctrl key is pressed
-            if event.delta > 0:
-                scale_factor = self.modified_scale  # Increase scale by 0.1 for fine-grained zoom in
-            else:
-                scale_factor = -self.modified_scale/2  # Decrease scale by 0.1 for fine-grained zoom out
-        else:
-            if event.delta > 0:
-                scale_factor = 1.0  # Increase scale by 1 for regular zoom in
-            else:
-                scale_factor = -1.0  # Decrease scale by 1 for regular zoom out
-        self.modified_scale = round(self.modified_scale + scale_factor, 1)
-        if self.modified_scale < 0.1:
-            self.modified_scale = 0.1
-        self.update_distance_scale()
-        self.draw_celestial_bodies()
-
-    def update_distance_scale(self):
-        self.distance_scale = self.standard_draw_scale * self.modified_scale
-        self.update_scale_text()
+        update_standard_draw_scale(self, new_width, new_height)
+        update_distance_scale(self)
+        draw_celestial_bodies(self)
 
     def handle_canvas_double_click(self, event):
         clicked_body_ids = self.widgets.canvas.find_overlapping(event.x, event.y, event.x, event.y)
         for object_name, body_id, text_id in self.body_ids:
             if body_id in clicked_body_ids or text_id in clicked_body_ids:
                 self.update_following_object(object_name)
-                self.update_standard_draw_scale(self.widgets.canvas.winfo_width(), self.widgets.canvas.winfo_height())
-                self.draw_celestial_bodies()
+                update_standard_draw_scale(self, self.widgets.canvas.winfo_width(), self.widgets.canvas.winfo_height())
+                draw_celestial_bodies(self)
                 break
 
     def mouse_hover(self, event):
@@ -456,8 +220,12 @@ class App(ctk.CTk):
             time_step = datetime.timedelta(days=number)
         if auto_play or event.keysym == "Right":
             self.date += time_step
+            if self.current_iteration < self.iterations:
+                self.current_iteration += 1
         elif event.keysym == "Left":
             self.date -= time_step
+            if self.current_iteration > 0:
+                self.current_iteration -= 1
         self.timestamp = self.convert_to_julian_date()
         self.update_time_text()
         last_positions = self.save_positions()
@@ -465,25 +233,31 @@ class App(ctk.CTk):
         position_changes = self.calculate_change_vectors(last_positions)
         self.update_orbits(position_changes)
         if self.spaceship!=None:
-            #self.spaceship.update_status(1, 1, 0, 0, COAST_TIME_STEP, self.celestial_bodies)
             if self.following == self.spaceship:
                 self.origin = self.position_following(True)
-        self.draw_celestial_bodies()
+        draw_celestial_bodies(self)
 
-    def simulate_spaceship_trajectory(self, start_time, input_vector):
-        for i, iteration in enumerate(input_vector):
-            throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step = iteration
-            simulation_time = start_time + datetime.timedelta(minutes=i*time_step)
-            self.timestamp = self.convert_to_julian_date(simulation_time)
-            self.update_all_bodies_positions()
-            self.spaceship.update_status(throttle=throttle,
-                                         thrust_vector_x=thrust_vector_x,
-                                         thrust_vector_y=thrust_vector_y,
-                                         thrust_vector_z=thrust_vector_z,
-                                         time_step=time_step,
-                                         bodies=self.celestial_bodies)
-        self.timestamp = self.convert_to_julian_date(start_time)
-        self.update_all_bodies_positions()
+    def modify_zoom_level(self, event):
+        if event.state & 0x1:  # Check if Shift key is pressed
+            if event.delta > 0:
+                scale_factor = 0.1  # Increase scale by 0.1 for fine-grained zoom in
+            else:
+                scale_factor = -0.1  # Decrease scale by 0.1 for fine-grained zoom out
+        elif event.state & 0x4: # Check if Ctrl key is pressed
+            if event.delta > 0:
+                scale_factor = self.modified_scale  # Increase scale by 0.1 for fine-grained zoom in
+            else:
+                scale_factor = -self.modified_scale/2  # Decrease scale by 0.1 for fine-grained zoom out
+        else:
+            if event.delta > 0:
+                scale_factor = 1.0  # Increase scale by 1 for regular zoom in
+            else:
+                scale_factor = -1.0  # Decrease scale by 1 for regular zoom out
+        self.modified_scale = round(self.modified_scale + scale_factor, 1)
+        if self.modified_scale < 0.1:
+            self.modified_scale = 0.1
+        update_distance_scale(self)
+        draw_celestial_bodies(self)
 
     def change_time_step(self, event):
         if event.keysym=="Up":
@@ -573,20 +347,6 @@ class App(ctk.CTk):
                                                 body_obj.orbit_points[i][1] + change_vector["y"],
                                                 body_obj.orbit_points[i][2] + change_vector["z"] if DRAW_3D else 0)
 
-    def draw_orbits(self):
-        for body_name, body in self.celestial_bodies.items():
-            for i in range(len(body.orbit_points)-1):
-                x1, y1 = body.orbit_points[i][0]-self.origin.x, body.orbit_points[i][1]-self.origin.y
-                x2, y2 = body.orbit_points[i+1][0]-self.origin.x, body.orbit_points[i+1][1]-self.origin.y
-                if DRAW_3D:
-                    z1 = body.orbit_points[i][2]-self.origin.z
-                    z2 = body.orbit_points[i+1][2]-self.origin.z
-                    (x1, y1, z1) = (x1, y1, z1) @ self.rotation_matrix
-                    (x2, y2, z2) = (x2, y2, z2) @ self.rotation_matrix
-                x1, y1 = self.transform_coordinates_to_pixels(x1, y1)
-                x2, y2 = self.transform_coordinates_to_pixels(x2, y2)
-                self.widgets.canvas.create_line(x1, y1, x2, y2, fill=ORBIT_FILL_COLOR, dash=(2, 2), tags='orbit')
-
     def update_all_bodies_positions(self):
         self.origin = self.position_following(self.following==self.spaceship)
         for body_name, body_obj in self.celestial_bodies.items():
@@ -606,7 +366,7 @@ class App(ctk.CTk):
             self.max_distance_depth = max_z - min_z
 
     def convert_to_julian_date(self, date=None, seconds=None, minutes=None,
-                               hours=None, days=None, months=None, years=None):
+                                hours=None, days=None, months=None, years=None):
         if date is None:
             if self.date is None:
                 self.date = datetime.datetime.now()
@@ -642,5 +402,5 @@ class Widgets(ctk.CTkFrame):
 if __name__ == "__main__":
     root = App()
     root.mainloop()
-    root.close_ephemeris_data()
+    close_ephemeris_data(root)
     root.destroy
