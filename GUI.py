@@ -9,7 +9,7 @@ from creators import create_bodies, create_test_spaceship
 from ephemeris_data import check_ephemeris_file_update, load_ephemeris_data, close_ephemeris_data
 from creators import *
 from graphics import draw_celestial_bodies, update_standard_draw_scale, update_distance_scale
-from orbital_functions import simulate_spaceship_trajectory
+from orbital_functions import simulate_spaceship_trajectory, calculate_gravitational_acceleration_from_body, calculate_total_gravitational_acceleration
 
 class App(ctk.CTk):
     def __init__(self):
@@ -33,16 +33,14 @@ class App(ctk.CTk):
         self.load_orbits()
 
         self.spaceship = create_test_spaceship()
-        self.spaceship.velocity_y = 300
+        self.spaceship.velocity_x = 20
+        self.spaceship.velocity_y = 10
         self.iterations = 100
         self.current_iteration = 0
         test_input_vector = []
         for i in range(self.iterations):
             test_input_vector.append((0, 1, 0, 0, 1))
         #simulate_spaceship_trajectory(self, self.date, test_input_vector)
-        #self.spaceship.x = 0
-        #self.spaceship.y = 0
-        #self.spaceship.z = 0
         self.update_all_bodies_positions()
         self.update_boundaries()
 
@@ -57,6 +55,14 @@ class App(ctk.CTk):
         draw_celestial_bodies(self)
         self.auto_play = False
         self.update_auto_play_text()
+        #self.spaceship.attach_to_planet(self.celestial_bodies["Earth"], 1000)
+        self.spaceship.x = self.celestial_bodies["Earth"].x - self.celestial_bodies["Earth"].radius + 20
+        self.spaceship.y = self.celestial_bodies["Earth"].y
+        self.spaceship.z = self.celestial_bodies["Earth"].z
+        gx, gy, gz = calculate_gravitational_acceleration_from_body(self.spaceship, self.celestial_bodies["Earth"])
+        print(gx, gy, gz)
+        gtx, gty, gtz = calculate_total_gravitational_acceleration(self.spaceship, self.celestial_bodies)
+        print(gtx, gty, gtz)
 
     def configure_app_window(self):
         self.title("SOLARA: Solar System Simulator")

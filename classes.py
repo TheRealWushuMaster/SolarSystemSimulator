@@ -101,7 +101,8 @@ class Spaceship():
         self.size = size
         self.takeoff_jettisoned = takeoff_jettisoned
         self.reset_values()
-
+        self.gravitational_parameter = G * self.total_mass
+    
     def reset_values(self):
         self.positions = []
         self.velocities = []
@@ -161,6 +162,7 @@ class Spaceship():
                 self.takeoff_propulsion_system.structure_mass = 0
                 self.takeoff_propulsion_system.fuel_mass = 0
         self.total_mass = self.structure_mass + self.payload_mass + self.fuel_mass + self.takeoff_propulsion_system.structure_mass + self.takeoff_propulsion_system.fuel_mass
+        self.gravitational_parameter = G * self.total_mass
 
     def update_acceleration(self, thrust_x, thrust_y, thrust_z,
                             gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z):
@@ -177,6 +179,22 @@ class Spaceship():
         self.x += self.velocity_x * time_step
         self.y += self.velocity_y * time_step
         self.z += self.velocity_z * time_step
+
+    def attach_to_planet(self, planet, altitude):
+        # Calculate the distance from the planet's center to the spaceship's initial position
+        distance_to_planet_center = planet.radius + altitude
+
+        # Calculate the velocity needed for a circular orbit at the specified altitude
+        orbital_velocity = sqrt(G * planet.mass / distance_to_planet_center / 1000)
+
+        # Calculate the velocity components in the x, y, and z directions
+        velocity_x = 0  # Assuming the spaceship starts at periapsis with no radial velocity
+        velocity_y = orbital_velocity  # Velocity aligned with the positive y-direction (counter-clockwise orbit)
+        velocity_z = 0  # Assuming the spaceship starts at periapsis with no out-of-plane velocity
+
+        # Set the initial position and velocity of the spaceship
+        self.x, self.y, self.z = planet.x + altitude, planet.y, planet.z
+        self.velocity_x, self.velocity_y, self.velocity_z = velocity_x, velocity_y, velocity_z
 
 class PropulsionSystem():
     def __init__(self, max_thrust=0, specific_impulse=0, exhaust_velocity=0, structure_mass=0, fuel_mass=0):
