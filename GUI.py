@@ -32,16 +32,17 @@ class App(ctk.CTk):
         self.update_following_object()
         self.load_orbits()
 
+        self.spaceship = create_test_spaceship()
+        self.spaceship.velocity_y = 300
         self.iterations = 100
         self.current_iteration = 0
-        self.spaceship = create_test_spaceship()
         test_input_vector = []
         for i in range(self.iterations):
             test_input_vector.append((0, 1, 0, 0, 1))
-        simulate_spaceship_trajectory(self, self.date, test_input_vector)
-        self.spaceship.x = 0
-        self.spaceship.y = 0
-        self.spaceship.z = 0
+        #simulate_spaceship_trajectory(self, self.date, test_input_vector)
+        #self.spaceship.x = 0
+        #self.spaceship.y = 0
+        #self.spaceship.z = 0
         self.update_all_bodies_positions()
         self.update_boundaries()
 
@@ -235,6 +236,10 @@ class App(ctk.CTk):
         if self.spaceship!=None:
             if self.following == self.spaceship:
                 self.origin = self.position_following(True)
+            self.spaceship.update_status(0, 0, 1, 0, 60, self.celestial_bodies)
+            velocity_module = sqrt(self.spaceship.velocity_x**2 + self.spaceship.velocity_y**2 + self.spaceship.velocity_z**2)
+            #print(f"Velocity module = {velocity_module}")
+            #print(f"Fuel mass = {self.spaceship.fuel_mass}")
         draw_celestial_bodies(self)
 
     def modify_zoom_level(self, event):
@@ -347,13 +352,23 @@ class App(ctk.CTk):
                                                 body_obj.orbit_points[i][1] + change_vector["y"],
                                                 body_obj.orbit_points[i][2] + change_vector["z"] if DRAW_3D else 0)
 
-    def update_all_bodies_positions(self):
+    def update_all_bodies_positions(self, simulating=False):
         self.origin = self.position_following(self.following==self.spaceship)
         for body_name, body_obj in self.celestial_bodies.items():
             position = self.body_position(body_obj.location_path)
             self.celestial_bodies[body_name].x = position[0]
             self.celestial_bodies[body_name].y = position[1]
             self.celestial_bodies[body_name].z = position[2]
+        if self.spaceship is not None and not simulating:
+            # if self.current_iteration < 0:
+            #     x, y, z = self.spaceship.positions[0]
+            # elif self.current_iteration < self.iterations:
+            #     x, y, z = self.spaceship.positions[self.current_iteration]
+            # else:
+            #     x, y, z = self.spaceship.positions[self.iterations-1]
+            # self.spaceship.x, self.spaceship.y, self.spaceship.z = x, y, z
+            #self.spaceship.update_status(0, 0, 0, 0, 1, self.celestial_bodies)
+            pass
 
     def update_boundaries(self):
         max_x = max(abs(body.x-self.origin.x) for body in self.celestial_bodies.values())

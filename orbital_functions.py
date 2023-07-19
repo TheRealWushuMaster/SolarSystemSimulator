@@ -17,14 +17,14 @@ def calculate_total_gravitational_acceleration(spaceship, bodies):
     return total_x, total_y, total_z
 
 def calculate_gravitational_acceleration_from_body(spaceship, body):
-    x = body.x - spaceship.x
-    y = body.y - spaceship.y
-    z = body.z - spaceship.z
+    x = (body.x - spaceship.x) * 1000   # Convert distances in km to meters
+    y = (body.y - spaceship.y) * 1000
+    z = (body.z - spaceship.z) * 1000
     distance_squared = x**2 + y**2 + z**2
     distance = sqrt(distance_squared)
-    if distance<=body.radius:
+    if distance<=body.radius*1000:
         return 0, 0, 0
-    gravitational_acceleration = G * body.mass / distance_squared
+    gravitational_acceleration = G * body.mass / distance_squared / 1000    # Convert units from m/s^2 to km/s^2
     acceleration_x = gravitational_acceleration * x / distance
     acceleration_y = gravitational_acceleration * y / distance
     acceleration_z = gravitational_acceleration * z / distance
@@ -35,7 +35,7 @@ def simulate_spaceship_trajectory(self, start_time, input_vector):
         throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step = iteration
         simulation_time = start_time + datetime.timedelta(minutes=i*time_step)
         self.timestamp = self.convert_to_julian_date(simulation_time)
-        self.update_all_bodies_positions()
+        self.update_all_bodies_positions(simulating=True)
         self.spaceship.update_status(throttle=throttle,
                                      thrust_vector_x=thrust_vector_x,
                                      thrust_vector_y=thrust_vector_y,
@@ -43,4 +43,4 @@ def simulate_spaceship_trajectory(self, start_time, input_vector):
                                      time_step=time_step,
                                      bodies=self.celestial_bodies)
     self.timestamp = self.convert_to_julian_date(start_time)
-    self.update_all_bodies_positions()
+    self.spaceship.x, self.spaceship.y, self.spaceship.z = self.spaceship.positions[0]

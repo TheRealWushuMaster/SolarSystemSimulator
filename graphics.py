@@ -20,7 +20,7 @@ def draw_celestial_bodies(self):
         x, y = transform_coordinates_to_pixels(self, x, y)
         body_id = self.widgets.canvas.create_oval(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color), tags='object')
         if radius > 3 and body.rings > 0:
-            self.draw_planetary_rings(x, y, radius, body.rings)
+            draw_planetary_rings(self, x, y, radius, body.rings)
             self.widgets.canvas.create_arc(x-radius, y-radius, x + radius, y + radius, fill=body.color, outline=get_lighter_color(body.color), start=0, extent=180, tags='object')
             self.widgets.canvas.create_arc(x-(radius-1), y-(radius-1), x + (radius-1), y + (radius-1), fill=body.color, outline=body.color, start=0, extent=180, tags='object')
         text_id = place_name(self, x, y, radius, body.name)
@@ -46,13 +46,7 @@ def transform_coordinates_to_pixels(self, x, y):
     return x_p, y_p
 
 def draw_spaceship(self):
-    if self.current_iteration < 0:
-        x, y, z = self.spaceship.positions[0]
-    elif self.current_iteration < self.iterations:
-        x, y, z = self.spaceship.positions[self.current_iteration]
-    else:
-        x, y, z = self.spaceship.positions[self.iterations-1]
-    #x, y, z = self.spaceship.x - self.origin.x, self.spaceship.y - self.origin.y, self.spaceship.z - self.origin.z
+    x, y, z = self.spaceship.x - self.origin.x, self.spaceship.y - self.origin.y, self.spaceship.z - self.origin.z
     if DRAW_3D:
         (x, y, z) = (x, y, z) @ self.rotation_matrix
     x, y = transform_coordinates_to_pixels(self, x, y)
@@ -163,9 +157,9 @@ def draw_planetary_rings(self, x, y, planet_radius, ring_value):
         #ring_colors = ['white', 'lightgray', 'darkgray', 'gray']
         ring_colors = ['#1a1917', '#5c5344', '#232220', '#4e473f']
         for i, color in enumerate(ring_colors):
-            self.draw_one_ring(x, y, planet_radius, ring_size+i*ring_thickness, color, ring_thickness)
+            draw_one_ring(self, x, y, planet_radius, ring_size+i*ring_thickness, color, ring_thickness)
     else:
-        self.draw_one_ring(x, y, planet_radius, ring_size, "lightgray", ring_thickness)
+        draw_one_ring(self, x, y, planet_radius, ring_size, "lightgray", ring_thickness)
 
 def draw_one_ring(self, x, y, planet_radius, ring_size, ring_color, ring_thickness):
     self.widgets.canvas.create_oval(x - ring_size,

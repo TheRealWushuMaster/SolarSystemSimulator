@@ -114,7 +114,10 @@ class Spaceship():
 
     def update_status(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step, bodies):
         if self.takeoff_jettisoned:
-            thrust_module = self.main_propulsion_system.calculate_thrust(throttle)
+            if self.fuel_mass > 0:
+                thrust_module = self.main_propulsion_system.calculate_thrust(throttle)
+            else:
+                thrust_module = 0
         else:
             thrust_module = self.takeoff_propulsion_system.calculate_thrust(throttle)
         thrust_x = thrust_vector_x * thrust_module
@@ -185,11 +188,11 @@ class PropulsionSystem():
 
     def calculate_thrust(self, throttle):
         if throttle >= 1.0:
-            return self.max_thrust
+            return self.max_thrust / 1000
         elif throttle <= 0.0:
             return 0
         else:
-            return self.max_thrust * throttle
+            return self.max_thrust / 1000 * throttle    # Convert to distance in km
 
     def calculate_fuel_consumption(self, thrust_module, time_step):
-        return thrust_module / self.exhaust_velocity / self.specific_impulse * time_step
+        return thrust_module / (self.exhaust_velocity / 1000) / self.specific_impulse * time_step     # Convert exhaust velocity to km/s
