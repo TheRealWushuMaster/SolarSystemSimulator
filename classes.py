@@ -1,4 +1,4 @@
-from math import sqrt
+from math import sqrt, sin, cos
 from settings import G
 from orbital_functions import calculate_total_gravitational_acceleration
 
@@ -180,20 +180,32 @@ class Spaceship():
         self.y += self.velocity_y * time_step
         self.z += self.velocity_z * time_step
 
-    def attach_to_planet(self, planet, altitude):
+    def attach_to_planet(self, planet, altitude, planet_velocity, angle=0):
         # Calculate the distance from the planet's center to the spaceship's initial position
-        distance_to_planet_center = planet.radius + altitude
+        distance_to_planet_center = planet.radius + altitude    # In kms
 
+        # Calculate the initial position of the spaceship on the circular orbit
+        initial_x = planet.x + distance_to_planet_center * cos(angle)
+        initial_y = planet.y + distance_to_planet_center * sin(angle)
+        initial_z = planet.z
+        
         # Calculate the velocity needed for a circular orbit at the specified altitude
-        orbital_velocity = sqrt(G * planet.mass / distance_to_planet_center / 1000)
+        orbital_velocity_module = sqrt(G * planet.mass / (distance_to_planet_center*1000))/1000
+        orbital_velocity_x = orbital_velocity_module * sin(angle)
+        orbital_velocity_y = orbital_velocity_module * cos(angle)
+        print(f"Orbital velocity={orbital_velocity_module}")
+        print(orbital_velocity_x, orbital_velocity_y)
 
         # Calculate the velocity components in the x, y, and z directions
-        velocity_x = 0  # Assuming the spaceship starts at periapsis with no radial velocity
-        velocity_y = orbital_velocity  # Velocity aligned with the positive y-direction (counter-clockwise orbit)
-        velocity_z = 0  # Assuming the spaceship starts at periapsis with no out-of-plane velocity
+        velocity_x = planet_velocity[0] + orbital_velocity_x
+        velocity_y = planet_velocity[1] + orbital_velocity_y # + orbital_velocity_y
+        velocity_z = planet_velocity[2]
+
+        # Calculate the planet's orbital velocity (considering its distance from the Sun and orbital period)
+        #planet_orbital_speed = planet.average_orbital_speed #sqrt(G * sun_mass / planet_position.length())
 
         # Set the initial position and velocity of the spaceship
-        self.x, self.y, self.z = planet.x + altitude, planet.y, planet.z
+        self.x, self.y, self.z = initial_x, initial_y, initial_z
         self.velocity_x, self.velocity_y, self.velocity_z = velocity_x, velocity_y, velocity_z
 
 class PropulsionSystem():
