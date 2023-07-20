@@ -9,7 +9,6 @@ from creators import create_bodies, create_test_spaceship
 from ephemeris_data import check_ephemeris_file_update, load_ephemeris_data, close_ephemeris_data
 from creators import *
 from graphics import draw_celestial_bodies, update_standard_draw_scale, update_distance_scale
-from orbital_functions import simulate_spaceship_trajectory, calculate_gravitational_acceleration_from_body, calculate_total_gravitational_acceleration, vector_module
 
 class App(ctk.CTk):
     def __init__(self):
@@ -22,7 +21,7 @@ class App(ctk.CTk):
 
         self.celestial_bodies = create_bodies(star_data=Star_data,
                                               planet_data=Planet_data,
-                                              moon_data=None)
+                                              moon_data=Moon_data)
 
         self.date = datetime.datetime.now()
         self.timestamp = self.convert_to_julian_date()
@@ -55,19 +54,7 @@ class App(ctk.CTk):
         draw_celestial_bodies(self)
         self.auto_play = False
         self.update_auto_play_text()
-        planet_velocity = self.body_velocity(self.celestial_bodies["Earth"].location_path)
-        print(planet_velocity)
-        print(vector_module(planet_velocity[0], planet_velocity[1], planet_velocity[2]))
-        self.spaceship.attach_to_planet(self.celestial_bodies["Earth"], 6000, planet_velocity, 0)
-        print(self.spaceship.velocity_x, self.spaceship.velocity_y, self.spaceship.velocity_z)
-        print(vector_module(self.spaceship.velocity_x, self.spaceship.velocity_y, self.spaceship.velocity_z))
-        #self.spaceship.x = self.celestial_bodies["Earth"].x - self.celestial_bodies["Earth"].radius + 20
-        #self.spaceship.y = self.celestial_bodies["Earth"].y
-        #self.spaceship.z = self.celestial_bodies["Earth"].z
-        # gx, gy, gz = calculate_gravitational_acceleration_from_body(self.spaceship, self.celestial_bodies["Earth"])
-        # print(gx, gy, gz)
-        # gtx, gty, gtz = calculate_total_gravitational_acceleration(self.spaceship, self.celestial_bodies)
-        # print(gtx, gty, gtz)
+        self.orbit_on_planet("Earth", 5000, 45)
 
     def configure_app_window(self):
         self.title("SOLARA: Solar System Simulator")
@@ -234,23 +221,20 @@ class App(ctk.CTk):
             self.date += time_step
             if self.current_iteration < self.iterations:
                 self.current_iteration += 1
+            if self.spaceship!=None:
+                self.spaceship.step_forward(0, 0, 1, 0, 60, self.celestial_bodies)
         elif event.keysym == "Left":
             self.date -= time_step
             if self.current_iteration > 0:
                 self.current_iteration -= 1
+            if self.spaceship!=None:
+                self.spaceship.step_backwards()
         self.timestamp = self.convert_to_julian_date()
         self.update_time_text()
         last_positions = self.save_positions()
         self.update_all_bodies_positions()
         position_changes = self.calculate_change_vectors(last_positions)
         self.update_orbits(position_changes)
-        if self.spaceship!=None:
-            if self.following == self.spaceship:
-                self.origin = self.position_following(True)
-            self.spaceship.update_status(0, 0, 1, 0, 60, self.celestial_bodies)
-            velocity_module = sqrt(self.spaceship.velocity_x**2 + self.spaceship.velocity_y**2 + self.spaceship.velocity_z**2)
-            #print(f"Velocity module = {velocity_module}")
-            #print(f"Fuel mass = {self.spaceship.fuel_mass}")
         draw_celestial_bodies(self)
 
     def modify_zoom_level(self, event):
@@ -334,7 +318,12 @@ class App(ctk.CTk):
             index2 = body_location_path[index + 1]
             step_pos, step_vel = self.kernel[index1, index2].compute_and_differentiate(timestamp)
             velocity += step_vel
-        return velocity/100000#/3600
+        return velocity/86400   # Default is km/day, convert to km/s
+
+    def orbit_on_planet(self, planet_name, altitude, angle_deg):
+        planet = self.celestial_bodies[planet_name]
+        planet_velocity = self.body_velocity(planet.location_path)
+        self.spaceship.attach_to_planet(planet.x, planet.y, planet.z, planet_velocity, planet.mass, planet.radius, altitude, angle_deg)
 
     def print_all_bodies_positions(self):
         for body_name, body_obj in self.celestial_bodies.items():

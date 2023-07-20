@@ -1,4 +1,4 @@
-from math import sqrt, sin, cos
+from math import sqrt, sin, cos, radians
 from settings import G
 from orbital_functions import calculate_total_gravitational_acceleration
 
@@ -112,6 +112,8 @@ class Spaceship():
         self.fuel_masses = []
         self.takeoff_fuel_masses = []
         self.time_steps = []
+        self.jettisons = []
+        self.index = 0
 
     def update_status(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step, bodies):
         if self.takeoff_jettisoned:
@@ -126,24 +128,46 @@ class Spaceship():
         thrust_z = thrust_vector_z * thrust_module
         gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z = calculate_total_gravitational_acceleration(self, bodies)
         self.update_acceleration(thrust_x, thrust_y, thrust_z,
-                                 gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z)
+                                gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z)
         self.update_mass(thrust_module, time_step)
         self.update_velocity(time_step)
         self.update_position(time_step)
         self.store_values(throttle=throttle,
-                          thrust_vector_x=thrust_vector_x,
-                          thrust_vector_y=thrust_vector_y,
-                          thrust_vector_z=thrust_vector_z,
-                          time_step=time_step)
+                        thrust_vector_x=thrust_vector_x,
+                        thrust_vector_y=thrust_vector_y,
+                        thrust_vector_z=thrust_vector_z,
+                        time_step=time_step)
+        self.index += 1
+
+    def step_forward(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step, bodies):
+        if self.index == len(self.positions):
+            self.update_status(throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step, bodies)
+        else:
+            self.index += 1
+            self.load_from_index()
+
+    def step_backwards(self):
+        if self.index > 0:
+            self.index -= 1
+        self.load_from_index()
+
+    def load_from_index(self):
+        self.x = self.positions[self.index-1][0]; self.y = self.positions[self.index-1][1]; self.z = self.positions[self.index-1][2]
+        self.velocity_x = self.velocities[self.index-1][0]; self.velocity_y = self.velocities[self.index-1][1]; self.velocity_z = self.velocities[self.index-1][2]
+        self.acceleration_x = self.accelerations[self.index-1][0]; self.acceleration_y = self.accelerations[self.index-1][1]; self.acceleration_z = self.accelerations[self.index-1][2]
+        self.fuel_mass = self.fuel_masses[self.index-1]
+        self.takeoff_propulsion_system.fuel_mass = self.takeoff_fuel_masses[self.index-1]
+        self.takeoff_jettisoned = self.jettisons[self.index-1]
 
     def store_values(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step):
         self.positions.append((self.x, self.y, self.z))
-        # self.velocities.append((self.velocity_x, self.velocity_y, self.velocity_z))
-        # self.accelerations.append((self.acceleration_x, self.acceleration_y, self.acceleration_z))
-        # self.thrust_vectors.append((thrust_vector_x, thrust_vector_y, thrust_vector_z))
-        # self.throttles.append(throttle)
-        # self.fuel_masses.append(self.fuel_mass)
-        # self.takeoff_fuel_masses.append(self.takeoff_propulsion_system.fuel_mass)
+        self.velocities.append((self.velocity_x, self.velocity_y, self.velocity_z))
+        self.accelerations.append((self.acceleration_x, self.acceleration_y, self.acceleration_z))
+        self.thrust_vectors.append((thrust_vector_x, thrust_vector_y, thrust_vector_z))
+        self.throttles.append(throttle)
+        self.fuel_masses.append(self.fuel_mass)
+        self.takeoff_fuel_masses.append(self.takeoff_propulsion_system.fuel_mass)
+        self.jettisons.append(self.takeoff_jettisoned)
         self.time_steps.append(time_step)
 
     def update_mass(self, thrust_module, time_step):
@@ -180,31 +204,20 @@ class Spaceship():
         self.y += self.velocity_y * time_step
         self.z += self.velocity_z * time_step
 
-    def attach_to_planet(self, planet, altitude, planet_velocity, angle=0):
-        # Calculate the distance from the planet's center to the spaceship's initial position
-        distance_to_planet_center = planet.radius + altitude    # In kms
-
-        # Calculate the initial position of the spaceship on the circular orbit
-        initial_x = planet.x + distance_to_planet_center * cos(angle)
-        initial_y = planet.y + distance_to_planet_center * sin(angle)
-        initial_z = planet.z
-        
-        # Calculate the velocity needed for a circular orbit at the specified altitude
-        orbital_velocity_module = sqrt(G * planet.mass / (distance_to_planet_center*1000))/1000
-        orbital_velocity_x = orbital_velocity_module * sin(angle)
-        orbital_velocity_y = orbital_velocity_module * cos(angle)
-        print(f"Orbital velocity={orbital_velocity_module}")
-        print(orbital_velocity_x, orbital_velocity_y)
-
-        # Calculate the velocity components in the x, y, and z directions
+    def attach_to_planet(self, planet_x, planet_y, planet_z, planet_velocity,
+                         planet_mass, planet_radius, altitude, angle_deg=0):
+        distance_to_planet_center = planet_radius + altitude    # In kms
+        angle_radians = radians(angle_deg)
+        initial_x = planet_x + distance_to_planet_center * sin(angle_radians)
+        initial_y = planet_y - distance_to_planet_center * cos(angle_radians)
+        initial_z = planet_z
+        # Velocity for a circular orbit at the specified altitude
+        orbital_velocity_module = sqrt(G * planet_mass / (distance_to_planet_center*1000))/1000
+        orbital_velocity_x = orbital_velocity_module * cos(angle_radians)
+        orbital_velocity_y = orbital_velocity_module * sin(angle_radians)
         velocity_x = planet_velocity[0] + orbital_velocity_x
-        velocity_y = planet_velocity[1] + orbital_velocity_y # + orbital_velocity_y
+        velocity_y = planet_velocity[1] + orbital_velocity_y
         velocity_z = planet_velocity[2]
-
-        # Calculate the planet's orbital velocity (considering its distance from the Sun and orbital period)
-        #planet_orbital_speed = planet.average_orbital_speed #sqrt(G * sun_mass / planet_position.length())
-
-        # Set the initial position and velocity of the spaceship
         self.x, self.y, self.z = initial_x, initial_y, initial_z
         self.velocity_x, self.velocity_y, self.velocity_z = velocity_x, velocity_y, velocity_z
 

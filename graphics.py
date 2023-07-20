@@ -45,6 +45,11 @@ def transform_coordinates_to_pixels(self, x, y):
     y_p = round(y * self.distance_scale + self.center_point_y)
     return x_p, y_p
 
+def transform_pixels_to_coordinates(self, x, y):
+    x_c = x / self.distance_scale
+    y_c = y / self.distance_scale
+    return x_c, y_c
+
 def draw_spaceship(self):
     x, y, z = self.spaceship.x - self.origin.x, self.spaceship.y - self.origin.y, self.spaceship.z - self.origin.z
     if DRAW_3D:
