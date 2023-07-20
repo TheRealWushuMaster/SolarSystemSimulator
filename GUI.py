@@ -211,18 +211,22 @@ class App(ctk.CTk):
         number = list(simulation_steps.items())[self.simulation_step_index][1]
         if self.simulation_step_index <= 1:
             time_step = datetime.timedelta(seconds=number)
+            spaceship_time_step = number
         elif self.simulation_step_index <= 4:
             time_step = datetime.timedelta(minutes=number)
+            spaceship_time_step = number*60
         elif self.simulation_step_index <= 6:
             time_step = datetime.timedelta(hours=number)
+            spaceship_time_step = number*3600
         else:
             time_step = datetime.timedelta(days=number)
+            spaceship_time_step = number*86400
         if auto_play or event.keysym == "Right":
             self.date += time_step
             if self.current_iteration < self.iterations:
                 self.current_iteration += 1
             if self.spaceship!=None:
-                self.spaceship.step_forward(0, 0, 1, 0, 60, self.celestial_bodies)
+                self.spaceship.step_forward(0, 0, 1, 0, spaceship_time_step, self.celestial_bodies)
         elif event.keysym == "Left":
             self.date -= time_step
             if self.current_iteration > 0:
