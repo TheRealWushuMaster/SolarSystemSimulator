@@ -21,6 +21,7 @@ Use the up and down keys to cycle through the available time steps:
 * Weeks
 * Months
 * Years
+
 Use the left or right keys to adjust the time backwards or forwards, respectively, with the selected time step.
 
 The date range is roughly between the years 1550 and 2650 (from the *de440t.bsp* ephemeris).
