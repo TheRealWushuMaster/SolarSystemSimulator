@@ -30,7 +30,8 @@ Use the spacebar to start or stop the automatic time advancement using the selec
 ### 6. Reset view and scale
 Use the *escape* key to reset the view to its default state (*scale=1.0* viewed from above)
 ## HUD information
-* **Current date**: shows the current time and the adjustments applied
+* **Current date**: shows the current date and time and time step
+* **Auto run**: shows the state of the auto simulation
 * **Scale**: shows the scale being applied
 * **Position**: calculates a rough estimate of distances between the cursor position and the focused object, both in *km* and *AU*; it assumes a flat projection
 * **Following**: shows the focused object
