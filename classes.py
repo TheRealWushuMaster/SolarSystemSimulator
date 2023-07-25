@@ -205,14 +205,15 @@ class Spaceship():
         self.z += self.velocity_z * time_step
 
     def attach_to_planet(self, planet_x, planet_y, planet_z, planet_velocity,
-                         planet_mass, planet_radius, altitude, angle_deg=0):
+                         planet_mass, planet_radius, altitude, angle_deg=0,
+                         eccentricity=0):
         distance_to_planet_center = planet_radius + altitude    # In kms
         angle_radians = radians(angle_deg)
         initial_x = planet_x + distance_to_planet_center * sin(angle_radians)
         initial_y = planet_y - distance_to_planet_center * cos(angle_radians)
         initial_z = planet_z
-        # Velocity for a circular orbit at the specified altitude
-        orbital_velocity_module = sqrt(G * planet_mass / (distance_to_planet_center*1000))/1000
+        semi_major_axis = distance_to_planet_center / sqrt(1 - eccentricity**2)
+        orbital_velocity_module = sqrt(G * planet_mass * ((2 / distance_to_planet_center/1000) - (1 / semi_major_axis/1000))) / 1000
         orbital_velocity_x = orbital_velocity_module * cos(angle_radians)
         orbital_velocity_y = orbital_velocity_module * sin(angle_radians)
         velocity_x = planet_velocity[0] + orbital_velocity_x

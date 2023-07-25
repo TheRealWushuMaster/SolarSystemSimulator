@@ -32,14 +32,11 @@ class App(ctk.CTk):
         self.load_orbits()
 
         self.spaceship = create_test_spaceship()
-        #self.spaceship.velocity_x = 20
-        #self.spaceship.velocity_y = 10
         self.iterations = 100
         self.current_iteration = 0
         test_input_vector = []
         for i in range(self.iterations):
             test_input_vector.append((0, 1, 0, 0, 1))
-        #simulate_spaceship_trajectory(self, self.date, test_input_vector)
         self.update_all_bodies_positions()
         self.update_boundaries()
 
@@ -54,7 +51,7 @@ class App(ctk.CTk):
         draw_celestial_bodies(self)
         self.auto_play = False
         self.update_auto_play_text()
-        self.orbit_on_planet("Earth", 5000, 45)
+        self.orbit_on_planet("Earth", 5000)
 
     def configure_app_window(self):
         self.title("SOLARA: Solar System Simulator")
@@ -171,11 +168,17 @@ class App(ctk.CTk):
                     line = f"    - {property_print_name}: {property_value} {units}"
                     property_lines.append(line)
             object_properties_text = "Information:\n" + "\n".join(property_lines)
+            self.widgets.canvas.itemconfigure(self.following_object, text=following_text)
+            self.widgets.canvas.itemconfigure(self.following_object_info, text=object_properties_text)
         else:
             self.following = self.spaceship
             self.origin = classes.Point(self.spaceship.x, self.spaceship.y, self.spaceship.z)
-            following_text = "Following: SPACESHIP"
-            object_properties_text = "Test spaceship"
+            self.update_spaceship_text()
+
+    def update_spaceship_text(self):
+        following_text = "Following: SPACESHIP"
+        spaceship_speed_module = sqrt(self.spaceship.velocity_x**2 + self.spaceship.velocity_y**2 + self.spaceship.velocity_z**2)
+        object_properties_text = f"Velocity x = {format_with_thousands_separator(self.spaceship.velocity_x, 2)} km/s\nVelocity y = {format_with_thousands_separator(self.spaceship.velocity_y, 2)} km/s\nVelocity z = {format_with_thousands_separator(self.spaceship.velocity_z, 2)} km/s\nVelocity module = {format_with_thousands_separator(spaceship_speed_module, 2)} km/s"
         self.widgets.canvas.itemconfigure(self.following_object, text=following_text)
         self.widgets.canvas.itemconfigure(self.following_object_info, text=object_properties_text)
 
@@ -235,6 +238,8 @@ class App(ctk.CTk):
                 self.spaceship.step_backwards()
         self.timestamp = self.convert_to_julian_date()
         self.update_time_text()
+        if self.following == self.spaceship:
+            self.update_spaceship_text()
         last_positions = self.save_positions()
         self.update_all_bodies_positions()
         position_changes = self.calculate_change_vectors(last_positions)
@@ -324,10 +329,12 @@ class App(ctk.CTk):
             velocity += step_vel
         return velocity/86400   # Default is km/day, convert to km/s
 
-    def orbit_on_planet(self, planet_name, altitude, angle_deg):
+    def orbit_on_planet(self, planet_name, altitude, angle_deg=0, eccentricity=0):
         planet = self.celestial_bodies[planet_name]
         planet_velocity = self.body_velocity(planet.location_path)
-        self.spaceship.attach_to_planet(planet.x, planet.y, planet.z, planet_velocity, planet.mass, planet.radius, altitude, angle_deg)
+        self.spaceship.attach_to_planet(planet.x, planet.y, planet.z, planet_velocity,
+                                        planet.mass, planet.radius, altitude, angle_deg,
+                                        eccentricity)
 
     def print_all_bodies_positions(self):
         for body_name, body_obj in self.celestial_bodies.items():

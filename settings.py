@@ -9,11 +9,22 @@ DEFAULT_BACKGROUND = "black"
 # JPL body information
 EPHEMERIS_FILE = "de440t.bsp"
 EPHEMERIS_URL = "https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de440t.bsp"
-CHARON_FILE = "plu043.bsp"
-CHARON_FILE_URL = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/plu043.bsp"
 MAX_JULIAN_DATE = 2688976.5
 MIN_JULIAN_DATE = 2287184.5
+MARS_FILE = "mar097.bsp"
+MARS_FILE_URL = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/mar097.bsp"
+JUPITER_FILE = "jup365.bsp"
+JUPITER_FILE_URL = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/jup365.bsp"
+SATURN_FILE = "sat441l.bsp"
+SATURN_FILE_URL = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/sat441l.bsp"
+URANUS_FILE = "ura111.bsp"
+URANUS_FILE_URL = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/ura111.bsp"
+NEPTUNE_FILE = "nep102.bsp"
+NEPTUNE_FILE_URL = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/nep102.bsp"
+PLUTO_FILE = "plu043.bsp"
+PLUTO_FILE_URL = "https://ssd.jpl.nasa.gov/ftp/eph/satellites/bsp/plu043.bsp"
 ALL_EPHEMERIS_DATA_URL = "https://ssd.jpl.nasa.gov/ephem.html"
+PLANETARY_SATELLITE_EPHEMERIDES_URL = "https://ssd.jpl.nasa.gov/sats/ephem/files.html"
 
 # Units
 AU = 149597870.7   # Astronomical unit in km
