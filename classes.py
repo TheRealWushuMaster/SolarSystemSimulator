@@ -213,7 +213,7 @@ class Spaceship():
         initial_y = planet_y - distance_to_planet_center * cos(angle_radians)
         initial_z = planet_z
         semi_major_axis = distance_to_planet_center / sqrt(1 - eccentricity**2)
-        orbital_velocity_module = sqrt(G * planet_mass * ((2 / distance_to_planet_center/1000) - (1 / semi_major_axis/1000))) / 1000
+        orbital_velocity_module = sqrt(G * planet_mass * ((2 / distance_to_planet_center/1000) - (1 / semi_major_axis/1000))) / 1000    # In km/s
         orbital_velocity_x = orbital_velocity_module * cos(angle_radians)
         orbital_velocity_y = orbital_velocity_module * sin(angle_radians)
         velocity_x = planet_velocity[0] + orbital_velocity_x
@@ -240,3 +240,55 @@ class PropulsionSystem():
 
     def calculate_fuel_consumption(self, thrust_module, time_step):
         return thrust_module / (self.exhaust_velocity / 1000) / self.specific_impulse * time_step     # Convert exhaust velocity to km/s
+
+class FlightPlan():
+    def __init__(self):
+        self.maneuvers = []
+    
+    def add_thrust_off_planet(self, duration, max_thrust, direction):
+        # Add a maneuver to thrust off the planet with the specified parameters
+        # duration: Time duration in seconds
+        # max_thrust: Maximum thrust in Newtons
+        # direction: Tuple representing the normalized thrust vector direction (x, y, z)
+        pass
+
+    def add_coast(self, duration):
+        # Add a maneuver to coast without thrust for the specified duration
+        # duration: Time duration in seconds
+        pass
+
+    def add_thrust_towards_planet(self, duration, max_thrust, planet_position):
+        # Add a maneuver to thrust towards a planet with the specified parameters
+        # duration: Time duration in seconds
+        # max_thrust: Maximum thrust in Newtons
+        # planet_position: Tuple representing the position of the target planet (x, y, z)
+        pass
+
+    def add_thrust_along_vector(self, duration, max_thrust, thrust_vector):
+        # Add a maneuver to thrust along a specific vector with the specified parameters
+        pass
+
+    def add_speed_up(self, duration, acceleration):
+        # Add a maneuver to speed up the spaceship by applying a constant acceleration
+        pass
+
+    def add_slow_down(self, duration, acceleration):
+        # Add a maneuver to slow down the spaceship by applying a constant acceleration
+        pass
+
+    def calculate_thrust_vector(self, maneuver, spaceship_position, spaceship_velocity):
+        # Calculate the thrust vector for a given maneuver based on the current state of the spaceship
+        # maneuver: The maneuver for which to calculate the thrust vector
+        # spaceship_position: Tuple representing the current position of the spaceship (x, y, z)
+        # spaceship_velocity: Tuple representing the current velocity of the spaceship (vx, vy, vz)
+        # Returns: Tuple representing the normalized thrust vector direction (x, y, z)
+        pass
+
+    def execute(self, spaceship):
+        # Execute the flight plan by simulating the trajectory of the spaceship
+        # spaceship: The spaceship object to simulate
+        pass
+
+    def populate_from_instructions(self, instructions):
+        # Populate the flight plan from a list of high-level instructions
+        pass

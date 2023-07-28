@@ -32,11 +32,11 @@ class App(ctk.CTk):
         self.load_orbits()
 
         self.spaceship = create_test_spaceship()
-        self.iterations = 100
-        self.current_iteration = 0
-        test_input_vector = []
-        for i in range(self.iterations):
-            test_input_vector.append((0, 1, 0, 0, 1))
+        self.test_input_iterations = 50
+        self.test_input_vector = []
+        for i in range(self.test_input_iterations):
+            self.test_input_vector.append((1, 0.7071, 0.7071, 0))
+        self.test_input_index = 0
         self.update_all_bodies_positions()
         self.update_boundaries()
 
@@ -50,6 +50,7 @@ class App(ctk.CTk):
         self.yaw_angle = 0
         draw_celestial_bodies(self)
         self.auto_play = False
+        self.simulate_trajectory = True
         self.update_auto_play_text()
         self.orbit_on_planet("Earth", 5000)
 
@@ -178,7 +179,11 @@ class App(ctk.CTk):
     def update_spaceship_text(self):
         following_text = "Following: SPACESHIP"
         spaceship_speed_module = sqrt(self.spaceship.velocity_x**2 + self.spaceship.velocity_y**2 + self.spaceship.velocity_z**2)
-        object_properties_text = f"Velocity x = {format_with_thousands_separator(self.spaceship.velocity_x, 2)} km/s\nVelocity y = {format_with_thousands_separator(self.spaceship.velocity_y, 2)} km/s\nVelocity z = {format_with_thousands_separator(self.spaceship.velocity_z, 2)} km/s\nVelocity module = {format_with_thousands_separator(spaceship_speed_module, 2)} km/s"
+        object_properties_text = (f"Velocity x = {format_with_thousands_separator(self.spaceship.velocity_x, 2)} km/s\n"
+                                  f"Velocity y = {format_with_thousands_separator(self.spaceship.velocity_y, 2)} km/s\n"
+                                  f"Velocity z = {format_with_thousands_separator(self.spaceship.velocity_z, 2)} km/s\n"
+                                  f"Velocity module = {format_with_thousands_separator(spaceship_speed_module, 2)} km/s\n"
+                                  f"Fuel mass = {format_with_thousands_separator(self.spaceship.fuel_mass, 2)} kg")
         self.widgets.canvas.itemconfigure(self.following_object, text=following_text)
         self.widgets.canvas.itemconfigure(self.following_object_info, text=object_properties_text)
 
@@ -226,16 +231,29 @@ class App(ctk.CTk):
             spaceship_time_step = number*86400
         if auto_play or event.keysym == "Right":
             self.date += time_step
-            if self.current_iteration < self.iterations:
-                self.current_iteration += 1
+            #if self.current_iteration < self.iterations:
+            #    self.current_iteration += 1
             if self.spaceship!=None:
-                self.spaceship.step_forward(0, 0, 1, 0, spaceship_time_step, self.celestial_bodies)
+                if self.simulate_trajectory and 0 <= self.test_input_index < len(self.test_input_vector):
+                    throttle = self.test_input_vector[self.test_input_index][0]
+                    thrust_vector_x = self.test_input_vector[self.test_input_index][1]
+                    thrust_vector_y = self.test_input_vector[self.test_input_index][2]
+                    thrust_vector_z = self.test_input_vector[self.test_input_index][3]
+                    self.spaceship.step_forward(throttle,
+                                                thrust_vector_x,
+                                                thrust_vector_y,
+                                                thrust_vector_z,
+                                                spaceship_time_step,
+                                                self.celestial_bodies)
+                else:
+                    self.spaceship.step_forward(0, 0, 0, 0, spaceship_time_step, self.celestial_bodies)
+                self.test_input_index += 1
         elif event.keysym == "Left":
             self.date -= time_step
-            if self.current_iteration > 0:
-                self.current_iteration -= 1
             if self.spaceship!=None:
                 self.spaceship.step_backwards()
+                if self.simulate_trajectory:
+                    self.test_input_index -= 1
         self.timestamp = self.convert_to_julian_date()
         self.update_time_text()
         if self.following == self.spaceship:
