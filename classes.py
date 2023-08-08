@@ -292,3 +292,24 @@ class FlightPlan():
     def populate_from_instructions(self, instructions):
         # Populate the flight plan from a list of high-level instructions
         pass
+
+class Simulation():
+    def __init__(self, start_time, end_time, default_time_step=60):
+        self.start = start_time
+        self.end = end_time
+        self.default_time_step = default_time_step
+        self.spaceships = {}
+
+    def add_spaceship(self, spaceship_name, spaceship):
+        if not spaceship_name in self.spaceships.items():
+            self.spaceships[spaceship_name] = spaceship
+
+    def remove_spaceship(self, spaceship_name):
+        if spaceship_name in self.spaceships.items():
+            del self.spaceships[spaceship_name]
+
+    def run(self, time_step):
+        pass
+
+    def plot_trajectory(self):
+        pass
