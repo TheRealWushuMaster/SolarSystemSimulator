@@ -1,5 +1,5 @@
 from math import sqrt, sin, cos, radians
-from settings import G
+from settings import G, simulation_steps, DEFAULT_SMALL_TIME_STEP, DEFAULT_LARGE_TIME_STEP
 from orbital_functions import calculate_total_gravitational_acceleration
 
 class Star():
@@ -294,12 +294,28 @@ class FlightPlan():
         pass
 
 class Simulation():
-    def __init__(self, start_time, end_time, default_time_step=60):
+    def __init__(self, start_time=None, end_time=None,
+                 small_time_step=DEFAULT_SMALL_TIME_STEP, large_time_step=DEFAULT_LARGE_TIME_STEP):
         self.start = start_time
         self.end = end_time
-        self.default_time_step = default_time_step
+        self.small_time_step = small_time_step
+        self.large_time_step = large_time_step
         self.spaceships = {}
+        self.time_steps = []
+        self.step_index = 0
+        self.user_time_step = simulation_steps[0][1]
 
+    def adjust_user_time_step(self, up_or_down):
+        if up_or_down == "up":
+            if self.step_index < len(simulation_steps) - 1:
+                self.step_index += 1
+        elif up_or_down == "down":
+            if self.step_index > 0:
+                self.step_index -= 1
+        else:
+            raise ValueError(f"Argument '{up_or_down}' not recognized. Use 'up' or 'down'.")
+        self.user_time_step = simulation_steps[self.step_index][1]
+    
     def add_spaceship(self, spaceship_name, spaceship):
         if not spaceship_name in self.spaceships.items():
             self.spaceships[spaceship_name] = spaceship
