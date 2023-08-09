@@ -19,13 +19,15 @@ class App(ctk.CTk):
         check_ephemeris_file_update(self)
         load_ephemeris_data(self)
 
+        self.simulation = classes.Simulation(start_time=None,
+                                             end_time=None)
         self.celestial_bodies = create_bodies(star_data=Star_data,
                                               planet_data=Planet_data,
                                               moon_data=Moon_data)
 
-        self.date = datetime.datetime.now()
-        self.timestamp = self.convert_to_julian_date()
-        self.simulation_step_index = 0
+        #self.date = datetime.datetime.now()
+        #self.simulation.timestamp = self.convert_to_julian_date()
+        #self.simulation_step_index = 0
         self.update_time_text()
 
         self.update_following_object()
@@ -49,6 +51,7 @@ class App(ctk.CTk):
         self.roll_angle = 0
         self.yaw_angle = 0
         draw_celestial_bodies(self)
+        
         self.auto_play = False
         self.simulate_trajectory = True
         self.update_auto_play_text()
@@ -132,9 +135,9 @@ class App(ctk.CTk):
         draw_celestial_bodies(self)
 
     def pause_resume_simulation(self, event):
-        if self.auto_play:
-            self.auto_play = False
-            for id in self.after_ids:
+        if self.simulation.auto_play:
+            self.simulation.auto_play = False
+            for id in self.simulation.after_ids:
                 self.after_cancel(id)
         else:
             self.after_ids = []
@@ -254,7 +257,7 @@ class App(ctk.CTk):
                 self.spaceship.step_backwards()
                 if self.simulate_trajectory:
                     self.test_input_index -= 1
-        self.timestamp = self.convert_to_julian_date()
+        self.simulation.timestamp = self.convert_to_julian_date()
         self.update_time_text()
         if self.following == self.spaceship:
             self.update_spaceship_text()
@@ -316,7 +319,7 @@ class App(ctk.CTk):
         self.widgets.canvas.itemconfigure(self.auto_play_text, text=auto_play_text, fill=AUTO_RUN_TEXT_COLOR_RUN if self.auto_play else AUTO_RUN_TEXT_COLOR_STOP)
 
     def update_time_text(self):
-        time_step_name = list(simulation_steps.items())[self.simulation_step_index][0]
+        time_step_name = self.simulation.user_time_step_name #list(simulation_steps.items())[self.simulation_step_index][0]
         show_date = self.date.strftime('%Y-%m-%d %H:%M:%S')
         time_text = f"Current date: {show_date} - Time step = {time_step_name}"
         self.widgets.canvas.itemconfigure(self.time_text, text=time_text)
@@ -423,9 +426,10 @@ class App(ctk.CTk):
     def convert_to_julian_date(self, date=None, seconds=None, minutes=None,
                                 hours=None, days=None, months=None, years=None):
         if date is None:
-            if self.date is None:
-                self.date = datetime.datetime.now()
-            date = self.date
+            #if self.date is None:
+            #    self.date = datetime.datetime.now()
+            #date = self.date
+            date = self.simulation.date
         year = date.year
         month = date.month
         day = date.day

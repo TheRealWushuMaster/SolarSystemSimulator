@@ -1,3 +1,4 @@
+import datetime
 from math import sqrt, sin, cos, radians
 from settings import G, simulation_steps, DEFAULT_SMALL_TIME_STEP, DEFAULT_LARGE_TIME_STEP
 from orbital_functions import calculate_total_gravitational_acceleration
@@ -295,7 +296,8 @@ class FlightPlan():
 
 class Simulation():
     def __init__(self, start_time=None, end_time=None,
-                 small_time_step=DEFAULT_SMALL_TIME_STEP, large_time_step=DEFAULT_LARGE_TIME_STEP):
+                 small_time_step=DEFAULT_SMALL_TIME_STEP, large_time_step=DEFAULT_LARGE_TIME_STEP,
+                 date=None):
         self.start = start_time
         self.end = end_time
         self.small_time_step = small_time_step
@@ -304,6 +306,14 @@ class Simulation():
         self.time_steps = []
         self.step_index = 0
         self.user_time_step = simulation_steps[0][1]
+        self.user_time_step_name = simulation_steps[0][0]
+        self.auto_play = False
+        self.after_ids =[]
+        if date==None:
+            self.date = datetime.datetime.now()
+        else:
+            self.date = date
+        self.timestamp = 0
 
     def adjust_user_time_step(self, up_or_down):
         if up_or_down == "up":
