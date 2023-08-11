@@ -1,5 +1,28 @@
 import locale
 from math import pi
+from settings import MAX_JULIAN_DATE, MIN_JULIAN_DATE
+
+def convert_to_julian_date(date, seconds=None, minutes=None,
+                           hours=None, days=None, months=None, years=None):
+    year = date.year
+    month = date.month
+    day = date.day
+    hour= date.hour
+    minute = date.minute
+    second = date.second
+    if seconds is not None: second += seconds
+    if minutes is not None: minute += minutes
+    if hours is not None: hour += hours
+    if days is not None: day += days
+    if months is not None: month += months
+    if years is not None: year += years
+    julian_date = 367 * year - (7 * (year + ((month + 9) // 12))) // 4 + (275 * month) // 9 + day + 1721013.5
+    julian_date += (hour + (minute / 60) + (second / 3600)) / 24
+    if julian_date < MIN_JULIAN_DATE:
+        julian_date = MIN_JULIAN_DATE
+    elif julian_date > MAX_JULIAN_DATE:
+        julian_date = MAX_JULIAN_DATE
+    return julian_date
 
 def color_index_to_rgb(color_index):
     color_temp = 4600 * ((1 / ((0.92 * color_index) + 1.7)) + (1 / ((0.92 * color_index) + 0.62)))

@@ -25,9 +25,10 @@ def draw_celestial_bodies(self):
             self.widgets.canvas.create_arc(x-(radius-1), y-(radius-1), x + (radius-1), y + (radius-1), fill=body.color, outline=body.color, start=0, extent=180, tags='object')
         text_id = place_name(self, x, y, radius, body.name)
         self.body_ids.append((body.name, body_id, text_id))
-    if self.spaceship!=None:
-            spaceship_id, text_id = draw_spaceship(self)
-            self.body_ids.append(("Spaceship", spaceship_id, text_id))
+    if self.simulation.have_spaceships:
+            for spaceship_name, spaceship in self.simulation.spaceships.items():
+                spaceship_id, text_id = draw_spaceship(self, spaceship_name, spaceship)
+                self.body_ids.append((spaceship_name, spaceship_id, text_id))
     bring_hud_to_foreground(self)
 
 def bring_hud_to_foreground(self):
@@ -50,14 +51,14 @@ def transform_pixels_to_coordinates(self, x, y):
     y_c = y / self.distance_scale
     return x_c, y_c
 
-def draw_spaceship(self):
-    x, y, z = self.spaceship.x - self.origin.x, self.spaceship.y - self.origin.y, self.spaceship.z - self.origin.z
+def draw_spaceship(self, spaceship_name, spaceship):
+    x, y, z = spaceship.x - self.origin.x, spaceship.y - self.origin.y, spaceship.z - self.origin.z
     if DRAW_3D:
         (x, y, z) = (x, y, z) @ self.rotation_matrix
     x, y = transform_coordinates_to_pixels(self, x, y)
-    radius = max(round(self.spaceship.size * self.distance_scale), 1)
+    radius = max(round(spaceship.size * self.distance_scale), 1)
     spaceship_id = self.widgets.canvas.create_oval(x-radius, y-radius, x + radius, y + radius, fill=SPACESHIP_COLOR, outline=SPACESHIP_BORDER, tags='spaceship')
-    text_id = place_name(self, x, y, radius, "Spaceship")
+    text_id = place_name(self, x, y, radius, spaceship_name)
     return spaceship_id, text_id
 
 def text_object_size(text, font, font_size):

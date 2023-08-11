@@ -1,6 +1,3 @@
-from math import pi, cos
-from functions import calculate_additional_properties
-
 # Window settings
 WINDOW_SIZE = (800, 500)
 WINDOW_MIN_SIZE = (700, 400)
@@ -39,21 +36,6 @@ JULIAN_DATE_15_MINUTES = JULIAN_DATE_30_MINUTES/2
 JULIAN_DATE_MINUTE = JULIAN_DATE_15_MINUTES/15
 JULIAN_DATE_10_SECONDS = JULIAN_DATE_MINUTE/6
 JULIAN_DATE_SECOND = JULIAN_DATE_10_SECONDS/10
-# simulation_steps = {"Seconds": 1, "10 seconds": 10, "Minutes": 1,
-#                     "15 minutes": 15, "30 minutes": 30, "Hours": 1,
-#                     "12 hours": 12, "Days": 1, "Weeks": 7,
-#                     "Months": 30, "Years": 365}
-simulation_steps = [("1 second", 1),        # 1 second
-                    ("10 seconds", 10),     # 10 seconds
-                    ("1 minute", 60),       # 1 minute
-                    ("15 minutes", 900),    # 15 minutes (60 * 15)
-                    ("30 minutes", 1800),   # 30 minutes (60 * 30)
-                    ("1 hour", 3600),       # 1 hour (60 * 60)
-                    ("12 hours", 43200),    # 12 hours (60 * 60 * 12)
-                    ("1 day", 86400),       # 1 day (60 * 60 * 24)
-                    ("1 week", 604800),     # 1 week (60 * 60 * 24 * 7)
-                    ("1 month", 2592000),   # 1 month (60 * 60 * 24 * 30)
-                    ("1 year", 31536000)]   # 1 year (60 * 60 * 24 * 365)
 
 # Graphical information
 DRAW_3D = True
@@ -87,7 +69,17 @@ SPACESHIP_COLOR = "gray"
 SPACESHIP_BORDER = "white"
 DEFAULT_SMALL_TIME_STEP = 15 # Seconds
 DEFAULT_LARGE_TIME_STEP = 5*60  # Minutes translated to seconds
-
+simulation_steps = [("1 second", 1),        # 1 second
+                    ("10 seconds", 10),     # 10 seconds
+                    ("1 minute", 60),       # 1 minute
+                    ("15 minutes", 900),    # 15 minutes (60 * 15)
+                    ("30 minutes", 1800),   # 30 minutes (60 * 30)
+                    ("1 hour", 3600),       # 1 hour (60 * 60)
+                    ("12 hours", 43200),    # 12 hours (60 * 60 * 12)
+                    ("1 day", 86400),       # 1 day (60 * 60 * 24)
+                    ("1 week", 604800),     # 1 week (60 * 60 * 24 * 7)
+                    ("1 month", 2592000),   # 1 month (60 * 60 * 24 * 30)
+                    ("1 year", 31536000)]   # 1 year (60 * 60 * 24 * 365)
 
 # =========================
 # Celestial body properties
@@ -114,7 +106,6 @@ Star_data = {
         "ORBITAL_PERIOD": 0             # days
     }
 }
-calculate_additional_properties(Star_data, color=True)
 
 Planet_data = {
     "Mercury": {
@@ -307,7 +298,6 @@ Planet_data = {
         "ORBITAL_PERIOD": 90560
     },
 }
-calculate_additional_properties(Planet_data)
 
 Moon_data = {
     "Moon": {
@@ -332,7 +322,6 @@ Moon_data = {
         "ORBITAL_PERIOD": 27.321661
     }
 }
-calculate_additional_properties(Moon_data)
 
 # Info on other bodies for future representation
 Other_bodies = {

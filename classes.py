@@ -2,6 +2,7 @@ import datetime
 from math import sqrt, sin, cos, radians
 from settings import G, simulation_steps, DEFAULT_SMALL_TIME_STEP, DEFAULT_LARGE_TIME_STEP
 from orbital_functions import calculate_total_gravitational_acceleration
+from functions import convert_to_julian_date
 
 class Star():
     def __init__(self, NAME, X, Y, Z, RADIUS, MASS, TEMPERATURE, STAR_TYPE, LUMINOSITY,
@@ -81,7 +82,7 @@ class Spaceship():
                  radiation_reflectivity, surface_area,
                  x=0, y=0, z=0, velocity_x=0, velocity_y=0, velocity_z=0,
                  acceleration_x=0, acceleration_y=0, acceleration_z=0,
-                 size=0.1, takeoff_jettisoned=False):
+                 size=0.1, takeoff_jettisoned=False, flight_plan=None):
         self.x = x
         self.y = y
         self.z = z
@@ -95,12 +96,19 @@ class Spaceship():
         self.structure_mass = structure_mass
         self.fuel_mass = fuel_mass
         self.payload_mass = payload_mass
-        self.main_propulsion_system = main_propulsion_system
-        self.takeoff_propulsion_system = takeoff_propulsion_system
+        if isinstance(main_propulsion_system, PropulsionSystem):
+            self.main_propulsion_system = main_propulsion_system
+        else:
+            raise ValueError("Must provide a valid `PropulsionSystem` object.")
+        if isinstance(takeoff_propulsion_system, PropulsionSystem):
+            self.takeoff_propulsion_system = takeoff_propulsion_system
+        else:
+            self.takeoff_propulsion_system = PropulsionSystem()
         self.radiation_reflectivity = radiation_reflectivity
         self.surface_area = surface_area
         self.size = size
         self.takeoff_jettisoned = takeoff_jettisoned
+        self.flight_plan = flight_plan
         self.reset_values()
         self.gravitational_parameter = G * self.total_mass
     
@@ -240,7 +248,8 @@ class PropulsionSystem():
             return self.max_thrust / 1000 * throttle    # Convert to distance in km
 
     def calculate_fuel_consumption(self, thrust_module, time_step):
-        return thrust_module / (self.exhaust_velocity / 1000) / self.specific_impulse * time_step     # Convert exhaust velocity to km/s
+        # Need to verify this. It has units of kg if the exhaust velocity is in m/s.       
+        return thrust_module / self.exhaust_velocity * time_step
 
 class FlightPlan():
     def __init__(self):
@@ -298,37 +307,78 @@ class Simulation():
     def __init__(self, start_time=None, end_time=None,
                  small_time_step=DEFAULT_SMALL_TIME_STEP, large_time_step=DEFAULT_LARGE_TIME_STEP,
                  date=None):
-        self.start = start_time
-        self.end = end_time
+        self.start_time = start_time
+        self.end_time = end_time
         self.small_time_step = small_time_step
         self.large_time_step = large_time_step
         self.spaceships = {}
         self.time_steps = []
-        self.step_index = 0
+        self.user_time_step_index = 0
         self.user_time_step = simulation_steps[0][1]
         self.user_time_step_name = simulation_steps[0][0]
         self.auto_play = False
-        self.after_ids =[]
+        self.frame_updates =[]
         if date==None:
             self.date = datetime.datetime.now()
         else:
             self.date = date
-        self.timestamp = 0
+        self.timestamp = convert_to_julian_date(self.date)
+
+    def step_date(self, up_or_down, time_step=None):
+        if time_step==None:
+            time_step = self.user_time_step
+        time_step_delta = datetime.timedelta(seconds=time_step)
+        if up_or_down=="up":
+            if not self.end_time == None:
+                new_date = self.date + time_step_delta
+                if new_date > self.end_time:
+                    self.date = self.end_time
+                else:
+                    self.date = new_date
+            else:
+                self.date += time_step_delta
+        elif up_or_down=="down":
+            if not self.start_time == None:
+                new_date = self.date - time_step_delta
+                if new_date < self.start_time:
+                    self.date = self.start_time
+                else:
+                    self.date = new_date
+            else:
+                self.date -= time_step_delta
+        else:
+            raise ValueError(f"Argument '{up_or_down}' not recognized. Use 'up' or 'down'.")
+        self.timestamp = convert_to_julian_date(self.date)
+        self.update_simulation()
+
+    def update_simulation(self):
+        pass
+
+    def have_spaceships(self):
+        return (len(self.spaceships)>0)
+
+    def return_spaceship_name(self, spaceship):
+        for spaceship_name, spaceship_object in self.spaceships.items():
+            if spaceship_object == spaceship:
+                return spaceship_name
+        return None
 
     def adjust_user_time_step(self, up_or_down):
         if up_or_down == "up":
-            if self.step_index < len(simulation_steps) - 1:
-                self.step_index += 1
+            if self.user_time_step_index < len(simulation_steps) - 1:
+                self.user_time_step_index += 1
         elif up_or_down == "down":
-            if self.step_index > 0:
-                self.step_index -= 1
+            if self.user_time_step_index > 0:
+                self.user_time_step_index -= 1
         else:
             raise ValueError(f"Argument '{up_or_down}' not recognized. Use 'up' or 'down'.")
-        self.user_time_step = simulation_steps[self.step_index][1]
+        self.user_time_step_name = simulation_steps[self.user_time_step_index][0]
+        self.user_time_step = simulation_steps[self.user_time_step_index][1]
     
     def add_spaceship(self, spaceship_name, spaceship):
         if not spaceship_name in self.spaceships.items():
-            self.spaceships[spaceship_name] = spaceship
+            if isinstance(spaceship, Spaceship):
+                self.spaceships[spaceship_name] = spaceship
 
     def remove_spaceship(self, spaceship_name):
         if spaceship_name in self.spaceships.items():
