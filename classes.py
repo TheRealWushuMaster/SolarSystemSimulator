@@ -351,8 +351,12 @@ class Simulation():
         self.timestamp = convert_to_julian_date(self.date)
         self.update_simulation()
 
+    def simulate_spaceships(self):
+        for spaceship_name, spaceship in self.spaceships:
+            pass
+
     def update_simulation(self):
-        pass
+        self.simulate_spaceships()
 
     def have_spaceships(self):
         return (len(self.spaceships)>0)
