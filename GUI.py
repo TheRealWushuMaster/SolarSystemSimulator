@@ -1,13 +1,17 @@
-from settings import *
 import customtkinter as ctk
-import classes
-from functions import format_with_thousands_separator, property_name_and_units, calculate_additional_properties
+from settings import *
+from classes import Simulation, Point, Spaceship
+from functions import format_with_thousands_separator, property_name_and_units, \
+    calculate_additional_properties
 from math import sqrt
 from numpy import array, eye, sin, cos
 from creators import create_bodies, create_test_spaceship
-from ephemeris_data import check_ephemeris_file_update, load_ephemeris_data, close_ephemeris_data
-from creators import *
-from graphics import draw_celestial_bodies, update_standard_draw_scale, update_distance_scale
+from ephemeris_data import check_ephemeris_file_update, load_ephemeris_data, \
+    close_ephemeris_data
+from creators import create_bodies, create_test_spaceship
+from graphics import draw_celestial_bodies, update_standard_draw_scale, \
+    update_distance_scale
+
 
 class App(ctk.CTk):
     def __init__(self):
@@ -18,8 +22,8 @@ class App(ctk.CTk):
         check_ephemeris_file_update(self)
         load_ephemeris_data(self)
 
-        self.simulation = classes.Simulation(start_time=None,
-                                             end_time=None)
+        self.simulation = Simulation(start_time=None,
+                                     end_time=None)
         calculate_additional_properties(Star_data, color=True)
         calculate_additional_properties(Planet_data)
         calculate_additional_properties(Moon_data)
@@ -33,11 +37,6 @@ class App(ctk.CTk):
 
         spaceship = create_test_spaceship()
         self.simulation.add_spaceship(spaceship_name="Test Spaceship", spaceship=spaceship)
-        #self.test_input_iterations = 50
-        #self.test_input_vector = []
-        #for i in range(self.test_input_iterations):
-        #    self.test_input_vector.append((1, 0.7071, 0.7071, 0))
-        #self.test_input_index = 0
         self.update_all_bodies_positions()
         self.update_boundaries()
 
@@ -115,8 +114,8 @@ class App(ctk.CTk):
                                        [0, 1, 0],
                                        [-sin(self.pitch_angle), 0, cos(self.pitch_angle)]])
         rotation_matrix_roll = array([[1, 0, 0],
-                                     [0, cos(self.roll_angle), -sin(self.roll_angle)],
-                                     [0, sin(self.roll_angle), cos(self.roll_angle)]])
+                                      [0, cos(self.roll_angle), -sin(self.roll_angle)],
+                                      [0, sin(self.roll_angle), cos(self.roll_angle)]])
         self.rotation_matrix = rotation_matrix_yaw @ rotation_matrix_pitch @ rotation_matrix_roll
         self.mouse_drag_starting_point = (event.x, event.y)
         draw_celestial_bodies(self)
@@ -176,7 +175,7 @@ class App(ctk.CTk):
         elif object_name in self.simulation.spaceships:
             spaceship = self.simulation.spaceships[object_name]
             self.following = spaceship
-            self.origin = classes.Point(spaceship.x, spaceship.y, spaceship.z)
+            self.origin = Point(spaceship.x, spaceship.y, spaceship.z)
             self.update_spaceship_text(object_name, spaceship)
 
     def update_spaceship_text(self, spaceship_name, spaceship):
@@ -220,18 +219,9 @@ class App(ctk.CTk):
 
     def handle_time_adjustment(self, event=None, auto_play=False):
         if self.simulation.auto_play or event.keysym == "Right":
-            self.simulation.step_date("up")
+            self.simulation.step_date(self, "up")
         elif event.keysym == "Left":
-            self.simulation.step_date("down")
-        self.update_time_text()
-        if isinstance(self.following, Spaceship):
-            self.update_spaceship_text(spaceship_name=self.simulation.return_spaceship_name(self.following),
-                                       spaceship=self.following)
-        last_positions = self.save_positions()
-        self.update_all_bodies_positions()
-        position_changes = self.calculate_change_vectors(last_positions)
-        self.update_orbits(position_changes)
-        draw_celestial_bodies(self)
+            self.simulation.step_date(self, "down")
 
     def modify_zoom_level(self, event):
         if event.state & 0x1:  # Check if Shift key is pressed
@@ -331,7 +321,7 @@ class App(ctk.CTk):
             position = self.body_position(self.following.location_path)
         else:
             position = self.following.x, self.following.y, self.following.z
-        origin = classes.Point(position[0], position[1], position[2])
+        origin = Point(position[0], position[1], position[2])
         return origin
 
     def load_orbits(self, resolution=ORBIT_RESOLUTION):
@@ -378,6 +368,7 @@ class App(ctk.CTk):
             max_z = max(body.z for body in self.celestial_bodies.values())
             self.max_distance_depth = max_z - min_z
 
+
 class Widgets(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(master=parent)
@@ -385,6 +376,7 @@ class Widgets(ctk.CTkFrame):
         self.canvas = ctk.CTkCanvas(parent, bg="black", width=WINDOW_SIZE[0], height=WINDOW_SIZE[1])
         self.canvas.pack(fill="both", expand=True)
         self.canvas.update_idletasks()
+
 
 def main():
     root = App()

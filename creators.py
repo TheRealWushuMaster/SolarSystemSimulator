@@ -1,4 +1,4 @@
-from classes import Star, Planet, Spaceship, PropulsionSystem
+from classes import Star, Planet, Spaceship, PropulsionSystem, FlightPlan
 
 def create_bodies(star_data=None, planet_data=None, moon_data=None):
     celestial_bodies = {}
@@ -18,6 +18,7 @@ def create_body_of_a_class(body_data, body_class):
     return bodies
 
 def create_test_spaceship():
+    flight_plan = FlightPlan()
     return create_ship_without_takeoff(main_max_thrust=10000,
                                        main_specific_impulse=3000,
                                        main_exhaust_velocity=4500,
@@ -26,11 +27,13 @@ def create_test_spaceship():
                                        ship_payload_mass=2000,
                                        ship_radiation_reflectivity=0.5,
                                        ship_surface_area=0.01,
-                                       ship_size=0.01)
+                                       ship_size=0.01,
+                                       flight_plan=flight_plan)
 
-def create_ship_with_takeoff(takeoff_max_thrust, takeoff_specific_impulse, takeoff_exhaust_velocity, takeoff_structure_mass, takeoff_fuel_mass,
-                             main_max_thrust, main_specific_impulse, main_exhaust_velocity,
-                             ship_structure_mass, ship_fuel_mass, ship_payload_mass, ship_radiation_reflectivity, ship_surface_area, ship_size):
+def create_ship_with_takeoff(takeoff_max_thrust, takeoff_specific_impulse, takeoff_exhaust_velocity,
+                             takeoff_structure_mass, takeoff_fuel_mass, main_max_thrust, main_specific_impulse,
+                             main_exhaust_velocity, ship_structure_mass, ship_fuel_mass, ship_payload_mass,
+                             ship_radiation_reflectivity, ship_surface_area, ship_size, flight_plan):
     main_propulsion_system = PropulsionSystem(max_thrust=main_max_thrust,
                                               specific_impulse=main_specific_impulse,
                                               exhaust_velocity=main_exhaust_velocity)
@@ -47,11 +50,14 @@ def create_ship_with_takeoff(takeoff_max_thrust, takeoff_specific_impulse, takeo
                           radiation_reflectivity=ship_radiation_reflectivity,
                           surface_area=ship_surface_area,
                           size=ship_size,
-                          takeoff_jettisoned=False)
+                          takeoff_jettisoned=False,
+                          flight_plan=flight_plan)
     return spaceship
 
 def create_ship_without_takeoff(main_max_thrust, main_specific_impulse, main_exhaust_velocity,
-                                ship_structure_mass, ship_fuel_mass, ship_payload_mass, ship_radiation_reflectivity, ship_surface_area, ship_size):
+                                ship_structure_mass, ship_fuel_mass, ship_payload_mass,
+                                ship_radiation_reflectivity, ship_surface_area, ship_size,
+                                flight_plan):
     main_propulsion_system = PropulsionSystem(max_thrust=main_max_thrust,
                                               specific_impulse=main_specific_impulse,
                                               exhaust_velocity=main_exhaust_velocity)
@@ -64,5 +70,6 @@ def create_ship_without_takeoff(main_max_thrust, main_specific_impulse, main_exh
                           radiation_reflectivity=ship_radiation_reflectivity,
                           surface_area=ship_surface_area,
                           size=ship_size,
-                          takeoff_jettisoned=True)
+                          takeoff_jettisoned=True,
+                          flight_plan=flight_plan)
     return spaceship

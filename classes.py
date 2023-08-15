@@ -1,8 +1,10 @@
 import datetime
+import copy
 from math import sqrt, sin, cos, radians
 from settings import G, simulation_steps, DEFAULT_SMALL_TIME_STEP, DEFAULT_LARGE_TIME_STEP
-from orbital_functions import calculate_total_gravitational_acceleration
+from orbital_functions import calculate_total_gravitational_acceleration, vector_from_to, return_normalized_vector
 from functions import convert_to_julian_date
+from graphics import draw_celestial_bodies
 
 class Star():
     def __init__(self, NAME, X, Y, Z, RADIUS, MASS, TEMPERATURE, STAR_TYPE, LUMINOSITY,
@@ -111,7 +113,7 @@ class Spaceship():
         if flight_plan is not None:
             self.flight_plan = flight_plan
         else:
-            pass
+            self.flight_plan = FlightPlan()
         self.reset_values()
         self.gravitational_parameter = G * self.total_mass
     
@@ -127,7 +129,8 @@ class Spaceship():
         self.jettisons = []
         self.index = 0
 
-    def update_status(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step, bodies):
+    def update_status(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z,
+                      time_step, bodies, store_values=True):
         if self.takeoff_jettisoned:
             if self.fuel_mass > 0:
                 thrust_module = self.main_propulsion_system.calculate_thrust(throttle)
@@ -144,11 +147,12 @@ class Spaceship():
         self.update_mass(thrust_module, time_step)
         self.update_velocity(time_step)
         self.update_position(time_step)
-        self.store_values(throttle=throttle,
-                        thrust_vector_x=thrust_vector_x,
-                        thrust_vector_y=thrust_vector_y,
-                        thrust_vector_z=thrust_vector_z,
-                        time_step=time_step)
+        if store_values:
+            self.store_values(throttle=throttle,
+                            thrust_vector_x=thrust_vector_x,
+                            thrust_vector_y=thrust_vector_y,
+                            thrust_vector_z=thrust_vector_z,
+                            time_step=time_step)
         self.index += 1
 
     def step_forward(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step, bodies):
@@ -216,6 +220,84 @@ class Spaceship():
         self.y += self.velocity_y * time_step
         self.z += self.velocity_z * time_step
 
+    def execute_instruction(self, bodies, time_step):
+        instruction = self.flight_plan.return_current_instruction()
+        bodies_copy = copy.deepcopy(bodies)
+        if instruction is not None:
+            if instruction["Remainder"] > time_step:
+                instruction["Remainder"] -= time_step
+            elif instruction["Remainder"] == time_step:
+                instruction["Remainder"] = 0
+                if instruction["Action"] == "Thrust":
+                    throttle = instruction["Throttle"]
+                    duration = instruction["Duration"]
+                    if instruction["Direction"] == "To":
+                        body = instruction["Body"]
+                        spaceship_vector = (self.x, self.y, self.z)
+                        body_vector = (bodies_copy[body].x, bodies_copy[body].y, bodies_copy[body].z)
+                        vector_x, vector_y, vector_z = vector_from_to(spaceship_vector, body_vector, normalized=True)
+                        self.update_status(throttle=throttle, thrust_vector_x=vector_x, thrust_vector_y=vector_y,
+                                           thrust_vector_z=vector_z, time_step=duration, bodies=bodies_copy,
+                                           store_values=True)
+                    elif instruction["Direction"] == "Off":
+                        body = instruction["Body"]
+                        spaceship_vector = (self.x, self.y, self.z)
+                        body_vector = (bodies_copy[body].x, bodies_copy[body].y, bodies_copy[body].z)
+                        vector_x, vector_y, vector_z = vector_from_to(body_vector, spaceship_vector, normalized=True)
+                        self.update_status(throttle=throttle, thrust_vector_x=vector_x, thrust_vector_y=vector_y,
+                                           thrust_vector_z=vector_z, time_step=duration, bodies=bodies_copy,
+                                           store_values=True)
+                    elif instruction["Direction"] == "Vector":
+                        vector_x = instruction["Vector"][0]
+                        vector_y = instruction["Vector"][1]
+                        vector_z = instruction["Vector"][2]
+                        vector = return_normalized_vector(vector_x, vector_y, vector_z)
+                        self.update_status(throttle=throttle, thrust_vector_x=vector[0], thrust_vector_y=vector[1],
+                                           thrust_vector_z=vector[2], time_step=duration, bodies=bodies_copy,
+                                           store_values=True)
+                    else:
+                        raise ValueError(f"Instruction direction '{instruction['Direction']}' not recognized.")
+                elif instruction["Action"] == "Coast":
+                    duration = instruction["Duration"]
+                    self.update_status(throttle=0, thrust_vector_x=0, thrust_vector_y=0,
+                                       thrust_vector_z=0, time_step=duration, bodies=bodies_copy,
+                                       store_values=True)
+                elif instruction["Action"] == "Speed up":
+                    throttle = instruction["Throttle"]
+                    duration = instruction["Duration"]
+                    vector_x = self.velocity_x
+                    vector_y = self.velocity_y
+                    vector_z = self.velocity_z
+                    vector = return_normalized_vector(vector_x, vector_y, vector_z)
+                    self.update_status(throttle=throttle, thrust_vector_x=vector[0], thrust_vector_y=vector[1],
+                                           thrust_vector_z=vector[2], time_step=duration, bodies=bodies_copy,
+                                           store_values=True)
+                elif instruction["Action"] == "Slow down":
+                    throttle = instruction["Throttle"]
+                    duration = instruction["Duration"]
+                    vector_x = -self.velocity_x
+                    vector_y = -self.velocity_y
+                    vector_z = -self.velocity_z
+                    vector = return_normalized_vector(vector_x, vector_y, vector_z)
+                    self.update_status(throttle=throttle, thrust_vector_x=vector[0], thrust_vector_y=vector[1],
+                                           thrust_vector_z=vector[2], time_step=duration, bodies=bodies_copy,
+                                           store_values=True)
+                else:
+                    raise ValueError(f"Instruction action '{instruction['Action']}' not recognized.")
+                self.next_instruction()
+            else:
+                remaining_time_step = time_step - instruction["Remainder"]
+                bodies_copy = copy.deepcopy(bodies)
+                instruction["Remainder"] = 0
+                #self.
+                self.next_instruction()
+                # Decide how to apply the `remaining_time_step` on the next instruction
+        else:
+            # The ship will coast indefinitely
+            self.update_status(throttle=0, thrust_vector_x=0, thrust_vector_y=0,
+                               thrust_vector_z=0, time_step=time_step, bodies=bodies_copy,
+                               store_values=True)
+
     def attach_to_planet(self, planet_x, planet_y, planet_z, planet_velocity,
                          planet_mass, planet_radius, altitude, angle_deg=0,
                          eccentricity=0):
@@ -261,47 +343,57 @@ class FlightPlan():
 
     def add_coast(self, duration=DEFAULT_LARGE_TIME_STEP):
         self.instructions.append({"Action": "Coast",
-                                  "Duration": duration})
+                                  "Duration": duration,
+                                  "Remainder": duration})
 
     def add_thrust_towards_body(self, throttle, body, duration=DEFAULT_SMALL_TIME_STEP):
         self.instructions.append({"Action": "Thrust",
                                   "Direction": "To",
                                   "Body": body,
                                   "Throttle": throttle,
-                                  "Duration": duration})
+                                  "Duration": duration,
+                                  "Remainder": duration})
 
     def add_thrust_off_body(self, throttle, body, duration=DEFAULT_SMALL_TIME_STEP):
         self.instructions.append({"Action": "Thrust",
                                   "Direction": "Off",
                                   "Body": body,
                                   "Throttle": throttle,
-                                  "Duration": duration})
+                                  "Duration": duration,
+                                  "Remainder": duration})
 
     def add_thrust_along_vector(self, throttle, vector, duration=DEFAULT_SMALL_TIME_STEP):
         self.instructions.append({"Action": "Thrust",
                                   "Direction": "Vector",
                                   "Vector": vector,
                                   "Throttle": throttle,
-                                  "Duration": duration})
+                                  "Duration": duration,
+                                  "Remainder": duration})
 
     def add_speed_up(self, throttle, duration=DEFAULT_SMALL_TIME_STEP):
         self.instructions.append({"Action": "Speed up",
                                   "Throttle": throttle,
-                                  "Duration": duration})
+                                  "Duration": duration,
+                                  "Remainder": duration})
 
     def add_slow_down(self, throttle, duration=DEFAULT_SMALL_TIME_STEP):
         self.instructions.append({"Action": "Slow down",
                                   "Throttle": throttle,
-                                  "Duration": duration})
+                                  "Duration": duration,
+                                  "Remainder": duration})
 
     def reset_instructions(self):
         self.instructions = []
 
     def return_current_instruction(self):
-        return self.instructions[self.current_step]
+        if self.current_step < len(self.instructions):
+            return self.instructions[self.current_step]
+        else:
+            return None  # `None` must be interpreted as an indefinite "Coast"
 
     def next_instruction(self):
-        self.current_step += 1
+        if self.current_step < len(self.instructions):
+            self.current_step += 1
 
     def populate_from_instructions(self, instructions):
         # Populate the flight plan from a list of high-level instructions
@@ -328,7 +420,7 @@ class Simulation():
             self.date = date
         self.timestamp = convert_to_julian_date(self.date)
 
-    def step_date(self, up_or_down, time_step=None):
+    def step_date(self, app, up_or_down, time_step=None):
         if time_step==None:
             time_step = self.user_time_step
         time_step_delta = datetime.timedelta(seconds=time_step)
@@ -353,26 +445,26 @@ class Simulation():
         else:
             raise ValueError(f"Argument '{up_or_down}' not recognized. Use 'up' or 'down'.")
         self.timestamp = convert_to_julian_date(self.date)
-        self.update_simulation()
+        self.update_simulation(app)
 
-    def simulate_spaceships(self, time_step):
-        for spaceship_name, spaceship in self.spaceships:
-            instruction = spaceship.flight_plan.get_current_instruction()
-            if instruction:
-                if instruction["Duration"] >= time_step:
-                    # Separate current instruction and execute it
-                    # over one or multiple simulation time steps
-                    pass
-                else:
-                    # Execute current instruction in full and execute the next
-                    # instruction/s in the remainder time
-                    pass
-            else:
-                # If no more instructions are left, then "coast"
-                pass
+    def simulate_spaceships(self, app, time_step=None):
+        if time_step is None:
+            time_step = self.user_time_step
+        if self.have_spaceships():
+            for spaceship_name, spaceship in self.spaceships.items():
+                spaceship.execute_instruction(app.celestial_bodies, time_step)
 
-    def update_simulation(self):
-        self.simulate_spaceships()
+    def update_simulation(self, app):
+        self.simulate_spaceships(app=app)
+        app.update_time_text()
+        if isinstance(app.following, Spaceship):
+            app.update_spaceship_text(spaceship_name=app.simulation.return_spaceship_name(app.following),
+                                       spaceship=app.following)
+        last_positions = app.save_positions()
+        app.update_all_bodies_positions()
+        position_changes = app.calculate_change_vectors(last_positions)
+        app.update_orbits(position_changes)
+        draw_celestial_bodies(app)
 
     def have_spaceships(self):
         return (len(self.spaceships)>0)
