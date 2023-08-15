@@ -108,7 +108,10 @@ class Spaceship():
         self.surface_area = surface_area
         self.size = size
         self.takeoff_jettisoned = takeoff_jettisoned
-        self.flight_plan = flight_plan
+        if flight_plan is not None:
+            self.flight_plan = flight_plan
+        else:
+            pass
         self.reset_values()
         self.gravitational_parameter = G * self.total_mass
     
@@ -253,51 +256,52 @@ class PropulsionSystem():
 
 class FlightPlan():
     def __init__(self):
-        self.maneuvers = []
-    
-    def add_thrust_off_planet(self, duration, max_thrust, direction):
-        # Add a maneuver to thrust off the planet with the specified parameters
-        # duration: Time duration in seconds
-        # max_thrust: Maximum thrust in Newtons
-        # direction: Tuple representing the normalized thrust vector direction (x, y, z)
-        pass
+        self.instructions = []
+        self.current_step = 0
 
-    def add_coast(self, duration):
-        # Add a maneuver to coast without thrust for the specified duration
-        # duration: Time duration in seconds
-        pass
+    def add_coast(self, duration=DEFAULT_LARGE_TIME_STEP):
+        self.instructions.append({"Action": "Coast",
+                                  "Duration": duration})
 
-    def add_thrust_towards_planet(self, duration, max_thrust, planet_position):
-        # Add a maneuver to thrust towards a planet with the specified parameters
-        # duration: Time duration in seconds
-        # max_thrust: Maximum thrust in Newtons
-        # planet_position: Tuple representing the position of the target planet (x, y, z)
-        pass
+    def add_thrust_towards_body(self, throttle, body, duration=DEFAULT_SMALL_TIME_STEP):
+        self.instructions.append({"Action": "Thrust",
+                                  "Direction": "To",
+                                  "Body": body,
+                                  "Throttle": throttle,
+                                  "Duration": duration})
 
-    def add_thrust_along_vector(self, duration, max_thrust, thrust_vector):
-        # Add a maneuver to thrust along a specific vector with the specified parameters
-        pass
+    def add_thrust_off_body(self, throttle, body, duration=DEFAULT_SMALL_TIME_STEP):
+        self.instructions.append({"Action": "Thrust",
+                                  "Direction": "Off",
+                                  "Body": body,
+                                  "Throttle": throttle,
+                                  "Duration": duration})
 
-    def add_speed_up(self, duration, acceleration):
-        # Add a maneuver to speed up the spaceship by applying a constant acceleration
-        pass
+    def add_thrust_along_vector(self, throttle, vector, duration=DEFAULT_SMALL_TIME_STEP):
+        self.instructions.append({"Action": "Thrust",
+                                  "Direction": "Vector",
+                                  "Vector": vector,
+                                  "Throttle": throttle,
+                                  "Duration": duration})
 
-    def add_slow_down(self, duration, acceleration):
-        # Add a maneuver to slow down the spaceship by applying a constant acceleration
-        pass
+    def add_speed_up(self, throttle, duration=DEFAULT_SMALL_TIME_STEP):
+        self.instructions.append({"Action": "Speed up",
+                                  "Throttle": throttle,
+                                  "Duration": duration})
 
-    def calculate_thrust_vector(self, maneuver, spaceship_position, spaceship_velocity):
-        # Calculate the thrust vector for a given maneuver based on the current state of the spaceship
-        # maneuver: The maneuver for which to calculate the thrust vector
-        # spaceship_position: Tuple representing the current position of the spaceship (x, y, z)
-        # spaceship_velocity: Tuple representing the current velocity of the spaceship (vx, vy, vz)
-        # Returns: Tuple representing the normalized thrust vector direction (x, y, z)
-        pass
+    def add_slow_down(self, throttle, duration=DEFAULT_SMALL_TIME_STEP):
+        self.instructions.append({"Action": "Slow down",
+                                  "Throttle": throttle,
+                                  "Duration": duration})
 
-    def execute(self, spaceship):
-        # Execute the flight plan by simulating the trajectory of the spaceship
-        # spaceship: The spaceship object to simulate
-        pass
+    def reset_instructions(self):
+        self.instructions = []
+
+    def return_current_instruction(self):
+        return self.instructions[self.current_step]
+
+    def next_instruction(self):
+        self.current_step += 1
 
     def populate_from_instructions(self, instructions):
         # Populate the flight plan from a list of high-level instructions
@@ -351,9 +355,21 @@ class Simulation():
         self.timestamp = convert_to_julian_date(self.date)
         self.update_simulation()
 
-    def simulate_spaceships(self):
+    def simulate_spaceships(self, time_step):
         for spaceship_name, spaceship in self.spaceships:
-            pass
+            instruction = spaceship.flight_plan.get_current_instruction()
+            if instruction:
+                if instruction["Duration"] >= time_step:
+                    # Separate current instruction and execute it
+                    # over one or multiple simulation time steps
+                    pass
+                else:
+                    # Execute current instruction in full and execute the next
+                    # instruction/s in the remainder time
+                    pass
+            else:
+                # If no more instructions are left, then "coast"
+                pass
 
     def update_simulation(self):
         self.simulate_spaceships()
