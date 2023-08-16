@@ -1,5 +1,5 @@
-import datetime
-import copy
+from datetime import datetime, timedelta
+from copy import deepcopy
 from settings import G, simulation_steps, DEFAULT_SMALL_TIME_STEP, DEFAULT_LARGE_TIME_STEP
 from orbital_functions import calculate_total_gravitational_acceleration, vector_from_to, return_normalized_vector
 from functions import convert_to_julian_date
@@ -293,7 +293,7 @@ class Spaceship():
 
     def execute_instruction(self, bodies, time_step):
         instruction = self.flight_plan.return_current_instruction()
-        bodies_copy = copy.deepcopy(bodies)
+        bodies_copy = deepcopy(bodies)
         if instruction is not None:
             if instruction["Remainder"] > time_step:
                 instruction["Remainder"] -= time_step
@@ -463,7 +463,7 @@ class Simulation():
                  small_time_step=DEFAULT_SMALL_TIME_STEP,
                  large_time_step=DEFAULT_LARGE_TIME_STEP):
         if date==None:
-            self.date = datetime.datetime.now()
+            self.date = datetime.now()
         else:
             self.date = date
         if start_time == "now":
@@ -485,7 +485,7 @@ class Simulation():
     def step_date(self, app, up_or_down, time_step=None):
         if time_step==None:
             time_step = self.user_time_step
-        time_step_delta = datetime.timedelta(seconds=time_step)
+        time_step_delta = timedelta(seconds=time_step)
         if up_or_down=="up":
             if self.end_time is not None:
                 new_date = self.date + time_step_delta
