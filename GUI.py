@@ -36,6 +36,10 @@ class App(ctk.CTk):
         self.load_orbits()
 
         spaceship = create_test_spaceship()
+        for i in range(20):
+            spaceship.flight_plan.add_coast(60)
+        for i in range(5):
+            spaceship.flight_plan.add_speed_up(1, 60)
         self.simulation.add_spaceship(spaceship_name="Test Spaceship", spaceship=spaceship)
         self.update_all_bodies_positions()
         self.update_boundaries()
