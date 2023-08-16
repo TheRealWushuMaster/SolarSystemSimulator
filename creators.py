@@ -17,8 +17,9 @@ def create_body_of_a_class(body_data, body_class):
             bodies[name] = body
     return bodies
 
-def create_test_spaceship():
-    flight_plan = FlightPlan()
+def create_test_spaceship(initial_state, flight_plan=None):
+    if flight_plan is None:
+        flight_plan = FlightPlan()
     return create_ship_without_takeoff(main_max_thrust=50000,
                                        main_specific_impulse=3000,
                                        main_exhaust_velocity=4500,
@@ -28,36 +29,38 @@ def create_test_spaceship():
                                        ship_radiation_reflectivity=0.5,
                                        ship_surface_area=0.01,
                                        ship_size=0.01,
-                                       flight_plan=flight_plan)
+                                       flight_plan=flight_plan,
+                                       initial_state=initial_state)
 
 def create_ship_with_takeoff(takeoff_max_thrust, takeoff_specific_impulse, takeoff_exhaust_velocity,
                              takeoff_structure_mass, takeoff_fuel_mass, main_max_thrust, main_specific_impulse,
                              main_exhaust_velocity, ship_structure_mass, ship_fuel_mass, ship_payload_mass,
-                             ship_radiation_reflectivity, ship_surface_area, ship_size, flight_plan):
+                             ship_radiation_reflectivity, ship_surface_area, ship_size, flight_plan, initial_state):
     main_propulsion_system = PropulsionSystem(max_thrust=main_max_thrust,
                                               specific_impulse=main_specific_impulse,
                                               exhaust_velocity=main_exhaust_velocity)
     takeoff_propulsion_system = PropulsionSystem(max_thrust=takeoff_max_thrust,
                                                  specific_impulse=takeoff_specific_impulse,
                                                  exhaust_velocity=takeoff_exhaust_velocity,
-                                                 structure_mass=takeoff_structure_mass,
-                                                 fuel_mass=takeoff_fuel_mass)
+                                                 structure_mass=takeoff_structure_mass)
     spaceship = Spaceship(structure_mass=ship_structure_mass,
                           fuel_mass=ship_fuel_mass,
                           payload_mass=ship_payload_mass,
                           main_propulsion_system=main_propulsion_system,
                           takeoff_propulsion_system=takeoff_propulsion_system,
+                          takeoff_fuel_mass=takeoff_fuel_mass,
                           radiation_reflectivity=ship_radiation_reflectivity,
                           surface_area=ship_surface_area,
                           size=ship_size,
                           takeoff_jettisoned=False,
-                          flight_plan=flight_plan)
+                          flight_plan=flight_plan,
+                          initial_state=initial_state)
     return spaceship
 
 def create_ship_without_takeoff(main_max_thrust, main_specific_impulse, main_exhaust_velocity,
                                 ship_structure_mass, ship_fuel_mass, ship_payload_mass,
                                 ship_radiation_reflectivity, ship_surface_area, ship_size,
-                                flight_plan):
+                                flight_plan, initial_state):
     main_propulsion_system = PropulsionSystem(max_thrust=main_max_thrust,
                                               specific_impulse=main_specific_impulse,
                                               exhaust_velocity=main_exhaust_velocity)
@@ -67,9 +70,11 @@ def create_ship_without_takeoff(main_max_thrust, main_specific_impulse, main_exh
                           payload_mass=ship_payload_mass,
                           main_propulsion_system=main_propulsion_system,
                           takeoff_propulsion_system=takeoff_propulsion_system,
+                          takeoff_fuel_mass=0,
                           radiation_reflectivity=ship_radiation_reflectivity,
                           surface_area=ship_surface_area,
                           size=ship_size,
                           takeoff_jettisoned=True,
-                          flight_plan=flight_plan)
+                          flight_plan=flight_plan,
+                          initial_state=initial_state)
     return spaceship

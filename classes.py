@@ -1,11 +1,10 @@
 import datetime
 import copy
-from math import sqrt, sin, cos, radians
 from settings import G, simulation_steps, DEFAULT_SMALL_TIME_STEP, DEFAULT_LARGE_TIME_STEP
 from orbital_functions import calculate_total_gravitational_acceleration, vector_from_to, return_normalized_vector
 from functions import convert_to_julian_date
 from graphics import draw_celestial_bodies
-
+from math import sin, cos, sqrt, radians
 
 class Star():
     def __init__(self, NAME, X, Y, Z, RADIUS, MASS, TEMPERATURE, STAR_TYPE, LUMINOSITY,
@@ -81,14 +80,16 @@ class Point():
         self.y = y
         self.z = z
 
+    def __str__(self):
+        result = "Point\n"
+        result += f"x = {self.x}, y = {self.y}, z = {self.z}"
+        return result
 
-class Spaceship():
-    def __init__(self, structure_mass, fuel_mass, payload_mass,
-                 main_propulsion_system, takeoff_propulsion_system,
-                 radiation_reflectivity, surface_area,
-                 x=0, y=0, z=0, velocity_x=0, velocity_y=0, velocity_z=0,
-                 acceleration_x=0, acceleration_y=0, acceleration_z=0,
-                 size=0.1, takeoff_jettisoned=False, flight_plan=None):
+
+class SpaceshipState():
+    def __init__(self, x, y, z,
+                 velocity_x, velocity_y, velocity_z,
+                 acceleration_x, acceleration_y, acceleration_z):
         self.x = x
         self.y = y
         self.z = z
@@ -98,11 +99,59 @@ class Spaceship():
         self.acceleration_x = acceleration_x
         self.acceleration_y = acceleration_y
         self.acceleration_z = acceleration_z
-        self.total_mass = structure_mass + fuel_mass + payload_mass + \
-            takeoff_propulsion_system.structure_mass + takeoff_propulsion_system.fuel_mass
-        self.structure_mass = structure_mass
+    
+    def __str__(self):
+        result = "Spaceship state\n"
+        result += f"x = {self.x}, y = {self.y}, z = {self.z}\n"
+        result += f"Velocity x = {self.velocity_x}, Velocity y = {self.velocity_y}, Velocity z = {self.velocity_z}\n"
+        result += f"Accel x = {self.acceleration_x}, Accel y = {self.acceleration_y}, Accel z = {self.acceleration_z}\n"
+        result += "====="
+        return result
+
+def orbit_planet_state(planet_position, planet_velocity,
+                       planet_mass, planet_radius, altitude, angle_deg=0,
+                       eccentricity=0):
+    distance_to_planet_center = planet_radius + altitude    # In kms
+    angle_radians = radians(angle_deg)
+    x = planet_position.x + distance_to_planet_center * sin(angle_radians)
+    y = planet_position.y - distance_to_planet_center * cos(angle_radians)
+    z = planet_position.z
+    semi_major_axis = distance_to_planet_center / sqrt(1 - eccentricity**2)
+    orbital_velocity_module = sqrt(G * planet_mass * ((2 / distance_to_planet_center/1000) - (1 / semi_major_axis/1000))) / 1000    # In km/s
+    orbital_velocity_x = orbital_velocity_module * cos(angle_radians)
+    orbital_velocity_y = orbital_velocity_module * sin(angle_radians)
+    velocity_x = planet_velocity.x + orbital_velocity_x
+    velocity_y = planet_velocity.y + orbital_velocity_y
+    velocity_z = planet_velocity.z
+    state = SpaceshipState(x=x, y=y, z=z,
+                           velocity_x=velocity_x, velocity_y=velocity_y, velocity_z=velocity_z,
+                           acceleration_x=0, acceleration_y=0, acceleration_z=0)
+    return state
+
+
+class Spaceship():
+    def __init__(self, structure_mass, fuel_mass, payload_mass,
+                 main_propulsion_system, takeoff_propulsion_system,
+                 takeoff_fuel_mass, radiation_reflectivity, surface_area,
+                 initial_state, takeoff_jettisoned, size=0.1, flight_plan=None):
+        self.reset_values()
+        self.x = initial_state.x
+        self.y = initial_state.y
+        self.z = initial_state.z
+        self.velocity_x = initial_state.velocity_x
+        self.velocity_y = initial_state.velocity_y
+        self.velocity_z = initial_state.velocity_z
+        self.acceleration_x = initial_state.acceleration_x
+        self.acceleration_y = initial_state.acceleration_y
+        self.acceleration_z = initial_state.acceleration_z
+        self.takeoff_jettisoned = takeoff_jettisoned
         self.fuel_mass = fuel_mass
+        self.takeoff_fuel_mass = takeoff_fuel_mass
+        self.structure_mass = structure_mass
         self.payload_mass = payload_mass
+        self.total_mass = self.calculate_total_mass()
+        self.store_initial_state(initial_state)
+        self.index = 1
         if isinstance(main_propulsion_system, PropulsionSystem):
             self.main_propulsion_system = main_propulsion_system
         else:
@@ -114,13 +163,10 @@ class Spaceship():
         self.radiation_reflectivity = radiation_reflectivity
         self.surface_area = surface_area
         self.size = size
-        self.takeoff_jettisoned = takeoff_jettisoned
         if flight_plan is not None:
             self.flight_plan = flight_plan
         else:
             self.flight_plan = FlightPlan()
-        self.reset_values()
-        #self.gravitational_parameter = G * self.total_mass
     
     def reset_values(self):
         self.positions = []
@@ -168,28 +214,42 @@ class Spaceship():
             self.load_from_index()
 
     def step_backwards(self):
-        if self.index > 0:
+        if self.index > 1:
             self.index -= 1
         self.load_from_index()
 
     def load_from_index(self):
-        self.x = self.positions[self.index-1][0]; self.y = self.positions[self.index-1][1]; self.z = self.positions[self.index-1][2]
-        self.velocity_x = self.velocities[self.index-1][0]; self.velocity_y = self.velocities[self.index-1][1]; self.velocity_z = self.velocities[self.index-1][2]
-        self.acceleration_x = self.accelerations[self.index-1][0]; self.acceleration_y = self.accelerations[self.index-1][1]; self.acceleration_z = self.accelerations[self.index-1][2]
+        self.x = self.positions[self.index-1].x
+        self.y = self.positions[self.index-1].y
+        self.z = self.positions[self.index-1].z
+        self.velocity_x = self.velocities[self.index-1].x
+        self.velocity_y = self.velocities[self.index-1].y
+        self.velocity_z = self.velocities[self.index-1].z
+        self.acceleration_x = self.accelerations[self.index-1].x
+        self.acceleration_y = self.accelerations[self.index-1].y
+        self.acceleration_z = self.accelerations[self.index-1].z
         self.fuel_mass = self.fuel_masses[self.index-1]
-        self.takeoff_propulsion_system.fuel_mass = self.takeoff_fuel_masses[self.index-1]
+        self.takeoff_fuel_mass = self.takeoff_fuel_masses[self.index-1]
         self.takeoff_jettisoned = self.jettisons[self.index-1]
 
     def store_values(self, throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step):
-        self.positions.append((self.x, self.y, self.z))
-        self.velocities.append((self.velocity_x, self.velocity_y, self.velocity_z))
-        self.accelerations.append((self.acceleration_x, self.acceleration_y, self.acceleration_z))
-        self.thrust_vectors.append((thrust_vector_x, thrust_vector_y, thrust_vector_z))
+        self.positions.append(Point(self.x, self.y, self.z))
+        self.velocities.append(Point(self.velocity_x, self.velocity_y, self.velocity_z))
+        self.accelerations.append(Point(self.acceleration_x, self.acceleration_y, self.acceleration_z))
+        self.thrust_vectors.append(Point(thrust_vector_x, thrust_vector_y, thrust_vector_z))
         self.throttles.append(throttle)
         self.fuel_masses.append(self.fuel_mass)
-        self.takeoff_fuel_masses.append(self.takeoff_propulsion_system.fuel_mass)
+        self.takeoff_fuel_masses.append(self.takeoff_fuel_mass)
         self.jettisons.append(self.takeoff_jettisoned)
         self.time_steps.append(time_step)
+
+    def store_initial_state(self, initial_state):
+        self.positions.append(Point(initial_state.x, initial_state.y, initial_state.z))
+        self.velocities.append(Point(initial_state.velocity_x, initial_state.velocity_y, initial_state.velocity_z))
+        self.accelerations.append(Point(initial_state.acceleration_x, initial_state.acceleration_y, initial_state.acceleration_z))
+        self.fuel_masses.append(self.fuel_mass)
+        self.takeoff_fuel_masses.append(self.takeoff_fuel_mass)
+        self.jettisons.append(self.takeoff_jettisoned)
 
     def update_mass(self, thrust_module, time_step):
         if self.takeoff_jettisoned:
@@ -200,14 +260,20 @@ class Spaceship():
                 self.fuel_mass = 0
         else:
             fuel_consumed = self.takeoff_propulsion_system.calculate_fuel_consumption(thrust_module, time_step)
-            if self.takeoff.fuel_mass > fuel_consumed:
+            if self.takeoff_fuel_mass > fuel_consumed:
                 self.takeoff_propulsion_system.fuel_mass -= fuel_consumed
             else:
                 self.takeoff_jettisoned = True
                 self.takeoff_propulsion_system.structure_mass = 0
                 self.takeoff_propulsion_system.fuel_mass = 0
-        self.total_mass = self.structure_mass + self.payload_mass + self.fuel_mass + self.takeoff_propulsion_system.structure_mass + self.takeoff_propulsion_system.fuel_mass
-        self.gravitational_parameter = G * self.total_mass
+        self.total_mass = self.structure_mass + self.payload_mass + self.fuel_mass + self.takeoff_propulsion_system.structure_mass + self.takeoff_fuel_mass
+
+    def calculate_total_mass(self):
+        mass = self.structure_mass + self.payload_mass + self.fuel_mass
+        if self.takeoff_jettisoned:
+            return mass
+        else:
+            return mass + self.takeoff_propulsion_system.structure_mass + self.takeoff_fuel_mass
 
     def update_acceleration(self, thrust_x, thrust_y, thrust_z,
                             gravitational_acceleration_x, gravitational_acceleration_y, gravitational_acceleration_z):
@@ -229,7 +295,6 @@ class Spaceship():
         instruction = self.flight_plan.return_current_instruction()
         bodies_copy = copy.deepcopy(bodies)
         if instruction is not None:
-            print(instruction)
             if instruction["Remainder"] > time_step:
                 instruction["Remainder"] -= time_step
             elif instruction["Remainder"] == time_step:
@@ -307,32 +372,14 @@ class Spaceship():
                                bodies=bodies_copy, store_values=True)
         self.flight_plan.next_instruction()
 
-    def attach_to_planet(self, planet_x, planet_y, planet_z, planet_velocity,
-                         planet_mass, planet_radius, altitude, angle_deg=0,
-                         eccentricity=0):
-        distance_to_planet_center = planet_radius + altitude    # In kms
-        angle_radians = radians(angle_deg)
-        initial_x = planet_x + distance_to_planet_center * sin(angle_radians)
-        initial_y = planet_y - distance_to_planet_center * cos(angle_radians)
-        initial_z = planet_z
-        semi_major_axis = distance_to_planet_center / sqrt(1 - eccentricity**2)
-        orbital_velocity_module = sqrt(G * planet_mass * ((2 / distance_to_planet_center/1000) - (1 / semi_major_axis/1000))) / 1000    # In km/s
-        orbital_velocity_x = orbital_velocity_module * cos(angle_radians)
-        orbital_velocity_y = orbital_velocity_module * sin(angle_radians)
-        velocity_x = planet_velocity[0] + orbital_velocity_x
-        velocity_y = planet_velocity[1] + orbital_velocity_y
-        velocity_z = planet_velocity[2]
-        self.x, self.y, self.z = initial_x, initial_y, initial_z
-        self.velocity_x, self.velocity_y, self.velocity_z = velocity_x, velocity_y, velocity_z
-
 
 class PropulsionSystem():
-    def __init__(self, max_thrust=0, specific_impulse=0, exhaust_velocity=0, structure_mass=0, fuel_mass=0):
+    def __init__(self, max_thrust=0, specific_impulse=0,
+                 exhaust_velocity=0, structure_mass=0):
         self.max_thrust = max_thrust
         self.specific_impulse = specific_impulse
         self.exhaust_velocity = exhaust_velocity
         self.structure_mass = structure_mass
-        self.fuel_mass = fuel_mass
 
     def calculate_thrust(self, throttle):
         if throttle >= 1.0:
@@ -412,10 +459,17 @@ class FlightPlan():
 
 
 class Simulation():
-    def __init__(self, start_time=None, end_time=None,
-                 small_time_step=DEFAULT_SMALL_TIME_STEP, large_time_step=DEFAULT_LARGE_TIME_STEP,
-                 date=None):
-        self.start_time = start_time
+    def __init__(self, date=None, start_time=None, end_time=None,
+                 small_time_step=DEFAULT_SMALL_TIME_STEP,
+                 large_time_step=DEFAULT_LARGE_TIME_STEP):
+        if date==None:
+            self.date = datetime.datetime.now()
+        else:
+            self.date = date
+        if start_time == "now":
+            self.start_time = self.date
+        else:
+            self.start_time = start_time
         self.end_time = end_time
         self.small_time_step = small_time_step
         self.large_time_step = large_time_step
@@ -426,10 +480,6 @@ class Simulation():
         self.user_time_step_name = simulation_steps[0][0]
         self.auto_play = False
         self.frame_updates =[]
-        if date==None:
-            self.date = datetime.datetime.now()
-        else:
-            self.date = date
         self.timestamp = convert_to_julian_date(self.date)
 
     def step_date(self, app, up_or_down, time_step=None):
@@ -437,7 +487,7 @@ class Simulation():
             time_step = self.user_time_step
         time_step_delta = datetime.timedelta(seconds=time_step)
         if up_or_down=="up":
-            if not self.end_time == None:
+            if self.end_time is not None:
                 new_date = self.date + time_step_delta
                 if new_date > self.end_time:
                     self.date = self.end_time
@@ -446,7 +496,7 @@ class Simulation():
             else:
                 self.date += time_step_delta
         elif up_or_down=="down":
-            if not self.start_time == None:
+            if self.start_time is not None:
                 new_date = self.date - time_step_delta
                 if new_date < self.start_time:
                     self.date = self.start_time

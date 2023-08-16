@@ -1,6 +1,6 @@
 import customtkinter as ctk
 from settings import *
-from classes import Simulation, Point, Spaceship
+from classes import Simulation, Point, Spaceship, FlightPlan, orbit_planet_state
 from functions import format_with_thousands_separator, property_name_and_units, \
     calculate_additional_properties
 from math import sqrt
@@ -22,7 +22,7 @@ class App(ctk.CTk):
         check_ephemeris_file_update(self)
         load_ephemeris_data(self)
 
-        self.simulation = Simulation(start_time=None,
+        self.simulation = Simulation(start_time="now",
                                      end_time=None)
         calculate_additional_properties(Star_data, color=True)
         calculate_additional_properties(Planet_data)
@@ -30,19 +30,22 @@ class App(ctk.CTk):
         self.celestial_bodies = create_bodies(star_data=Star_data,
                                               planet_data=Planet_data,
                                               moon_data=Moon_data)
+        self.update_following_object()
+        self.update_all_bodies_positions()
         self.update_time_text()
 
-        self.update_following_object()
         self.load_orbits()
-
-        spaceship = create_test_spaceship()
-        for i in range(20):
-            spaceship.flight_plan.add_coast(60)
-        for i in range(5):
-            spaceship.flight_plan.add_speed_up(1, 60)
-        self.simulation.add_spaceship(spaceship_name="Test Spaceship", spaceship=spaceship)
-        self.update_all_bodies_positions()
         self.update_boundaries()
+
+        initial_state = self.return_orbit_planet_state(planet_name="Earth", altitude=5000)
+        flight_plan = FlightPlan()
+        for i in range(20):
+            flight_plan.add_coast(60)
+        for i in range(5):
+            flight_plan.add_speed_up(1, 60)
+        spaceship = create_test_spaceship(initial_state=initial_state,
+                                          flight_plan=flight_plan)
+        self.simulation.add_spaceship(spaceship_name="Test Spaceship", spaceship=spaceship)
 
         self.modified_scale = 1.0
         self.center_point_x, self.center_point_y = round(self.widgets.canvas.winfo_reqwidth()/2), round(self.widgets.canvas.winfo_reqheight()/2)
@@ -55,9 +58,6 @@ class App(ctk.CTk):
         draw_celestial_bodies(self)
         
         self.update_auto_play_text()
-        self.orbit_on_planet(planet_name="Earth",
-                             altitude=5000,
-                             spaceship_name="Test Spaceship")
 
     def configure_app_window(self):
         self.title("SOLARA: Solar System Simulator")
@@ -305,16 +305,20 @@ class App(ctk.CTk):
             index1 = body_location_path[index]
             index2 = body_location_path[index + 1]
             step_pos, step_vel = self.kernel[index1, index2].compute_and_differentiate(timestamp)
-            velocity += step_vel
-        return velocity/86400   # Default is km/day, convert to km/s
+            velocity += step_vel/86400  # Default is km/day, convert to km/s
+        velocity = Point(x=velocity[0], y=velocity[1], z=velocity[2])
+        return velocity
 
-    def orbit_on_planet(self, planet_name, spaceship_name, altitude, angle_deg=0, eccentricity=0):
+    def return_orbit_planet_state(self, planet_name, altitude, angle_deg=0, eccentricity=0):
         planet = self.celestial_bodies[planet_name]
+        planet_position = Point(x=planet.x, y=planet.y, z=planet.z)
         planet_velocity = self.body_velocity(planet.location_path)
-        if spaceship_name in self.simulation.spaceships:
-            self.simulation.spaceships[spaceship_name].attach_to_planet(planet.x, planet.y, planet.z, planet_velocity,
-                                                                        planet.mass, planet.radius, altitude, angle_deg,
-                                                                        eccentricity)
+        state = orbit_planet_state(planet_position=planet_position,
+                                   planet_velocity=planet_velocity,
+                                   planet_mass=planet.mass, planet_radius=planet.radius,
+                                   altitude=altitude, angle_deg=angle_deg,
+                                   eccentricity=eccentricity)
+        return state
 
     def print_all_bodies_positions(self):
         for body_name, body_obj in self.celestial_bodies.items():
