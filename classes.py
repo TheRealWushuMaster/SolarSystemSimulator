@@ -99,7 +99,28 @@ class SpaceshipState():
         self.acceleration_x = acceleration_x
         self.acceleration_y = acceleration_y
         self.acceleration_z = acceleration_z
-    
+
+    @classmethod
+    def orbit_planet_state(cls, planet_position, planet_velocity,
+                           planet_mass, planet_radius, altitude, angle_deg=0,
+                           eccentricity=0):
+        distance_to_planet_center = planet_radius + altitude    # In kms
+        angle_radians = radians(angle_deg)
+        x = planet_position.x + distance_to_planet_center * sin(angle_radians)
+        y = planet_position.y - distance_to_planet_center * cos(angle_radians)
+        z = planet_position.z
+        semi_major_axis = distance_to_planet_center / sqrt(1 - eccentricity**2)
+        orbital_velocity_module = sqrt(G * planet_mass * ((2 / distance_to_planet_center/1000) - (1 / semi_major_axis/1000))) / 1000    # In km/s
+        orbital_velocity_x = orbital_velocity_module * cos(angle_radians)
+        orbital_velocity_y = orbital_velocity_module * sin(angle_radians)
+        velocity_x = planet_velocity.x + orbital_velocity_x
+        velocity_y = planet_velocity.y + orbital_velocity_y
+        velocity_z = planet_velocity.z
+        state = cls(x=x, y=y, z=z,
+                    velocity_x=velocity_x, velocity_y=velocity_y, velocity_z=velocity_z,
+                    acceleration_x=0, acceleration_y=0, acceleration_z=0)
+        return state
+
     def __str__(self):
         result = "Spaceship state\n"
         result += f"x = {self.x}, y = {self.y}, z = {self.z}\n"
@@ -107,26 +128,6 @@ class SpaceshipState():
         result += f"Accel x = {self.acceleration_x}, Accel y = {self.acceleration_y}, Accel z = {self.acceleration_z}\n"
         result += "====="
         return result
-
-def orbit_planet_state(planet_position, planet_velocity,
-                       planet_mass, planet_radius, altitude, angle_deg=0,
-                       eccentricity=0):
-    distance_to_planet_center = planet_radius + altitude    # In kms
-    angle_radians = radians(angle_deg)
-    x = planet_position.x + distance_to_planet_center * sin(angle_radians)
-    y = planet_position.y - distance_to_planet_center * cos(angle_radians)
-    z = planet_position.z
-    semi_major_axis = distance_to_planet_center / sqrt(1 - eccentricity**2)
-    orbital_velocity_module = sqrt(G * planet_mass * ((2 / distance_to_planet_center/1000) - (1 / semi_major_axis/1000))) / 1000    # In km/s
-    orbital_velocity_x = orbital_velocity_module * cos(angle_radians)
-    orbital_velocity_y = orbital_velocity_module * sin(angle_radians)
-    velocity_x = planet_velocity.x + orbital_velocity_x
-    velocity_y = planet_velocity.y + orbital_velocity_y
-    velocity_z = planet_velocity.z
-    state = SpaceshipState(x=x, y=y, z=z,
-                           velocity_x=velocity_x, velocity_y=velocity_y, velocity_z=velocity_z,
-                           acceleration_x=0, acceleration_y=0, acceleration_z=0)
-    return state
 
 
 class Spaceship():
@@ -560,9 +561,6 @@ class Simulation():
     def remove_spaceship(self, spaceship_name):
         if spaceship_name in self.spaceships.items():
             del self.spaceships[spaceship_name]
-
-    def run(self, time_step):
-        pass
 
     def plot_trajectory(self):
         pass

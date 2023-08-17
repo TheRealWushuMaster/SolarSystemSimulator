@@ -1,6 +1,6 @@
 import customtkinter as ctk
 from settings import *
-from classes import Simulation, Point, Spaceship, FlightPlan, orbit_planet_state
+from classes import Simulation, Point, Spaceship, SpaceshipState, FlightPlan
 from functions import format_with_thousands_separator, property_name_and_units, \
     calculate_additional_properties
 from math import sqrt
@@ -313,11 +313,11 @@ class App(ctk.CTk):
         planet = self.celestial_bodies[planet_name]
         planet_position = Point(x=planet.x, y=planet.y, z=planet.z)
         planet_velocity = self.body_velocity(planet.location_path)
-        state = orbit_planet_state(planet_position=planet_position,
-                                   planet_velocity=planet_velocity,
-                                   planet_mass=planet.mass, planet_radius=planet.radius,
-                                   altitude=altitude, angle_deg=angle_deg,
-                                   eccentricity=eccentricity)
+        state = SpaceshipState.orbit_planet_state(planet_position=planet_position,
+                                                  planet_velocity=planet_velocity,
+                                                  planet_mass=planet.mass, planet_radius=planet.radius,
+                                                  altitude=altitude, angle_deg=angle_deg,
+                                                  eccentricity=eccentricity)
         return state
 
     def print_all_bodies_positions(self):
