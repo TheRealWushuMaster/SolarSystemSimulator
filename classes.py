@@ -4,7 +4,7 @@ from settings import G, simulation_steps, DEFAULT_SMALL_TIME_STEP, DEFAULT_LARGE
 from orbital_functions import calculate_total_gravitational_acceleration, vector_from_to, return_normalized_vector
 from functions import convert_to_julian_date
 from graphics import draw_celestial_bodies
-from math import sin, cos, sqrt, radians
+from math import sin, cos, sqrt, radians, exp
 
 class Star():
     def __init__(self, NAME, X, Y, Z, RADIUS, MASS, TEMPERATURE, STAR_TYPE, LUMINOSITY,
@@ -293,7 +293,7 @@ class Spaceship():
         self.z += self.velocity_z * time_step
 
     def execute_instruction(self, bodies, time_step):
-        instruction = self.flight_plan.return_current_instruction()
+        instruction, instructions, index = self.flight_plan.return_current_instruction()
         bodies_copy = deepcopy(bodies)
         if instruction is not None:
             if instruction["Remainder"] > time_step:
@@ -351,13 +351,71 @@ class Spaceship():
                 elif instruction["Action"] == "Slow down":
                     throttle = instruction["Throttle"]
                     duration = instruction["Duration"]
-                    vector_x = -self.velocity_x
-                    vector_y = -self.velocity_y
-                    vector_z = -self.velocity_z
-                    vector = return_normalized_vector(vector_x, vector_y, vector_z)
-                    self.update_status(throttle=throttle, thrust_vector_x=vector[0],
-                                       thrust_vector_y=vector[1], thrust_vector_z=vector[2],
+                    velocity = self.return_velocity_vector(normalized=True)
+                    self.update_status(throttle=throttle, thrust_vector_x=velocity.x,
+                                       thrust_vector_y=velocity.y, thrust_vector_z=velocity.z,
                                        time_step=duration, bodies=bodies_copy, store_values=True)
+                elif instruction["Action"] == "Delta V":
+                    delta_v = instruction["Amount"]
+                    if delta_v > 0:
+                        direction = 1
+                    else:
+                        direction = -1
+                    delta_v = abs(delta_v)
+                    duration = instruction["Duration"]
+                    velocity = self.return_velocity_vector(normalized=True, coefficient=direction)
+                    if self.takeoff_jettisoned:
+                        v_exhaust = self.main_propulsion_system.exhaust_velocity
+                        max_thrust = self.main_propulsion_system.max_thrust
+                    else:
+                        v_exhaust = self.takeoff_propulsion_system.exhaust_velocity
+                        max_thrust = self.takeoff_propulsion_system.max_thrust
+                    delta_m_max = max_thrust/v_exhaust*duration
+                    delta_m = self.total_mass*(1-1/exp(delta_v/v_exhaust))
+                    num_periods = delta_m/delta_m_max
+                    if num_periods<=1:
+                        throttle = delta_m*v_exhaust/max_thrust/duration
+                        self.update_status(throttle=throttle, thrust_vector_x=velocity.x,
+                                           thrust_vector_y=velocity.y, thrust_vector_z=velocity.z,
+                                           time_step=duration, bodies=bodies_copy, store_values=True)
+                    else:
+                        whole = int(num_periods)
+                        fract = num_periods - whole
+                        for i in range(whole):
+                            pass
+                        if fract>0:
+                            pass
+                    
+                    
+                    throttle = delta_m*v_exhaust/max_thrust
+                    if throttle <= 1:
+                        # Add one speedup
+                        self.update_status(throttle=throttle, thrust_vector_x=velocity.x,
+                                           thrust_vector_y=velocity.y, thrust_vector_z=velocity.z,
+                                           time_step=duration, bodies=bodies_copy, store_values=True)
+                    else:
+                        # Add one speedup at full throttle and leave the rest on a following instruction
+                        self.update_status(throttle=1, thrust_vector_x=velocity.x,
+                                           thrust_vector_y=velocity.y, thrust_vector_z=velocity.z,
+                                           time_step=duration, bodies=bodies_copy, store_values=True)
+                    
+                    
+                    
+                    
+                    throttle_whole = int(throttle)
+                    throttle_fract = throttle - throttle_whole
+                    iterations = throttle_whole + (1 if throttle_fract > 0 else 0)
+                    if throttle_whole > 0:
+                        pass
+                    
+                    
+                    for i in range(iterations):
+                        pass
+                    
+                    if throttle <= 1:
+                        pass
+                    else:
+                        pass
                 else:
                     raise ValueError(f"Instruction action '{instruction['Action']}' not recognized.")
                 #self.flight_plan.next_instruction()
@@ -373,6 +431,12 @@ class Spaceship():
                                bodies=bodies_copy, store_values=True)
         self.flight_plan.next_instruction()
 
+    def return_velocity_vector(self, normalized=False, coefficient=1):
+        if normalized:
+            normalized = return_normalized_vector(self.velocity_x, self.velocity_y, self.velocity_z)
+            return Point(coefficient*normalized[0], coefficient*normalized[1], coefficient*normalized[2])
+        else:
+            return Point(coefficient*self.velocity_x, coefficient*self.velocity_y, coefficient*self.velocity_z)
 
 class PropulsionSystem():
     def __init__(self, max_thrust=0, specific_impulse=0,
@@ -391,8 +455,7 @@ class PropulsionSystem():
             return self.max_thrust / 1000 * throttle    # Convert to distance in km
 
     def calculate_fuel_consumption(self, thrust_module, time_step):
-        # Need to verify this. It has units of kg if the exhaust velocity is in m/s.       
-        return thrust_module/(self.exhaust_velocity/1000)*time_step  # Convert exhaust velocity to km/s
+        return thrust_module/(self.exhaust_velocity)*time_step
 
 
 class FlightPlan():
@@ -405,39 +468,57 @@ class FlightPlan():
                                   "Duration": duration,
                                   "Remainder": duration})
 
-    def add_thrust_towards_body(self, throttle, body, duration=DEFAULT_SMALL_TIME_STEP):
-        self.instructions.append({"Action": "Thrust",
-                                  "Direction": "To",
-                                  "Body": body,
-                                  "Throttle": throttle,
-                                  "Duration": duration,
-                                  "Remainder": duration})
+    def add_thrust_towards_body(self, throttle, body, duration=DEFAULT_SMALL_TIME_STEP, index=None):
+        dict = {"Action": "Thrust",
+                "Direction": "To",
+                "Body": body,
+                "Throttle": throttle,
+                "Duration": duration,
+                "Remainder": duration}
+        if index is None:
+            self.instructions.append(dict)
+        else:
+            self.instructions.insert(index)
 
-    def add_thrust_off_body(self, throttle, body, duration=DEFAULT_SMALL_TIME_STEP):
-        self.instructions.append({"Action": "Thrust",
-                                  "Direction": "Off",
-                                  "Body": body,
-                                  "Throttle": throttle,
-                                  "Duration": duration,
-                                  "Remainder": duration})
+    def add_thrust_off_body(self, throttle, body, duration=DEFAULT_SMALL_TIME_STEP, index=None):
+        dict = {"Action": "Thrust",
+                "Direction": "Off",
+                "Body": body,
+                "Throttle": throttle,
+                "Duration": duration,
+                "Remainder": duration}
+        if index is None:
+            self.instructions.append(dict)
+        else:
+            self.instructions.insert(index)
 
-    def add_thrust_along_vector(self, throttle, vector, duration=DEFAULT_SMALL_TIME_STEP):
-        self.instructions.append({"Action": "Thrust",
-                                  "Direction": "Vector",
-                                  "Vector": vector,
-                                  "Throttle": throttle,
-                                  "Duration": duration,
-                                  "Remainder": duration})
+    def add_thrust_along_vector(self, throttle, vector, duration=DEFAULT_SMALL_TIME_STEP, index=None):
+        dict = {"Action": "Thrust",
+                "Direction": "Vector",
+                "Vector": vector,
+                "Throttle": throttle,
+                "Duration": duration,
+                "Remainder": duration}
+        if index is None:
+            self.instructions.append(dict)
+        else:
+            self.instructions.insert(index)
 
-    def add_speed_up(self, throttle, duration=DEFAULT_SMALL_TIME_STEP):
+    def add_speed_up(self, throttle, duration=DEFAULT_SMALL_TIME_STEP, index=None):
         self.instructions.append({"Action": "Speed up",
                                   "Throttle": throttle,
                                   "Duration": duration,
                                   "Remainder": duration})
 
-    def add_slow_down(self, throttle, duration=DEFAULT_SMALL_TIME_STEP):
+    def add_slow_down(self, throttle, duration=DEFAULT_SMALL_TIME_STEP, index=None):
         self.instructions.append({"Action": "Slow down",
                                   "Throttle": throttle,
+                                  "Duration": duration,
+                                  "Remainder": duration})
+
+    def add_delta_v(self, delta_v, duration=DEFAULT_SMALL_TIME_STEP, index=None):
+        self.instructions.append({"Action": "Delta V",
+                                  "Amount": delta_v,
                                   "Duration": duration,
                                   "Remainder": duration})
 
@@ -446,7 +527,7 @@ class FlightPlan():
 
     def return_current_instruction(self):
         if self.current_step < len(self.instructions):
-            return self.instructions[self.current_step]
+            return self.instructions[self.current_step], self.instructions, self.current_step
         else:
             return None  # `None` must be interpreted as an indefinite "Coast"
 
