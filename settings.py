@@ -49,6 +49,8 @@ SCALE_TEXT_COLOR = "yellow"
 AUTO_RUN_TEXT_COLOR_RUN = "red"
 AUTO_RUN_TEXT_COLOR_STOP = "green"
 FOLLOWING_OBJECT_TEXT_COLOR = "green"
+DISTANCE_REFERENCE_TEXT_COLOR = "cyan"
+VELOCITY_REFERENCE_TEXT_COLOR = "cyan"
 INFO_TEXT_SEPARATION = 20
 BODY_NAME_COLOR = "white"
 ORBIT_FILL_COLOR = "#222222"
@@ -61,14 +63,15 @@ MILISECONDS_PER_FRAME = round(1000/FRAMES_PER_SECOND)
 G = 6.674e-11
 ARRIVAL_DISTANCE = 2    # Number of radiuses from the planet to consider "arrived" at the planet
 AVERAGE_RADIATION_ANGLE = 45
-c = 299792458
+c = 299792458   # m/s
 DEFAULT_TIME_STEP = JULIAN_DATE_DAY/24  # 1 hour
 BOOST_TIME_STEP = JULIAN_DATE_DAY/24/60 # 1 minute
 COAST_TIME_STEP = JULIAN_DATE_DAY/24/6  # 10 minutes
 SPACESHIP_COLOR = "gray"
 SPACESHIP_BORDER = "white"
-DEFAULT_SMALL_TIME_STEP = 15 # Seconds
-DEFAULT_LARGE_TIME_STEP = 5*60  # Minutes translated to seconds
+DEFAULT_SMALL_TIME_STEP = 10  # Seconds
+DEFAULT_MEDIUM_TIME_STEP = 5*60  # 5 minutes in seconds
+DEFAULT_LARGE_TIME_STEP = 30*60  # 30 minutes in seconds
 simulation_steps = [("1 second", 1),        # 1 second
                     ("10 seconds", 10),     # 10 seconds
                     ("1 minute", 60),       # 1 minute

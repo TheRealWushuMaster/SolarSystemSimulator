@@ -11,6 +11,7 @@ from ephemeris_data import check_ephemeris_file_update, load_ephemeris_data, \
 from creators import create_bodies, create_test_spaceship
 from graphics import draw_celestial_bodies, update_standard_draw_scale, \
     update_distance_scale
+from orbital_functions import return_normalized_vector, vector_module
 
 
 class App(ctk.CTk):
@@ -30,19 +31,27 @@ class App(ctk.CTk):
         self.celestial_bodies = create_bodies(star_data=Star_data,
                                               planet_data=Planet_data,
                                               moon_data=Moon_data)
+        
         self.update_following_object()
         self.update_all_bodies_positions()
+        self.distance_reference_object = "Sun"
+        self.velocity_reference_object = "Earth"
+        self.update_distance_reference()
+        self.update_velocity_reference()
+        
         self.update_time_text()
 
         self.load_orbits()
         self.update_boundaries()
 
         initial_state = self.return_orbit_planet_state(planet_name="Earth", altitude=5000)
+        initial_state.velocity_x += 10
         flight_plan = FlightPlan()
         for i in range(5):
             flight_plan.add_coast(10)
-        for i in range(1):
-            flight_plan.add_delta_v(0.764, 10)
+        # for i in range(1):
+        #     flight_plan.add_delta_v(2.3354*1.3, 10)
+        # flight_plan.add_coast(10)
         spaceship = create_test_spaceship(initial_state=initial_state,
                                           flight_plan=flight_plan)
         self.simulation.add_spaceship(spaceship_name="Test Spaceship", spaceship=spaceship)
@@ -81,10 +90,13 @@ class App(ctk.CTk):
         self.scale_text = self.widgets.canvas.create_text(10, 10+2*INFO_TEXT_SEPARATION, anchor="nw", fill=SCALE_TEXT_COLOR, text="Scale", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
         self.distance_text_km = self.widgets.canvas.create_text(10, 10+3*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Distance km", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
         self.distance_text_au = self.widgets.canvas.create_text(10, 10+4*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Distance AU", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
-        self.following_object = self.widgets.canvas.create_text(10, 10+5*INFO_TEXT_SEPARATION, anchor="nw", fill=FOLLOWING_OBJECT_TEXT_COLOR, text="Following: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
-        self.following_object_info = self.widgets.canvas.create_text(10, 10+6*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Object info: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
+        self.distance_reference_text = self.widgets.canvas.create_text(10, 10+5*INFO_TEXT_SEPARATION, anchor="nw", fill=DISTANCE_REFERENCE_TEXT_COLOR, text="Distance reference: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
+        self.velocity_reference_text = self.widgets.canvas.create_text(10, 10+6*INFO_TEXT_SEPARATION, anchor="nw", fill=VELOCITY_REFERENCE_TEXT_COLOR, text="Velocity reference: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
+        self.following_object = self.widgets.canvas.create_text(10, 10+7*INFO_TEXT_SEPARATION, anchor="nw", fill=FOLLOWING_OBJECT_TEXT_COLOR, text="Following: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
+        self.following_object_info = self.widgets.canvas.create_text(10, 10+8*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Object info: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
         self.hud_objects = (self.time_text, self.auto_play_text, self.scale_text, self.distance_text_km,
-                            self.distance_text_au, self.following_object, self.following_object_info)
+                            self.distance_text_au, self.following_object, self.distance_reference_text,
+                            self.velocity_reference_text, self.following_object_info)
 
     def bind_events(self):
         self.widgets.canvas.bind("<Configure>", self.on_canvas_resize)
@@ -159,6 +171,28 @@ class App(ctk.CTk):
             self.handle_time_adjustment(auto_play=True)
             self.after(MILISECONDS_PER_FRAME, self.advance_step)
 
+    def update_distance_reference(self):
+        if self.distance_reference_object in self.celestial_bodies:
+            position = self.body_position(self.celestial_bodies[self.distance_reference_object].location_path)
+            self.distance_reference = Point(position[0], position[1], position[2])
+        elif self.distance_reference_object in self.simulation.spaceships.items():
+            position = Point(self.simulation.spaceships[self.distance_reference_object].x, self.simulation.spaceships[self.distance_reference_object].y, self.simulation.spaceships[self.distance_reference_object].z)
+            self.distance_reference = position
+        else:
+            raise ValueError(f"Object '{self.distance_reference_object}' not found.")
+        self.widgets.canvas.itemconfigure(self.distance_reference_text, text=f"Distance reference: {self.distance_reference_object.upper()}")
+
+    def update_velocity_reference(self):
+        if self.velocity_reference_object in self.celestial_bodies:
+            velocity = self.body_velocity(self.celestial_bodies[self.velocity_reference_object].location_path)
+            self.velocity_reference = Point(velocity.x, velocity.y, velocity.z)
+        elif self.velocity_reference_object in self.simulation.spaceships:
+            velocity = Point(self.simulation.spaceships[self.velocity_reference_object].velocity_x, self.simulation.spaceships[self.velocity_reference_object].velocity_y, self.simulation.spaceships[self.velocity_reference_object].velocity_z)
+            self.velocity_reference = velocity
+        else:
+            raise ValueError(f"Object '{self.velocity_reference_object}' not found.")
+        self.widgets.canvas.itemconfigure(self.velocity_reference_text, text=f"Velocity reference: {self.velocity_reference_object.upper()}")
+
     def update_following_object(self, object_name="Sun"):
         if object_name in self.celestial_bodies:
             self.following = self.celestial_bodies[object_name]
@@ -190,12 +224,14 @@ class App(ctk.CTk):
 
     def update_spaceship_text(self, spaceship_name, spaceship):
         following_text = f"Following: {spaceship_name}"
-        spaceship_speed_module = sqrt(spaceship.velocity_x**2 + spaceship.velocity_y**2 + spaceship.velocity_z**2)
-        object_properties_text = (f"Velocity x = {format_with_thousands_separator(spaceship.velocity_x, 2)} km/s\n"
-                                  f"Velocity y = {format_with_thousands_separator(spaceship.velocity_y, 2)} km/s\n"
-                                  f"Velocity z = {format_with_thousands_separator(spaceship.velocity_z, 2)} km/s\n"
-                                  f"Velocity module = {format_with_thousands_separator(spaceship_speed_module, 2)} km/s\n"
-                                  f"Fuel mass = {format_with_thousands_separator(spaceship.fuel_mass, 2)} kg")
+        speed = spaceship.return_velocity_vector() - self.velocity_reference
+        speed_module = vector_module(speed.x, speed.y, speed.z)
+        object_properties_text = (f"Velocity x = {format_with_thousands_separator(speed.x, 2)} km/s\n"
+                                  f"Velocity y = {format_with_thousands_separator(speed.y, 2)} km/s\n"
+                                  f"Velocity z = {format_with_thousands_separator(speed.z, 2)} km/s\n"
+                                  f"Velocity module = {format_with_thousands_separator(speed_module, 2)} km/s\n"
+                                  f"Fuel mass (main) = {format_with_thousands_separator(spaceship.fuel_mass, 2)} kg\n"
+                                  f"Fuel mass (takeoff) = {format_with_thousands_separator(spaceship.takeoff_fuel_mass, 2)} kg")
         self.widgets.canvas.itemconfigure(self.following_object, text=following_text)
         self.widgets.canvas.itemconfigure(self.following_object_info, text=object_properties_text)
 

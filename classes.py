@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 from copy import deepcopy
 from settings import G, simulation_steps, DEFAULT_SMALL_TIME_STEP, DEFAULT_LARGE_TIME_STEP
-from orbital_functions import calculate_total_gravitational_acceleration, vector_from_to, return_normalized_vector
+from orbital_functions import calculate_total_gravitational_acceleration, vector_from_to, \
+    return_normalized_vector, orbital_velocity_module
 from functions import convert_to_julian_date
 from graphics import draw_celestial_bodies
 from math import sin, cos, sqrt, radians, exp, log
@@ -80,6 +81,24 @@ class Point():
         self.y = y
         self.z = z
 
+    def __add__(self, other):
+        if isinstance(other, Point):
+            new_x = self.x + other.x
+            new_y = self.y + other.y
+            new_z = self.z + other.z
+            return Point(new_x, new_y, new_z)
+        else:
+            raise ValueError("Can only add two Point instances together.")
+
+    def __sub__(self, other):
+        if isinstance(other, Point):
+            new_x = self.x - other.x
+            new_y = self.y - other.y
+            new_z = self.z - other.z
+            return Point(new_x, new_y, new_z)
+        else:
+            raise ValueError("Can only subtract two Point instances together.")
+
     def __str__(self):
         result = "Point\n"
         result += f"x = {self.x}, y = {self.y}, z = {self.z}"
@@ -109,10 +128,9 @@ class SpaceshipState():
         x = planet_position.x + distance_to_planet_center * sin(angle_radians)
         y = planet_position.y - distance_to_planet_center * cos(angle_radians)
         z = planet_position.z
-        semi_major_axis = distance_to_planet_center / sqrt(1 - eccentricity**2)
-        orbital_velocity_module = sqrt(G * planet_mass * ((2 / distance_to_planet_center/1000) - (1 / semi_major_axis/1000))) / 1000    # In km/s
-        orbital_velocity_x = orbital_velocity_module * cos(angle_radians)
-        orbital_velocity_y = orbital_velocity_module * sin(angle_radians)
+        velocity_module = orbital_velocity_module(planet_mass=planet_mass, distance=distance_to_planet_center, eccentricity=eccentricity)
+        orbital_velocity_x = velocity_module * cos(angle_radians)
+        orbital_velocity_y = velocity_module * sin(angle_radians)
         velocity_x = planet_velocity.x + orbital_velocity_x
         velocity_y = planet_velocity.y + orbital_velocity_y
         velocity_z = planet_velocity.z
@@ -296,6 +314,8 @@ class Spaceship():
         instruction, instructions, index = self.flight_plan.return_current_instruction()
         bodies_copy = deepcopy(bodies)
         if instruction is not None:
+            #for item in instructions:
+            #    print(item)
             if instruction["Remainder"] > time_step:
                 instruction["Remainder"] -= time_step
             elif instruction["Remainder"] == time_step:
@@ -358,7 +378,7 @@ class Spaceship():
                 elif instruction["Action"] == "Delta V":
                     #print(f"Instructions = {instructions}")
                     #print(f"Instruction = {instruction}")
-                    delta_v = instruction["Amount"]  # km/s
+                    delta_v = instruction["Amount"]*1000  # Convert to m/s
                     if delta_v > 0:
                         direction = 1
                     else:
@@ -374,18 +394,19 @@ class Spaceship():
                         max_thrust = self.takeoff_propulsion_system.max_thrust
                     delta_m_max = max_thrust/v_exhaust*duration
                     #delta_m = self.total_mass*(1-1/exp(delta_v/v_exhaust))
-                    delta_v_max = v_exhaust*log(self.total_mass/(self.total_mass-delta_m_max))/1000  # Convert to km/s
+                    delta_v_max = v_exhaust*log(self.total_mass/(self.total_mass-delta_m_max))
                     num_periods = delta_v/delta_v_max
-                    # print(f"Delta m max = {delta_m_max}")
+                    #print(f"Delta m max = {delta_m_max}")
                     # print(f"Delta m = {delta_m}")
-                    # print(f"Delta v max = {delta_v_max}")
+                    print(f"Delta v max = {delta_v_max}")
+                    print(f"Delta v = {delta_v}")
                     # print(f"Delta v = {delta_v}")
                     # print(f"Periods = {num_periods}")
                     # print("====")
                     if num_periods<=1:
                         #print("Periods <= 1")
-                        throttle = delta_v/delta_v_max
-                        print(f"Delta v = {delta_v}")
+                        throttle = self.total_mass*(1-exp(-delta_v/v_exhaust))*v_exhaust/max_thrust/duration
+                        #print(f"Delta v = {delta_v}")
                         print(f"Throttle = {throttle}")
                         self.update_status(throttle=throttle, thrust_vector_x=velocity.x,
                                            thrust_vector_y=velocity.y, thrust_vector_z=velocity.z,
@@ -397,19 +418,19 @@ class Spaceship():
                         instructions.pop(index)
                         for i in range(whole):
                             instructions.insert(index+i, {"Action": "Delta V",
-                                                          "Amount": delta_v_max,
+                                                          "Amount": delta_v_max/1000*direction,
                                                           "Duration": duration,
                                                           "Remainder": duration})
                         if fract>0:
-                            instructions.append({"Action": "Delta V",
-                                                 "Amount": delta_v_max*fract,
-                                                 "Duration": duration,
-                                                 "Remainder": duration})
+                            instructions.insert(index + whole, {"Action": "Delta V",
+                                                                "Amount": delta_v_max/1000*fract*direction,
+                                                                "Duration": duration,
+                                                                "Remainder": duration})
                         self.update_status(throttle=1, thrust_vector_x=velocity.x,
                                            thrust_vector_y=velocity.y, thrust_vector_z=velocity.z,
                                            time_step=duration, bodies=bodies_copy, store_values=True)
-                    print(f"Instructions = {instructions}")
-                    print(f"Index = {index}")
+                    #for item in instructions:
+                    #    print(item)
                 else:
                     raise ValueError(f"Instruction action '{instruction['Action']}' not recognized.")
                 #self.flight_plan.next_instruction()
@@ -607,6 +628,8 @@ class Simulation():
         position_changes = app.calculate_change_vectors(last_positions)
         app.update_orbits(position_changes)
         draw_celestial_bodies(app)
+        app.update_distance_reference()
+        app.update_velocity_reference()
 
     def have_spaceships(self):
         return (len(self.spaceships)>0)

@@ -20,11 +20,11 @@ def create_body_of_a_class(body_data, body_class):
 def create_test_spaceship(initial_state, flight_plan=None):
     if flight_plan is None:
         flight_plan = FlightPlan()
-    return create_ship_without_takeoff(main_max_thrust=50000,
+    return create_ship_without_takeoff(main_max_thrust=100000,
                                        main_specific_impulse=3000,
                                        main_exhaust_velocity=4500,
                                        ship_structure_mass=2000,
-                                       ship_fuel_mass=2000,
+                                       ship_fuel_mass=4000,
                                        ship_payload_mass=500,
                                        ship_radiation_reflectivity=0.5,
                                        ship_surface_area=0.01,

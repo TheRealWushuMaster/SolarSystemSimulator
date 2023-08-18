@@ -31,6 +31,14 @@ def calculate_gravitational_acceleration_from_body(spaceship, body):
     acceleration_z = gravitational_acceleration * z / distance
     return acceleration_x, acceleration_y, acceleration_z
 
+def escape_velocity(body_mass, distance):
+    return sqrt(2*G*body_mass/distance)
+
+def orbital_velocity_module(planet_mass, distance, eccentricity=0):
+    semi_major_axis = distance / sqrt(1 - eccentricity**2)
+    orbital_velocity_module = sqrt(G * planet_mass * ((2 / distance/1000) - (1 / semi_major_axis/1000))) / 1000    # In km/s
+    return orbital_velocity_module
+
 def simulate_spaceship_trajectory(self, start_time, input_vector):
     for i, iteration in enumerate(input_vector):
         throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step = iteration
