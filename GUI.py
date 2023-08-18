@@ -39,13 +39,19 @@ class App(ctk.CTk):
 
         initial_state = self.return_orbit_planet_state(planet_name="Earth", altitude=5000)
         flight_plan = FlightPlan()
-        for i in range(20):
-            flight_plan.add_coast(60)
         for i in range(5):
-            flight_plan.add_speed_up(1, 60)
+            flight_plan.add_coast(10)
+        for i in range(1):
+            flight_plan.add_delta_v(0.764, 10)
         spaceship = create_test_spaceship(initial_state=initial_state,
                                           flight_plan=flight_plan)
         self.simulation.add_spaceship(spaceship_name="Test Spaceship", spaceship=spaceship)
+
+        initial_state = self.return_orbit_planet_state(planet_name="Earth", altitude=6000)
+        flight_plan = FlightPlan()
+        spaceship = create_test_spaceship(initial_state=initial_state,
+                                          flight_plan=flight_plan)
+        self.simulation.add_spaceship(spaceship_name="Another Test Spaceship", spaceship=spaceship)
 
         self.modified_scale = 1.0
         self.center_point_x, self.center_point_y = round(self.widgets.canvas.winfo_reqwidth()/2), round(self.widgets.canvas.winfo_reqheight()/2)
