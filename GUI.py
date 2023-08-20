@@ -11,7 +11,6 @@ from ephemeris_data import check_ephemeris_file_update, load_ephemeris_data, \
 from creators import create_bodies, create_test_spaceship
 from graphics import draw_celestial_bodies, update_standard_draw_scale, \
     update_distance_scale
-from orbital_functions import return_normalized_vector, vector_module
 
 
 class App(ctk.CTk):
@@ -23,21 +22,23 @@ class App(ctk.CTk):
         check_ephemeris_file_update(self)
         load_ephemeris_data(self)
 
-        self.simulation = Simulation(start_time="now",
-                                     end_time=None)
         calculate_additional_properties(Star_data, color=True)
         calculate_additional_properties(Planet_data)
         calculate_additional_properties(Moon_data)
-        self.celestial_bodies = create_bodies(star_data=Star_data,
-                                              planet_data=Planet_data,
-                                              moon_data=Moon_data)
-        
-        self.update_following_object()
+        celestial_bodies = create_bodies(star_data=Star_data,
+                                         planet_data=Planet_data,
+                                         moon_data=Moon_data)
+        self.simulation = Simulation(gui=self,
+                                     start_time="now",
+                                     end_time=None,
+                                     celestial_bodies=celestial_bodies)
+
+        #self.update_following_object()
         self.update_all_bodies_positions()
-        self.distance_reference_object = "Sun"
-        self.velocity_reference_object = "Earth"
-        self.update_distance_reference()
-        self.update_velocity_reference()
+        #self.distance_reference_object = "Sun"
+        #self.velocity_reference_object = "Earth"
+        #self.update_distance_reference()
+        #self.update_velocity_reference()
         
         self.update_time_text()
 
@@ -45,10 +46,11 @@ class App(ctk.CTk):
         self.update_boundaries()
 
         initial_state = self.return_orbit_planet_state(planet_name="Earth", altitude=5000)
-        initial_state.velocity_x += 10
+        #initial_state.velocity_x += 0.764
         flight_plan = FlightPlan()
-        for i in range(5):
-            flight_plan.add_coast(10)
+        #flight_plan.add_delta_v(0.764, 10)
+        #for i in range(5):
+        #    flight_plan.add_coast(10)
         # for i in range(1):
         #     flight_plan.add_delta_v(2.3354*1.3, 10)
         # flight_plan.add_coast(10)
@@ -104,6 +106,7 @@ class App(ctk.CTk):
         self.widgets.canvas.bind("<Motion>", self.mouse_hover)
         self.widgets.canvas.bind("<Double-Button-1>", self.handle_canvas_double_click)
         self.widgets.canvas.bind("<ButtonPress-1>", self.start_mouse_drag)
+        self.widgets.canvas.bind("<ButtonPress-2>", self.change_velocity_reference)
         self.widgets.canvas.bind("<ButtonPress-3>", self.start_mouse_drag)
         self.widgets.canvas.bind("<B1-Motion>", self.on_mouse_drag)
         self.widgets.canvas.bind("<B3-Motion>", self.on_mouse_drag)
@@ -115,6 +118,14 @@ class App(ctk.CTk):
         self.bind("<Up>", self.change_time_step)
         self.bind("<Down>", self.change_time_step)
         self.bind("<space>", self.pause_resume_simulation)
+
+    def change_velocity_reference(self, event):
+        clicked_body_ids = self.widgets.canvas.find_overlapping(event.x, event.y, event.x, event.y)
+        for object_name, body_id, text_id in self.body_ids:
+            if body_id in clicked_body_ids or text_id in clicked_body_ids:
+                self.simulation.velocity_reference_object = object_name
+                self.simulation.update_velocity_reference()
+                break
 
     def start_mouse_drag(self, event):
         self.mouse_drag_starting_point = (event.x, event.y)
@@ -171,61 +182,31 @@ class App(ctk.CTk):
             self.handle_time_adjustment(auto_play=True)
             self.after(MILISECONDS_PER_FRAME, self.advance_step)
 
-    def update_distance_reference(self):
-        if self.distance_reference_object in self.celestial_bodies:
-            position = self.body_position(self.celestial_bodies[self.distance_reference_object].location_path)
-            self.distance_reference = Point(position[0], position[1], position[2])
-        elif self.distance_reference_object in self.simulation.spaceships.items():
-            position = Point(self.simulation.spaceships[self.distance_reference_object].x, self.simulation.spaceships[self.distance_reference_object].y, self.simulation.spaceships[self.distance_reference_object].z)
-            self.distance_reference = position
-        else:
-            raise ValueError(f"Object '{self.distance_reference_object}' not found.")
-        self.widgets.canvas.itemconfigure(self.distance_reference_text, text=f"Distance reference: {self.distance_reference_object.upper()}")
-
-    def update_velocity_reference(self):
-        if self.velocity_reference_object in self.celestial_bodies:
-            velocity = self.body_velocity(self.celestial_bodies[self.velocity_reference_object].location_path)
-            self.velocity_reference = Point(velocity.x, velocity.y, velocity.z)
-        elif self.velocity_reference_object in self.simulation.spaceships:
-            velocity = Point(self.simulation.spaceships[self.velocity_reference_object].velocity_x, self.simulation.spaceships[self.velocity_reference_object].velocity_y, self.simulation.spaceships[self.velocity_reference_object].velocity_z)
-            self.velocity_reference = velocity
-        else:
-            raise ValueError(f"Object '{self.velocity_reference_object}' not found.")
-        self.widgets.canvas.itemconfigure(self.velocity_reference_text, text=f"Velocity reference: {self.velocity_reference_object.upper()}")
-
-    def update_following_object(self, object_name="Sun"):
-        if object_name in self.celestial_bodies:
-            self.following = self.celestial_bodies[object_name]
-            self.origin = self.position_following()
-            following_text = f"Following: {self.following.name.upper()}"
-            properties_to_exclude = ["name", "x", "y", "z", "location_path", "texture", "rings", "surface",
-                                    "atmosphere", "orbit_points", "orbit_resolution", "num_orbit_steps"]
-            properties_to_format = ["luminosity", "radius", "mass", "temperature", "rotation_velocity",
-                                    "color_index", "average_orbital_speed", "orbital_period"]
-            properties_to_round = ["rotation_period", "circumference"]
-            property_lines = []
-            for property_name, property_value in vars(self.following).items():
-                if not (property_name in properties_to_exclude):
-                    property_print_name, units = property_name_and_units(property_name)
-                    if property_name in properties_to_round:
-                        property_value = format_with_thousands_separator(property_value, 0)
-                    if property_name in properties_to_format:
-                        property_value = format_with_thousands_separator(property_value)
-                    line = f"    - {property_print_name}: {property_value} {units}"
-                    property_lines.append(line)
-            object_properties_text = "Information:\n" + "\n".join(property_lines)
-            self.widgets.canvas.itemconfigure(self.following_object, text=following_text)
-            self.widgets.canvas.itemconfigure(self.following_object_info, text=object_properties_text)
-        elif object_name in self.simulation.spaceships:
-            spaceship = self.simulation.spaceships[object_name]
-            self.following = spaceship
-            self.origin = Point(spaceship.x, spaceship.y, spaceship.z)
-            self.update_spaceship_text(object_name, spaceship)
+    def update_following_body_text(self, body_name, body):
+        following_text = f"Following: {body_name.upper()}"
+        properties_to_exclude = ["name", "x", "y", "z", "location_path", "texture", "rings", "surface",
+                                "atmosphere", "orbit_points", "orbit_resolution", "num_orbit_steps"]
+        properties_to_format = ["luminosity", "radius", "mass", "temperature", "rotation_velocity",
+                                "color_index", "average_orbital_speed", "orbital_period"]
+        properties_to_round = ["rotation_period", "circumference"]
+        property_lines = []
+        for property_name, property_value in vars(body).items():
+            if not (property_name in properties_to_exclude):
+                property_print_name, units = property_name_and_units(property_name)
+                if property_name in properties_to_round:
+                    property_value = format_with_thousands_separator(property_value, 0)
+                if property_name in properties_to_format:
+                    property_value = format_with_thousands_separator(property_value)
+                line = f"    - {property_print_name}: {property_value} {units}"
+                property_lines.append(line)
+        object_properties_text = "Information:\n" + "\n".join(property_lines)
+        self.widgets.canvas.itemconfigure(self.following_object, text=following_text)
+        self.widgets.canvas.itemconfigure(self.following_object_info, text=object_properties_text)
 
     def update_spaceship_text(self, spaceship_name, spaceship):
         following_text = f"Following: {spaceship_name}"
-        speed = spaceship.return_velocity_vector() - self.velocity_reference
-        speed_module = vector_module(speed.x, speed.y, speed.z)
+        speed = spaceship.return_velocity_vector() - self.simulation.velocity_reference
+        speed_module = sqrt(speed.x**2 + speed.y**2 + speed.z**2)
         object_properties_text = (f"Velocity x = {format_with_thousands_separator(speed.x, 2)} km/s\n"
                                   f"Velocity y = {format_with_thousands_separator(speed.y, 2)} km/s\n"
                                   f"Velocity z = {format_with_thousands_separator(speed.z, 2)} km/s\n"
@@ -248,7 +229,7 @@ class App(ctk.CTk):
         clicked_body_ids = self.widgets.canvas.find_overlapping(event.x, event.y, event.x, event.y)
         for object_name, body_id, text_id in self.body_ids:
             if body_id in clicked_body_ids or text_id in clicked_body_ids:
-                self.update_following_object(object_name)
+                self.simulation.update_following_object(object_name)
                 update_standard_draw_scale(self, self.widgets.canvas.winfo_width(), self.widgets.canvas.winfo_height())
                 draw_celestial_bodies(self)
                 break
@@ -265,9 +246,9 @@ class App(ctk.CTk):
 
     def handle_time_adjustment(self, event=None, auto_play=False):
         if self.simulation.auto_play or event.keysym == "Right":
-            self.simulation.step_date(self, "up")
+            self.simulation.step_date("up")
         elif event.keysym == "Left":
-            self.simulation.step_date(self, "down")
+            self.simulation.step_date("down")
 
     def modify_zoom_level(self, event):
         if event.state & 0x1:  # Check if Shift key is pressed
@@ -300,7 +281,7 @@ class App(ctk.CTk):
 
     def save_positions(self):
         positions = {}
-        for body_name, body_obj in self.celestial_bodies.items():
+        for body_name, body_obj in self.simulation.celestial_bodies.items():
             positions[body_name] = {"x": body_obj.x,
                                     "y": body_obj.y,
                                     "z": body_obj.z}
@@ -308,7 +289,7 @@ class App(ctk.CTk):
 
     def calculate_change_vectors(self, last_positions):
         change_vectors = {}
-        for body_name, body_obj in self.celestial_bodies.items():
+        for body_name, body_obj in self.simulation.celestial_bodies.items():
             change_vectors[body_name] = {"x": body_obj.x - last_positions[body_name]["x"],
                                          "y": body_obj.y - last_positions[body_name]["y"],
                                          "z": body_obj.z - last_positions[body_name]["z"]}
@@ -352,7 +333,7 @@ class App(ctk.CTk):
         return velocity
 
     def return_orbit_planet_state(self, planet_name, altitude, angle_deg=0, eccentricity=0):
-        planet = self.celestial_bodies[planet_name]
+        planet = self.simulation.celestial_bodies[planet_name]
         planet_position = Point(x=planet.x, y=planet.y, z=planet.z)
         planet_velocity = self.body_velocity(planet.location_path)
         state = SpaceshipState.orbit_planet_state(planet_position=planet_position,
@@ -366,22 +347,14 @@ class App(ctk.CTk):
         for body_name, body_obj in self.celestial_bodies.items():
             print(f"{body_name}: ({body_obj.x}, {body_obj.y}, {body_obj.z})")
 
-    def position_following(self):
-        if not isinstance(self.following, Spaceship):
-            position = self.body_position(self.following.location_path)
-        else:
-            position = self.following.x, self.following.y, self.following.z
-        origin = Point(position[0], position[1], position[2])
-        return origin
-
     def load_orbits(self, resolution=ORBIT_RESOLUTION):
-        for body_name, body_obj in self.celestial_bodies.items():
+        for body_name, body_obj in self.simulation.celestial_bodies.items():
             body_obj.orbit_points = []
             period = body_obj.orbital_period
             if period > 0:
                 time_step = period/resolution*JULIAN_DATE_DAY
                 num_steps = round(period/time_step)
-                parent_body = self.celestial_bodies.get(body_obj.parent_body)
+                parent_body = self.simulation.celestial_bodies.get(body_obj.parent_body)
                 for i in range(num_steps+1):
                     date = MIN_JULIAN_DATE + i * time_step
                     if date <= MAX_JULIAN_DATE:
@@ -392,7 +365,7 @@ class App(ctk.CTk):
                             body_obj.orbit_points.append((position[0], position[1], position[2]))
 
     def update_orbits(self, change_vectors):
-        for body_name, body_obj in self.celestial_bodies.items():
+        for body_name, body_obj in self.simulation.celestial_bodies.items():
             if body_obj.parent_body in change_vectors and not body_obj=="Sun":
                 change_vector = change_vectors[body_obj.parent_body]
                 for i in range(len(body_obj.orbit_points)):
@@ -401,21 +374,21 @@ class App(ctk.CTk):
                                                 body_obj.orbit_points[i][2] + change_vector["z"] if DRAW_3D else 0)
 
     def update_all_bodies_positions(self):
-        self.origin = self.position_following()
-        for body_name, body_obj in self.celestial_bodies.items():
+        #self.origin = self.position_following()
+        for body_name, body_obj in self.simulation.celestial_bodies.items():
             position = self.body_position(body_obj.location_path)
-            self.celestial_bodies[body_name].x = position[0]
-            self.celestial_bodies[body_name].y = position[1]
-            self.celestial_bodies[body_name].z = position[2]
+            self.simulation.celestial_bodies[body_name].x = position[0]
+            self.simulation.celestial_bodies[body_name].y = position[1]
+            self.simulation.celestial_bodies[body_name].z = position[2]
 
     def update_boundaries(self):
-        max_x = max(abs(body.x-self.origin.x) for body in self.celestial_bodies.values())
-        max_y = max(abs(body.y-self.origin.y) for body in self.celestial_bodies.values())
+        max_x = max(abs(body.x-self.simulation.origin.x) for body in self.simulation.celestial_bodies.values())
+        max_y = max(abs(body.y-self.simulation.origin.y) for body in self.simulation.celestial_bodies.values())
         self.max_distance_width = max_x
         self.max_distance_height = max_y
         if DRAW_3D:
-            min_z = min(body.z for body in self.celestial_bodies.values())
-            max_z = max(body.z for body in self.celestial_bodies.values())
+            min_z = min(body.z for body in self.simulation.celestial_bodies.values())
+            max_z = max(body.z for body in self.simulation.celestial_bodies.values())
             self.max_distance_depth = max_z - min_z
 
 

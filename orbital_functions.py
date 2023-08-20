@@ -1,7 +1,8 @@
 import datetime
 from settings import c, AVERAGE_RADIATION_ANGLE, AU, G
-from math import pi, sin, cos, sqrt, exp
+from math import pi, sin, cos, sqrt
 from numpy import array, dot
+from classes import Point
 
 def calculate_radiation_pressure(luminosity, distance, reflectivity):
     return (1+reflectivity)*luminosity/4/pi/c * (cos(AVERAGE_RADIATION_ANGLE)*AU/distance)**2
@@ -39,6 +40,9 @@ def orbital_velocity_module(planet_mass, distance, eccentricity=0):
     orbital_velocity_module = sqrt(G * planet_mass * ((2 / distance/1000) - (1 / semi_major_axis/1000))) / 1000    # In km/s
     return orbital_velocity_module
 
+def orbital_period(planet_mass, radius_or_semi_major_axis):
+    return 2*pi*sqrt(radius_or_semi_major_axis**3/G/planet_mass)
+
 def simulate_spaceship_trajectory(self, start_time, input_vector):
     for i, iteration in enumerate(input_vector):
         throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step = iteration
@@ -54,52 +58,22 @@ def simulate_spaceship_trajectory(self, start_time, input_vector):
     self.timestamp = self.convert_to_julian_date(start_time)
     self.spaceship.x, self.spaceship.y, self.spaceship.z = self.spaceship.positions[0]
 
-def hohmann_transfer(body, spaceship, final_altitude, initial_altitude=0, time_step=1):
-    # Calculate the initial and final velocities required for the Hohmann transfer
-    initial_velocity = sqrt(G * body.mass / (body.radius + initial_altitude))
-    final_velocity = sqrt(G * body.mass * ((2 / (body.radius + initial_altitude)) - (1 / final_altitude)))
+def hohmann_transfer(body, body_velocity, spaceship, r2):
+    body_position = body.return_position_vector()
+    spaceship_position = spaceship.return_positon_vector()
+    initial_distance_vector = spaceship_position - body_position
+    r1 = return_vector_module(initial_distance_vector.x,
+                              initial_distance_vector.y,
+                              initial_distance_vector.z)
+    current_v1 = spaceship.return_velocity_vector() - body_velocity
+    v1 = sqrt(G*body.mass/r2)
+    v1_p = sqrt(2*G*body.mass*(1/r1 - 1/(r1+r2)))
+    delta_v1 = v1_p - v1
+    v2 = sqrt(G*body.mass/r2)
+    v2_p = sqrt(2*G*body.mass*(1/r2 - 1/(r1+r2)))
+    delta_v2 = v2 - v2_p
+    transfer_time = orbital_period(body.mass, r1+r2)/2
 
-    # Calculate the required delta-v (velocity change) for the transfer
-    delta_v = final_velocity - initial_velocity
-
-    # Calculate the time required for the transfer
-    transfer_time = pi * sqrt(((body.radius + initial_altitude) ** 3) / (8 * G * body.mass))
-
-    # Calculate the minimum max_thrust required for the transfer
-    min_max_thrust = abs(delta_v) / (time_step * 1000)  # Convert delta_v to km/s and divide by time_step
-
-    # Calculate the number of time steps needed to complete one orbit
-    time_steps_per_orbit = int(transfer_time / time_step)
-
-    # Use the existing ship's max_thrust if it's greater than the calculated minimum max_thrust
-    effective_max_thrust = max(min_max_thrust, spaceship.max_thrust)
-
-    # Calculate the throttle value based on the effective_max_thrust
-    throttle = effective_max_thrust / spaceship.max_thrust if spaceship.max_thrust > 0 else 0
-
-    # Calculate the thrust vector components based on the velocity vector components
-    velocity_x = sqrt(G * body.mass / (body.radius + initial_altitude))
-    velocity_y = 0  # Assuming the spacecraft starts at periapsis with no radial velocity
-    # thrust_vector_x = velocity_y  # Thrust vector aligned with y-direction
-    # thrust_vector_y = -velocity_x  # Thrust vector aligned with -x direction
-    # thrust_vector_z = 0
-    thrust_vector_x, thrust_vector_y, thrust_vector_z = vector_from_to((body.x, body.y, body.z),
-                                                                       (spaceship.x, spaceship.y, spaceship.y),
-                                                                       normalized=True)
-
-    # Calculate the fuel consumption using the Tsiolkovsky rocket equation
-    ve = spaceship.main_propulsion_system.exhaust_velocity * 1000  # Convert to m/s
-    m0 = spaceship.total_mass
-    mf = m0 / exp(delta_v / ve)
-    fuel_consumed = m0 - mf
-
-    # Create the input vectors for the spaceship to follow the Hohmann transfer trajectory
-    input_vectors = []
-    for _ in range(time_steps_per_orbit):
-        input_vector = (throttle, thrust_vector_x, thrust_vector_y, thrust_vector_z, time_step)  # Apply thrust in positive z-direction
-        input_vectors.append(input_vector)
-
-    return input_vectors, min_max_thrust, transfer_time
 
 def vector_from_to(base_vector, target_vector, normalized=False):
     target_vector_x, target_vector_y, target_vector_z = target_vector
@@ -126,9 +100,9 @@ def rotate_vector(vector, rotate_x=0, rotate_y=0, rotate_z=0, normalized=False):
         rotated_vector = return_normalized_vector(rotated_vector[0], rotated_vector[1], rotated_vector[2])
     return rotated_vector
 
-def vector_module(x, y, z):
+def return_vector_module(x, y, z):
     return sqrt(x**2 + y**2 + z**2)
 
 def return_normalized_vector(x, y, z):
-    module = vector_module(x, y, z)
+    module = return_vector_module(x, y, z)
     return x/module, y/module, z/module

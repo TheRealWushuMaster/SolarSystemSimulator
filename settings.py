@@ -83,6 +83,9 @@ simulation_steps = [("1 second", 1),        # 1 second
                     ("1 week", 604800),     # 1 week (60 * 60 * 24 * 7)
                     ("1 month", 2592000),   # 1 month (60 * 60 * 24 * 30)
                     ("1 year", 31536000)]   # 1 year (60 * 60 * 24 * 365)
+# When simulating, consider that "month" and "year" time steps are not perfect
+# multiples of some other time steps, which can be a problem when simulating
+# multiple instructions per simulation time step.
 
 # =========================
 # Celestial body properties

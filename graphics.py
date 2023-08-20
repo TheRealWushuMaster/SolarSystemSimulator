@@ -12,8 +12,8 @@ def draw_celestial_bodies(self):
     self.body_ids = []
     clear_canvas_bodies(self)
     draw_orbits(self)
-    for body in self.celestial_bodies.values():
-        x, y, z = body.x - self.origin.x, body.y - self.origin.y, body.z - self.origin.z
+    for body in self.simulation.celestial_bodies.values():
+        x, y, z = body.x - self.simulation.origin.x, body.y - self.simulation.origin.y, body.z - self.simulation.origin.z
         radius = max(round(body.radius * self.distance_scale), 1)
         if DRAW_3D:
             (x, y, z) = (x, y, z) @ self.rotation_matrix
@@ -52,12 +52,14 @@ def transform_pixels_to_coordinates(self, x, y):
     return x_c, y_c
 
 def draw_spaceship(self, spaceship_name, spaceship):
-    x, y, z = spaceship.x - self.origin.x, spaceship.y - self.origin.y, spaceship.z - self.origin.z
+    x, y, z = spaceship.x - self.simulation.origin.x, spaceship.y - self.simulation.origin.y, spaceship.z - self.simulation.origin.z
     if DRAW_3D:
         (x, y, z) = (x, y, z) @ self.rotation_matrix
     x, y = transform_coordinates_to_pixels(self, x, y)
     radius = max(round(spaceship.size * self.distance_scale), 1)
-    spaceship_id = self.widgets.canvas.create_oval(x-radius, y-radius, x + radius, y + radius, fill=SPACESHIP_COLOR, outline=SPACESHIP_BORDER, tags='spaceship')
+    spaceship_id = self.widgets.canvas.create_oval(x-radius, y-radius, x + radius, y + radius,
+                                                   fill=SPACESHIP_COLOR, outline=SPACESHIP_BORDER,
+                                                   tags='spaceship')
     text_id = place_name(self, x, y, radius, spaceship_name)
     return spaceship_id, text_id
 
@@ -181,13 +183,13 @@ def update_distance_scale(self):
     self.update_scale_text()
 
 def draw_orbits(self):
-    for body_name, body in self.celestial_bodies.items():
+    for body_name, body in self.simulation.celestial_bodies.items():
         for i in range(len(body.orbit_points)-1):
-            x1, y1 = body.orbit_points[i][0]-self.origin.x, body.orbit_points[i][1]-self.origin.y
-            x2, y2 = body.orbit_points[i+1][0]-self.origin.x, body.orbit_points[i+1][1]-self.origin.y
+            x1, y1 = body.orbit_points[i][0]-self.simulation.origin.x, body.orbit_points[i][1]-self.simulation.origin.y
+            x2, y2 = body.orbit_points[i+1][0]-self.simulation.origin.x, body.orbit_points[i+1][1]-self.simulation.origin.y
             if DRAW_3D:
-                z1 = body.orbit_points[i][2]-self.origin.z
-                z2 = body.orbit_points[i+1][2]-self.origin.z
+                z1 = body.orbit_points[i][2]-self.simulation.origin.z
+                z2 = body.orbit_points[i+1][2]-self.simulation.origin.z
                 (x1, y1, z1) = (x1, y1, z1) @ self.rotation_matrix
                 (x2, y2, z2) = (x2, y2, z2) @ self.rotation_matrix
             x1, y1 = transform_coordinates_to_pixels(self, x1, y1)
