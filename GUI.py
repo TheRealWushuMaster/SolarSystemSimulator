@@ -33,22 +33,17 @@ class App(ctk.CTk):
                                      end_time=None,
                                      celestial_bodies=celestial_bodies)
 
-        #self.update_following_object()
         self.update_all_bodies_positions()
-        #self.distance_reference_object = "Sun"
-        #self.velocity_reference_object = "Earth"
-        #self.update_distance_reference()
-        #self.update_velocity_reference()
-        
+
         self.update_time_text()
 
         self.load_orbits()
         self.update_boundaries()
 
-        initial_state = self.return_orbit_planet_state(planet_name="Earth", altitude=1000)
-        initial_state.velocity_x += 2.951
         flight_plan = FlightPlan()
-        #flight_plan.add_delta_v(delta_v=2.951, reference="Earth", duration=10)
+        flight_plan.add_delta_v(delta_v=2.951, reference="Earth", duration=10)
+        initial_state = self.return_orbit_body_state(body_name="Earth", altitude=1000)
+        #initial_state.velocity_x += 2.951
         #for i in range(5):
         #    flight_plan.add_coast(10)
         # for i in range(1):
@@ -58,10 +53,8 @@ class App(ctk.CTk):
                                           flight_plan=flight_plan)
         self.simulation.add_spaceship(spaceship_name="Test Spaceship", spaceship=spaceship)
 
-        initial_state = self.return_orbit_planet_state(planet_name="Moon", altitude=500)
-        flight_plan = FlightPlan()
-        spaceship = create_test_spaceship(initial_state=initial_state,
-                                          flight_plan=flight_plan)
+        initial_state = self.return_orbit_body_state(body_name="Moon", altitude=500)
+        spaceship = create_test_spaceship(initial_state=initial_state)
         self.simulation.add_spaceship(spaceship_name="Another Test Spaceship", spaceship=spaceship)
 
         self.modified_scale = 1.0
@@ -184,18 +177,13 @@ class App(ctk.CTk):
 
     def update_following_body_text(self, body_name, body):
         following_text = f"Following: {body_name.upper()}"
-        properties_to_exclude = ["name", "x", "y", "z", "location_path", "texture", "rings", "surface",
-                                "atmosphere", "orbit_points", "orbit_resolution", "num_orbit_steps"]
-        properties_to_format = ["luminosity", "radius", "mass", "temperature", "rotation_velocity",
-                                "color_index", "average_orbital_speed", "orbital_period"]
-        properties_to_round = ["rotation_period", "circumference"]
         property_lines = []
         for property_name, property_value in vars(body).items():
-            if not (property_name in properties_to_exclude):
+            if property_name not in PROPERTIES_TO_EXCLUDE:
                 property_print_name, units = property_name_and_units(property_name)
-                if property_name in properties_to_round:
+                if property_name in PROPERTIES_TO_ROUND:
                     property_value = format_with_thousands_separator(property_value, 0)
-                if property_name in properties_to_format:
+                if property_name in PROPERTIES_TO_FORMAT:
                     property_value = format_with_thousands_separator(property_value)
                 line = f"    - {property_print_name}: {property_value} {units}"
                 property_lines.append(line)
@@ -332,17 +320,28 @@ class App(ctk.CTk):
         velocity = Point(x=velocity[0], y=velocity[1], z=velocity[2])
         return velocity
 
-    def return_orbit_planet_state(self, planet_name, altitude,
+    def body_position_and_velocity(self, body_location_path, timestamp=None):
+        position = [0, 0, 0]
+        velocity = [0, 0, 0]
+        if timestamp==None:
+            timestamp = self.simulation.timestamp
+        for index in range(len(body_location_path) - 1):
+            index1 = body_location_path[index]
+            index2 = body_location_path[index + 1]
+            step_pos, step_vel = self.kernel[index1, index2].compute_and_differentiate(timestamp)
+            position += step_pos  # km/s
+            velocity += step_vel/86400  # Default is km/day, convert to km/s
+        position = Point(x=position[0], y=position[1], z=position[2])
+        velocity = Point(x=velocity[0], y=velocity[1], z=velocity[2])
+        return position, velocity
+
+    def return_orbit_body_state(self, body_name, altitude,
                                   direction=DEFAULT_ORBIT_DIRECTION,
                                   angle_deg=0, eccentricity=0):
-        planet = self.simulation.celestial_bodies[planet_name]
-        planet_position = Point(x=planet.x, y=planet.y, z=planet.z)
-        planet_velocity = self.body_velocity(planet.location_path)
-        state = SpaceshipState.orbit_planet_state(planet_position=planet_position,
-                                                  planet_velocity=planet_velocity,
-                                                  planet_mass=planet.mass, planet_radius=planet.radius,
-                                                  altitude=altitude, direction=direction,
-                                                  angle_deg=angle_deg, eccentricity=eccentricity)
+        body = self.simulation.celestial_bodies[body_name]
+        state = SpaceshipState.orbit_planet_state(body, altitude, direction=direction,
+                                                  angle_deg=angle_deg,
+                                                  eccentricity=eccentricity)
         return state
 
     def print_all_bodies_positions(self):
@@ -376,12 +375,15 @@ class App(ctk.CTk):
                                                 body_obj.orbit_points[i][2] + change_vector["z"] if DRAW_3D else 0)
 
     def update_all_bodies_positions(self):
-        #self.origin = self.position_following()
         for body_name, body_obj in self.simulation.celestial_bodies.items():
-            position = self.body_position(body_obj.location_path)
-            self.simulation.celestial_bodies[body_name].x = position[0]
-            self.simulation.celestial_bodies[body_name].y = position[1]
-            self.simulation.celestial_bodies[body_name].z = position[2]
+            #position = self.body_position(body_obj.location_path)
+            position, velocity = self.body_position_and_velocity(body_obj.location_path)
+            self.simulation.celestial_bodies[body_name].x = position.x
+            self.simulation.celestial_bodies[body_name].y = position.y
+            self.simulation.celestial_bodies[body_name].z = position.z
+            self.simulation.celestial_bodies[body_name].velocity_x = velocity.x
+            self.simulation.celestial_bodies[body_name].velocity_y = velocity.y
+            self.simulation.celestial_bodies[body_name].velocity_z = velocity.z
 
     def update_boundaries(self):
         max_x = max(abs(body.x-self.simulation.origin.x) for body in self.simulation.celestial_bodies.values())

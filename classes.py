@@ -17,6 +17,9 @@ class Star():
         self.x = X
         self.y = Y
         self.z = Z
+        self.velocity_x = 0
+        self.velocity_y = 0
+        self.velocity_z = 0
         self.radius = RADIUS
         self.mass = MASS
         self.temperature = TEMPERATURE
@@ -58,6 +61,9 @@ class Planet():
         self.x = X
         self.y = Y
         self.z = Z
+        self.velocity_x = 0
+        self.velocity_y = 0
+        self.velocity_z = 0
         self.radius = RADIUS
         self.mass = MASS
         self.temperature = TEMPERATURE
@@ -134,20 +140,16 @@ class SpaceshipState():
         self.acceleration_z = acceleration_z
 
     @classmethod
-    def orbit_planet_state(cls, planet_position, planet_velocity,
-                           planet_mass, planet_radius, altitude,
+    def orbit_planet_state(cls, body, altitude,
                            direction=DEFAULT_ORBIT_DIRECTION,
                            angle_deg=0, eccentricity=0):
-        distance_to_planet_center = planet_radius + altitude    # In kms
+        distance_to_planet_center = body.radius + altitude    # In kms
         angle_radians = radians(angle_deg)
-        x = planet_position.x + distance_to_planet_center * sin(angle_radians)
-        y = planet_position.y - distance_to_planet_center * cos(angle_radians)
-        z = planet_position.z
-        delta_v_x, delta_v_y, delta_v_z = delta_v_to_establish_orbit((0, 0, 0), planet_mass,
-                                                                     (planet_velocity.x, planet_velocity.y,
-                                                                     planet_velocity.z),
-                                                                     x, y, z, planet_position.x, planet_position.y,
-                                                                     planet_position.z, eccentricity,
+        x = body.x + distance_to_planet_center * sin(angle_radians)
+        y = body.y - distance_to_planet_center * cos(angle_radians)
+        z = body.z
+        delta_v_x, delta_v_y, delta_v_z = delta_v_to_establish_orbit((x, y, z), (0, 0, 0),
+                                                                     body, eccentricity,
                                                                      direction=direction)
         state = cls(x=x, y=y, z=z,
                     velocity_x=delta_v_x,
@@ -203,7 +205,7 @@ class Spaceship():
             self.flight_plan = flight_plan
         else:
             self.flight_plan = FlightPlan()
-    
+
     def reset_values(self):
         self.positions = []
         self.velocities = []
@@ -416,10 +418,13 @@ class Spaceship():
                     thrust_y = velocity.y
                     thrust_z = velocity.z
                     if reference in bodies:
-                        planet_velocity = gui.body_velocity(bodies[reference].location_path)
-                        thrust_x -= planet_velocity.x
-                        thrust_y -= planet_velocity.y
-                        thrust_z -= planet_velocity.z
+                        #planet_velocity = gui.body_velocity(bodies[reference].location_path)
+                        planet_velocity = (bodies[reference].velocity_x,
+                                           bodies[reference].velocity_y,
+                                           bodies[reference].velocity_z)
+                        thrust_x -= planet_velocity[0]
+                        thrust_y -= planet_velocity[1]
+                        thrust_z -= planet_velocity[2]
                     thrust_x, thrust_y, thrust_z = return_normalized_vector(x=thrust_x*direction,
                                                                             y=thrust_y*direction,
                                                                             z=thrust_z*direction)
@@ -457,6 +462,7 @@ class Spaceship():
                         self.update_status(throttle=1, thrust_vector_x=thrust_x,
                                            thrust_vector_y=thrust_y, thrust_vector_z=thrust_z,
                                            time_step=duration, bodies=bodies_copy, store_values=True)
+                    print(f"Vs_x = {self.velocity_x-planet_velocity[0]}, Vs_y = {self.velocity_y-planet_velocity[1]}, Vs_z = {self.velocity_z-planet_velocity[2]}")
                 elif instruction["Action"] == "Hohmann":
                     planet_name = instruction["Planet"]
                     new_altitude = instruction["Altitude"]

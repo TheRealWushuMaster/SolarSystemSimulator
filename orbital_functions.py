@@ -34,26 +34,24 @@ def calculate_gravitational_acceleration_from_body(spaceship, body):
 def escape_velocity(body_mass, distance):
     return sqrt(2*G*body_mass/distance)
 
-def delta_v_to_establish_orbit(spaceship_velocity, planet_mass,
-                               planet_velocity, spaceship_x, spaceship_y,
-                               spaceship_z, planet_x, planet_y, planet_z,
-                               eccentricity, direction=DEFAULT_ORBIT_DIRECTION):
-    r = (spaceship_x - planet_x, spaceship_y - planet_y, spaceship_z - planet_z)
+def delta_v_to_establish_orbit(spaceship_pos, spaceship_vel, body, eccentricity,
+                               direction=DEFAULT_ORBIT_DIRECTION):
+    r = (spaceship_pos[0] - body.x, spaceship_pos[1] - body.y, spaceship_pos[2] - body.z)
     tangencial_vector = return_tangencial_vector(vector=r,
                                                  direction=direction,
                                                  normalized=True)
-    distance = return_vector_module(spaceship_x - planet_x,
-                                    spaceship_y - planet_y,
-                                    spaceship_z - planet_z)
-    orbital_velocity = orbital_velocity_module(planet_mass, distance, eccentricity)
+    distance = return_vector_module(spaceship_pos[0] - body.x,
+                                    spaceship_pos[1] - body.y,
+                                    spaceship_pos[2] - body.z)
+    orbital_velocity = orbital_velocity_module(body.mass, distance, eccentricity)
     orbital_velocity_vector = (tangencial_vector[0]*orbital_velocity,
                                tangencial_vector[1]*orbital_velocity,
                                tangencial_vector[2]*orbital_velocity)
     orbital_velocity_vector_x = orbital_velocity_vector[0]
     orbital_velocity_vector_y = orbital_velocity_vector[1]
-    delta_v_x = orbital_velocity_vector_x + planet_velocity[0] - spaceship_velocity[0]
-    delta_v_y = orbital_velocity_vector_y + planet_velocity[1] - spaceship_velocity[1]
-    delta_v_z = planet_velocity[2] - spaceship_velocity[2]  # Orbit in the same z plane as the planet
+    delta_v_x = orbital_velocity_vector_x + body.velocity_x - spaceship_vel[0]
+    delta_v_y = orbital_velocity_vector_y + body.velocity_y - spaceship_vel[1]
+    delta_v_z = body.velocity_z - spaceship_vel[2]  # Orbit in the same z plane as the planet
     return (delta_v_x, delta_v_y, delta_v_z)
 
 def angle_between_two_vectors(v1_x, v1_y, v1_z, v2_x, v2_y, v2_z):

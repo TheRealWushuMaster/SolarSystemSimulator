@@ -58,6 +58,12 @@ ORBIT_RESOLUTION = 50
 ROTATION_SENSITIVITY = 0.005
 FRAMES_PER_SECOND = 10
 MILISECONDS_PER_FRAME = round(1000/FRAMES_PER_SECOND)
+PROPERTIES_TO_EXCLUDE = ["name", "x", "y", "z", "location_path", "texture", "rings", "surface",
+                         "atmosphere", "orbit_points", "orbit_resolution", "num_orbit_steps",
+                         "velocity_x", "velocity_y", "velocity_z"]
+PROPERTIES_TO_FORMAT = ["luminosity", "radius", "mass", "temperature", "rotation_velocity",
+                        "color_index", "average_orbital_speed", "orbital_period"]
+PROPERTIES_TO_ROUND = ["rotation_period", "circumference"]
 
 # Simulation parameters
 G = 6.674e-11
