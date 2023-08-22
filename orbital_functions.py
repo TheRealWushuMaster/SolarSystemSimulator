@@ -1,8 +1,7 @@
 import datetime
-from settings import c, AVERAGE_RADIATION_ANGLE, AU, G
-from math import pi, sin, cos, sqrt
+from settings import c, AVERAGE_RADIATION_ANGLE, AU, G, DEFAULT_ORBIT_DIRECTION
+from math import pi, sin, cos, sqrt, acos, degrees
 from numpy import array, dot
-from classes import Point
 
 def calculate_radiation_pressure(luminosity, distance, reflectivity):
     return (1+reflectivity)*luminosity/4/pi/c * (cos(AVERAGE_RADIATION_ANGLE)*AU/distance)**2
@@ -35,6 +34,36 @@ def calculate_gravitational_acceleration_from_body(spaceship, body):
 def escape_velocity(body_mass, distance):
     return sqrt(2*G*body_mass/distance)
 
+def delta_v_to_establish_orbit(spaceship_velocity, planet_mass,
+                               planet_velocity, spaceship_x, spaceship_y,
+                               spaceship_z, planet_x, planet_y, planet_z,
+                               eccentricity, direction=DEFAULT_ORBIT_DIRECTION):
+    r = (spaceship_x - planet_x, spaceship_y - planet_y, spaceship_z - planet_z)
+    tangencial_vector = return_tangencial_vector(vector=r,
+                                                 direction=direction,
+                                                 normalized=True)
+    distance = return_vector_module(spaceship_x - planet_x,
+                                    spaceship_y - planet_y,
+                                    spaceship_z - planet_z)
+    orbital_velocity = orbital_velocity_module(planet_mass, distance, eccentricity)
+    orbital_velocity_vector = (tangencial_vector[0]*orbital_velocity,
+                               tangencial_vector[1]*orbital_velocity,
+                               tangencial_vector[2]*orbital_velocity)
+    orbital_velocity_vector_x = orbital_velocity_vector[0]
+    orbital_velocity_vector_y = orbital_velocity_vector[1]
+    delta_v_x = orbital_velocity_vector_x + planet_velocity[0] - spaceship_velocity[0]
+    delta_v_y = orbital_velocity_vector_y + planet_velocity[1] - spaceship_velocity[1]
+    delta_v_z = planet_velocity[2] - spaceship_velocity[2]  # Orbit in the same z plane as the planet
+    return (delta_v_x, delta_v_y, delta_v_z)
+
+def angle_between_two_vectors(v1_x, v1_y, v1_z, v2_x, v2_y, v2_z):
+    dot_product = (v1_x*v2_x + v1_y*v2_y + v1_z*v2_z)
+    module_v1 = return_vector_module(v1_x, v1_y, v1_z)
+    module_v2 = return_vector_module(v2_x, v2_y, v2_z)
+    cosine = dot_product/module_v1/module_v2
+    angle = acos(cosine)
+    return degrees(angle)
+
 def orbital_velocity_module(planet_mass, distance, eccentricity=0):
     semi_major_axis = distance / sqrt(1 - eccentricity**2)
     orbital_velocity_module = sqrt(G * planet_mass * ((2 / distance/1000) - (1 / semi_major_axis/1000))) / 1000    # In km/s
@@ -65,15 +94,14 @@ def hohmann_transfer(body, body_velocity, spaceship, r2):
     r1 = return_vector_module(initial_distance_vector.x,
                               initial_distance_vector.y,
                               initial_distance_vector.z)
-    current_v1 = spaceship.return_velocity_vector() - body_velocity
-    v1 = sqrt(G*body.mass/r2)
+    v1 = sqrt(G*body.mass/r1)
     v1_p = sqrt(2*G*body.mass*(1/r1 - 1/(r1+r2)))
-    delta_v1 = v1_p - v1
+    delta_v1 = v1_p - v1  # Adjust the speed to the transfer orbit
     v2 = sqrt(G*body.mass/r2)
     v2_p = sqrt(2*G*body.mass*(1/r2 - 1/(r1+r2)))
-    delta_v2 = v2 - v2_p
+    delta_v2 = v2 - v2_p # Adjust the speed to the new circular orbit
     transfer_time = orbital_period(body.mass, r1+r2)/2
-
+    return delta_v1, delta_v2, transfer_time
 
 def vector_from_to(base_vector, target_vector, normalized=False):
     target_vector_x, target_vector_y, target_vector_z = target_vector
@@ -87,18 +115,30 @@ def vector_from_to(base_vector, target_vector, normalized=False):
 
 def rotate_vector(vector, rotate_x=0, rotate_y=0, rotate_z=0, normalized=False):
     rotation_x = array([[1, 0, 0],
-                           [0, cos(rotate_x), -sin(rotate_x)],
-                           [0, sin(rotate_x), cos(rotate_x)]])
+                        [0, cos(rotate_x), -sin(rotate_x)],
+                        [0, sin(rotate_x), cos(rotate_x)]])
     rotation_y = array([[cos(rotate_y), 0, sin(rotate_y)],
-                           [0, 1, 0],
-                           [-sin(rotate_y), 0, cos(rotate_y)]])
+                        [0, 1, 0],
+                        [-sin(rotate_y), 0, cos(rotate_y)]])
     rotation_z = array([[cos(rotate_z), -sin(rotate_z), 0],
-                           [sin(rotate_z), cos(rotate_z), 0],
-                           [0, 0, 1]])
+                        [sin(rotate_z), cos(rotate_z), 0],
+                        [0, 0, 1]])
     rotated_vector = dot(rotation_z, dot(rotation_y, dot(rotation_x, vector)))
     if normalized:
         rotated_vector = return_normalized_vector(rotated_vector[0], rotated_vector[1], rotated_vector[2])
     return rotated_vector
+
+def return_tangencial_vector(vector, direction, normalized=False):
+    if direction=="cw":
+        rotation = pi/2
+    elif direction=="ccw":
+        rotation = -pi/2
+    else:
+        raise ValueError(f"Direction '{direction}' not recognized. Use 'cw' or 'ccw'.")
+    tangencial_vector = rotate_vector(vector=vector,
+                                      rotate_z=rotation,
+                                      normalized=normalized)
+    return tangencial_vector
 
 def return_vector_module(x, y, z):
     return sqrt(x**2 + y**2 + z**2)

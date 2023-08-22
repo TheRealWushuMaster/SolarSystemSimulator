@@ -1,6 +1,6 @@
 import customtkinter as ctk
 from settings import *
-from classes import Simulation, Point, Spaceship, SpaceshipState, FlightPlan
+from classes import Simulation, Point, SpaceshipState, FlightPlan
 from functions import format_with_thousands_separator, property_name_and_units, \
     calculate_additional_properties
 from math import sqrt
@@ -45,10 +45,10 @@ class App(ctk.CTk):
         self.load_orbits()
         self.update_boundaries()
 
-        initial_state = self.return_orbit_planet_state(planet_name="Earth", altitude=5000)
-        #initial_state.velocity_x += 0.764
+        initial_state = self.return_orbit_planet_state(planet_name="Earth", altitude=1000)
+        initial_state.velocity_x += 2.951
         flight_plan = FlightPlan()
-        #flight_plan.add_delta_v(0.764, 10)
+        #flight_plan.add_delta_v(delta_v=2.951, reference="Earth", duration=10)
         #for i in range(5):
         #    flight_plan.add_coast(10)
         # for i in range(1):
@@ -58,7 +58,7 @@ class App(ctk.CTk):
                                           flight_plan=flight_plan)
         self.simulation.add_spaceship(spaceship_name="Test Spaceship", spaceship=spaceship)
 
-        initial_state = self.return_orbit_planet_state(planet_name="Earth", altitude=6000)
+        initial_state = self.return_orbit_planet_state(planet_name="Moon", altitude=500)
         flight_plan = FlightPlan()
         spaceship = create_test_spaceship(initial_state=initial_state,
                                           flight_plan=flight_plan)
@@ -332,15 +332,17 @@ class App(ctk.CTk):
         velocity = Point(x=velocity[0], y=velocity[1], z=velocity[2])
         return velocity
 
-    def return_orbit_planet_state(self, planet_name, altitude, angle_deg=0, eccentricity=0):
+    def return_orbit_planet_state(self, planet_name, altitude,
+                                  direction=DEFAULT_ORBIT_DIRECTION,
+                                  angle_deg=0, eccentricity=0):
         planet = self.simulation.celestial_bodies[planet_name]
         planet_position = Point(x=planet.x, y=planet.y, z=planet.z)
         planet_velocity = self.body_velocity(planet.location_path)
         state = SpaceshipState.orbit_planet_state(planet_position=planet_position,
                                                   planet_velocity=planet_velocity,
                                                   planet_mass=planet.mass, planet_radius=planet.radius,
-                                                  altitude=altitude, angle_deg=angle_deg,
-                                                  eccentricity=eccentricity)
+                                                  altitude=altitude, direction=direction,
+                                                  angle_deg=angle_deg, eccentricity=eccentricity)
         return state
 
     def print_all_bodies_positions(self):
