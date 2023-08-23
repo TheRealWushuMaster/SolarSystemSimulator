@@ -41,9 +41,9 @@ class App(ctk.CTk):
         self.update_boundaries()
 
         flight_plan = FlightPlan()
-        flight_plan.add_delta_v(delta_v=2.951, reference="Earth", duration=10)
+        #flight_plan.add_delta_v(delta_v=0.8314, reference="Earth", duration=10)
         initial_state = self.return_orbit_body_state(body_name="Earth", altitude=1000)
-        #initial_state.velocity_x += 2.951
+        #initial_state.velocity_x += 0.8314
         #for i in range(5):
         #    flight_plan.add_coast(10)
         # for i in range(1):

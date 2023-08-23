@@ -37,16 +37,16 @@ def escape_velocity(body_mass, distance):
 def delta_v_to_establish_orbit(spaceship_pos, spaceship_vel, body, eccentricity,
                                direction=DEFAULT_ORBIT_DIRECTION):
     r = (spaceship_pos[0] - body.x, spaceship_pos[1] - body.y, spaceship_pos[2] - body.z)
-    tangencial_vector = return_tangencial_vector(vector=r,
+    tangential_vector = return_tangential_vector(vector=r,
                                                  direction=direction,
                                                  normalized=True)
     distance = return_vector_module(spaceship_pos[0] - body.x,
                                     spaceship_pos[1] - body.y,
                                     spaceship_pos[2] - body.z)
     orbital_velocity = orbital_velocity_module(body.mass, distance, eccentricity)
-    orbital_velocity_vector = (tangencial_vector[0]*orbital_velocity,
-                               tangencial_vector[1]*orbital_velocity,
-                               tangencial_vector[2]*orbital_velocity)
+    orbital_velocity_vector = (tangential_vector[0]*orbital_velocity,
+                               tangential_vector[1]*orbital_velocity,
+                               tangential_vector[2]*orbital_velocity)
     orbital_velocity_vector_x = orbital_velocity_vector[0]
     orbital_velocity_vector_y = orbital_velocity_vector[1]
     delta_v_x = orbital_velocity_vector_x + body.velocity_x - spaceship_vel[0]
@@ -85,7 +85,7 @@ def simulate_spaceship_trajectory(self, start_time, input_vector):
     self.timestamp = self.convert_to_julian_date(start_time)
     self.spaceship.x, self.spaceship.y, self.spaceship.z = self.spaceship.positions[0]
 
-def hohmann_transfer(body, body_velocity, spaceship, r2):
+def hohmann_transfer(body, spaceship, r2):
     body_position = body.return_position_vector()
     spaceship_position = spaceship.return_positon_vector()
     initial_distance_vector = spaceship_position - body_position
@@ -126,17 +126,17 @@ def rotate_vector(vector, rotate_x=0, rotate_y=0, rotate_z=0, normalized=False):
         rotated_vector = return_normalized_vector(rotated_vector[0], rotated_vector[1], rotated_vector[2])
     return rotated_vector
 
-def return_tangencial_vector(vector, direction, normalized=False):
+def return_tangential_vector(vector, direction, normalized=False):
     if direction=="cw":
         rotation = pi/2
     elif direction=="ccw":
         rotation = -pi/2
     else:
         raise ValueError(f"Direction '{direction}' not recognized. Use 'cw' or 'ccw'.")
-    tangencial_vector = rotate_vector(vector=vector,
+    tangential_vector = rotate_vector(vector=vector,
                                       rotate_z=rotation,
                                       normalized=normalized)
-    return tangencial_vector
+    return tangential_vector
 
 def return_vector_module(x, y, z):
     return sqrt(x**2 + y**2 + z**2)
