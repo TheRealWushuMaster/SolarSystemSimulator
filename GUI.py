@@ -220,6 +220,7 @@ class App(ctk.CTk):
                 self.simulation.update_following_object(object_name)
                 update_standard_draw_scale(self, self.widgets.canvas.winfo_width(), self.widgets.canvas.winfo_height())
                 draw_celestial_bodies(self)
+                self.simulation.draw_spaceship_trajectories()
                 break
 
     def mouse_hover(self, event):
@@ -259,6 +260,7 @@ class App(ctk.CTk):
             self.modified_scale = 0.1
         update_distance_scale(self)
         draw_celestial_bodies(self)
+        self.simulation.draw_spaceship_trajectories()
 
     def change_time_step(self, event):
         if event.keysym=="Up":

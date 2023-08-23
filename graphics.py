@@ -36,7 +36,7 @@ def bring_hud_to_foreground(self):
         self.widgets.canvas.lift(object)
 
 def clear_canvas_bodies(self):
-    for tag in ('object', 'object_text', 'planet_rings', 'orbit', 'spaceship'):
+    for tag in ('object', 'object_text', 'planet_rings', 'orbit', 'spaceship', 'trajectory'):
         objects = self.widgets.canvas.find_withtag(tag)
         for obj in objects:
             self.widgets.canvas.delete(obj)
@@ -195,3 +195,16 @@ def draw_orbits(self):
             x1, y1 = transform_coordinates_to_pixels(self, x1, y1)
             x2, y2 = transform_coordinates_to_pixels(self, x2, y2)
             self.widgets.canvas.create_line(x1, y1, x2, y2, fill=ORBIT_FILL_COLOR, dash=(2, 2), tags='orbit')
+
+def draw_spaceship_trajectory(self, spaceship_positions, trajectory_color):
+    for i, position in enumerate(spaceship_positions):
+        if i>0:
+            x1, y1, z1 = spaceship_positions[i-1].x-self.simulation.origin.x, spaceship_positions[i-1].y-self.simulation.origin.y, spaceship_positions[i-1].z-self.simulation.origin.z
+            x2, y2, z2 = position.x-self.simulation.origin.x, position.y-self.simulation.origin.y, position.z-self.simulation.origin.z
+            (x1, y1, z1) = (x1, y1, z1) @ self.rotation_matrix
+            (x2, y2, z2) = (x2, y2, z2) @ self.rotation_matrix
+            x1, y1 = transform_coordinates_to_pixels(self, x1, y1)
+            x2, y2 = transform_coordinates_to_pixels(self, x2, y2)
+            self.widgets.canvas.create_line(x1, y1, x2, y2,
+                                            fill=trajectory_color,
+                                            dash=(2, 2), tags='trajectory')

@@ -4,8 +4,8 @@ from settings import simulation_steps, DEFAULT_SMALL_TIME_STEP, \
     DEFAULT_LARGE_TIME_STEP, DEFAULT_ORBIT_DIRECTION
 from orbital_functions import calculate_total_gravitational_acceleration, vector_from_to, \
     return_normalized_vector, delta_v_to_establish_orbit
-from functions import convert_to_julian_date
-from graphics import draw_celestial_bodies
+from functions import convert_to_julian_date, generate_spaceship_trajectory_color
+from graphics import draw_celestial_bodies, draw_spaceship_trajectory
 from math import sin, cos, radians, exp, log
 
 class Star():
@@ -205,6 +205,7 @@ class Spaceship():
             self.flight_plan = flight_plan
         else:
             self.flight_plan = FlightPlan()
+        self.trajectory_color = (0, 0, 0)
 
     def reset_values(self):
         self.positions = []
@@ -718,11 +719,12 @@ class Simulation():
         position_changes = self.gui.calculate_change_vectors(last_positions)
         self.gui.update_orbits(position_changes)
         draw_celestial_bodies(self.gui)
+        self.draw_spaceship_trajectories()
         self.update_distance_reference()
         self.update_velocity_reference()
 
     def have_spaceships(self):
-        return (len(self.spaceships)>0)
+        return len(self.spaceships)>0
 
     def return_spaceship_name(self, spaceship):
         for spaceship_name, spaceship_object in self.spaceships.items():
@@ -745,11 +747,14 @@ class Simulation():
     def add_spaceship(self, spaceship_name, spaceship):
         if not spaceship_name in self.spaceships.items():
             if isinstance(spaceship, Spaceship):
+                spaceship.trajectory_color = generate_spaceship_trajectory_color(spaceship_name)
                 self.spaceships[spaceship_name] = spaceship
 
     def remove_spaceship(self, spaceship_name):
         if spaceship_name in self.spaceships.items():
             del self.spaceships[spaceship_name]
 
-    def plot_trajectory(self):
-        pass
+    def draw_spaceship_trajectories(self):
+        for spaceship_name, spaceship in self.spaceships.items():
+            draw_spaceship_trajectory(self.gui, spaceship.positions,
+                                      spaceship.trajectory_color)

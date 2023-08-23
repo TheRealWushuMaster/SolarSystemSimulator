@@ -1,4 +1,5 @@
 import locale
+import hashlib
 from math import pi
 from settings import MAX_JULIAN_DATE, MIN_JULIAN_DATE
 
@@ -45,6 +46,17 @@ def get_lighter_color(hex_color, lighten_factor=0.2):
     b_lighter = int(min(255, b + (255 - b) * lighten_factor))
     hex_lighter = "#{:02x}{:02x}{:02x}".format(r_lighter, g_lighter, b_lighter)
     return hex_lighter
+
+def generate_spaceship_trajectory_color(spaceship_name):
+    hash_function = hashlib.md5()
+    hash_function.update(spaceship_name.encode('utf-8'))
+    hash_value = hash_function.digest()
+    scaled_value = int.from_bytes(hash_value, byteorder='big')
+    r = scaled_value % 256
+    g = (scaled_value // 256) % 256
+    b = (scaled_value // 256 // 256) % 256
+    rgb_color = "#{:02x}{:02x}{:02x}".format(r, g, b)
+    return rgb_color
 
 def calculate_additional_properties(data_dict, color=False):
     for item, data in data_dict.items():
