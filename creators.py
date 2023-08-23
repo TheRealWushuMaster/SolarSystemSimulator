@@ -1,4 +1,4 @@
-from classes import Star, Planet, Spaceship, PropulsionSystem, FlightPlan
+from classes import Star, Planet, Spaceship, SpaceshipState, PropulsionSystem, FlightPlan
 
 def create_bodies(star_data=None, planet_data=None, moon_data=None):
     celestial_bodies = {}
@@ -16,6 +16,22 @@ def create_body_of_a_class(body_data, body_class):
             body = body_class(name, **properties)
             bodies[name] = body
     return bodies
+
+def create_iss(simulation):
+    flight_plan = FlightPlan()
+    earth = simulation.celestial_bodies["Earth"]
+    initial_state = SpaceshipState.orbit_planet_state(body=earth, altitude=418)
+    return create_ship_without_takeoff(main_max_thrust=0,
+                                       main_specific_impulse=0,
+                                       main_exhaust_velocity=1,
+                                       ship_structure_mass=450000,
+                                       ship_fuel_mass=0,
+                                       ship_payload_mass=0,
+                                       ship_radiation_reflectivity=0.5,
+                                       ship_surface_area=0.009331,
+                                       ship_size=0.109,
+                                       flight_plan=flight_plan,
+                                       initial_state=initial_state)
 
 def create_test_spaceship(initial_state, flight_plan=None):
     if flight_plan is None:

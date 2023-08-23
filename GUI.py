@@ -5,7 +5,7 @@ from functions import format_with_thousands_separator, property_name_and_units, 
     calculate_additional_properties
 from math import sqrt
 from numpy import array, eye, sin, cos
-from creators import create_bodies, create_test_spaceship
+from creators import create_bodies, create_test_spaceship, create_iss
 from ephemeris_data import check_ephemeris_file_update, load_ephemeris_data, \
     close_ephemeris_data
 from creators import create_bodies, create_test_spaceship
@@ -56,6 +56,9 @@ class App(ctk.CTk):
         initial_state = self.return_orbit_body_state(body_name="Moon", altitude=500)
         spaceship = create_test_spaceship(initial_state=initial_state)
         self.simulation.add_spaceship(spaceship_name="Another Test Spaceship", spaceship=spaceship)
+
+        iss = create_iss(self.simulation)
+        self.simulation.add_spaceship(spaceship_name="ISS", spaceship=iss)
 
         self.modified_scale = 1.0
         self.center_point_x, self.center_point_y = round(self.widgets.canvas.winfo_reqwidth()/2), round(self.widgets.canvas.winfo_reqheight()/2)
