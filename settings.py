@@ -2,6 +2,7 @@
 WINDOW_SIZE = (800, 500)
 WINDOW_MIN_SIZE = (700, 400)
 DEFAULT_BACKGROUND = "black"
+WINDOW_LOGO = "logos/logo-2.ico"
 
 # JPL body information
 EPHEMERIS_FILE = "de440t.bsp"

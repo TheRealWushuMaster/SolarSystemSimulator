@@ -617,7 +617,6 @@ class Simulation():
         self.timestamp = convert_to_julian_date(self.date)
         self.celestial_bodies = celestial_bodies
         self.distance_reference_object = distance_reference_object
-        self.update_distance_reference()
         self.velocity_reference_object = velocity_reference_object
         self.update_velocity_reference()
         self.following_object_name = following_object_name
@@ -642,19 +641,6 @@ class Simulation():
             self.gui.update_spaceship_text(object_name, spaceship)
         else:
             raise ValueError(f"Object '{object_name}' not found.")
-
-    def update_distance_reference(self):
-        if self.distance_reference_object in self.celestial_bodies:
-            position = (self.celestial_bodies[self.distance_reference_object].x,
-                        self.celestial_bodies[self.distance_reference_object].y,
-                        self.celestial_bodies[self.distance_reference_object].z)
-            self.distance_reference = Point(position[0], position[1], position[2])
-        elif self.distance_reference_object in self.spaceships:
-            position = Point(self.spaceships[self.distance_reference_object].x, self.spaceships[self.distance_reference_object].y, self.spaceships[self.distance_reference_object].z)
-            self.distance_reference = position
-        else:
-            raise ValueError(f"Object '{self.distance_reference_object}' not found.")
-        self.gui.widgets.canvas.itemconfigure(self.gui.distance_reference_text, text=f"Distance reference: {self.distance_reference_object.upper()}")
 
     def update_velocity_reference(self):
         if self.velocity_reference_object in self.celestial_bodies:
@@ -720,7 +706,6 @@ class Simulation():
         self.gui.update_orbits(position_changes)
         draw_celestial_bodies(self.gui)
         self.draw_spaceship_trajectories()
-        self.update_distance_reference()
         self.update_velocity_reference()
 
     def have_spaceships(self):

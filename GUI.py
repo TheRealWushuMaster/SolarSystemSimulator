@@ -1,4 +1,5 @@
 import customtkinter as ctk
+import tkinter as tk
 from settings import *
 from classes import Simulation, Point, SpaceshipState, FlightPlan
 from functions import format_with_thousands_separator, property_name_and_units, \
@@ -11,6 +12,38 @@ from ephemeris_data import check_ephemeris_file_update, load_ephemeris_data, \
 from creators import create_bodies, create_test_spaceship
 from graphics import draw_celestial_bodies, update_standard_draw_scale, \
     update_distance_scale
+
+
+class SetupSimulationWindow(ctk.CTkToplevel):
+    def __init__(self):
+        super().__init__()
+        self.geometry("400x300")
+        #self.configure(fg_color=DEFAULT_BACKGROUND)
+        self.title("Simulation Setup")
+        #self.iconbitmap(default=WINDOW_LOGO)
+        #self.update_idletasks()
+        
+        #self.label = tk.Label(master=self, text="Testing")
+        self.label = ctk.CTkLabel(master=self, text="Testing using another window", width=42)
+        self.label.pack(padx=20, pady=20)
+        self.button = tk.Button(master=self, text="Test button")
+        self.button.pack()
+        
+        # self.mainloop()
+        
+        # Create objectives dropdown menu
+        # objectives_label = ctk.CTkLabel(popup, text="Select Objective:")
+        # objectives_label.pack()
+        # objectives_options = ["Fastest Time", "Least Fuel Usage"]
+        # objectives_var = ctk.StringVar(popup)
+        # objectives_var.set(objectives_options[0])
+        # objectives_dropdown = ctk.CTkComboBox(popup, textvariable=objectives_var, values=objectives_options)
+        # objectives_dropdown.pack()
+
+        # Add more widgets for spaceship setup, destination selection, etc.
+
+        # run_button = ctk.CTkButton(popup, text="Run Simulation")
+        # run_button.pack()
 
 
 class App(ctk.CTk):
@@ -77,9 +110,11 @@ class App(ctk.CTk):
         self.geometry(f"{WINDOW_SIZE[0]}x{WINDOW_SIZE[1]}")
         self.resizable=(True, True)
         self.minsize(WINDOW_MIN_SIZE[0], WINDOW_MIN_SIZE[1])
-        self.iconbitmap("logos/logo-2.ico")
+        self.iconbitmap(default=WINDOW_LOGO)
         self.configure(fg_color = DEFAULT_BACKGROUND)
         widgets = Widgets(self)
+        widgets.setup_simulation_button.configure(command=self.show_setup_window)
+        self.setup_simulation_window = None
         return widgets
 
     def configure_canvas_hud(self):
@@ -88,12 +123,11 @@ class App(ctk.CTk):
         self.scale_text = self.widgets.canvas.create_text(10, 10+2*INFO_TEXT_SEPARATION, anchor="nw", fill=SCALE_TEXT_COLOR, text="Scale", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
         self.distance_text_km = self.widgets.canvas.create_text(10, 10+3*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Distance km", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
         self.distance_text_au = self.widgets.canvas.create_text(10, 10+4*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Distance AU", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
-        self.distance_reference_text = self.widgets.canvas.create_text(10, 10+5*INFO_TEXT_SEPARATION, anchor="nw", fill=DISTANCE_REFERENCE_TEXT_COLOR, text="Distance reference: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
-        self.velocity_reference_text = self.widgets.canvas.create_text(10, 10+6*INFO_TEXT_SEPARATION, anchor="nw", fill=VELOCITY_REFERENCE_TEXT_COLOR, text="Velocity reference: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
-        self.following_object = self.widgets.canvas.create_text(10, 10+7*INFO_TEXT_SEPARATION, anchor="nw", fill=FOLLOWING_OBJECT_TEXT_COLOR, text="Following: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
-        self.following_object_info = self.widgets.canvas.create_text(10, 10+8*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Object info: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
-        self.hud_objects = (self.time_text, self.auto_play_text, self.scale_text, self.distance_text_km,
-                            self.distance_text_au, self.following_object, self.distance_reference_text,
+        self.velocity_reference_text = self.widgets.canvas.create_text(10, 10+5*INFO_TEXT_SEPARATION, anchor="nw", fill=VELOCITY_REFERENCE_TEXT_COLOR, text="Velocity reference: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
+        self.following_object = self.widgets.canvas.create_text(10, 10+6*INFO_TEXT_SEPARATION, anchor="nw", fill=FOLLOWING_OBJECT_TEXT_COLOR, text="Following: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO, "bold"), tags="info")
+        self.following_object_info = self.widgets.canvas.create_text(10, 10+7*INFO_TEXT_SEPARATION, anchor="nw", fill=DEFAULT_FONT_COLOR, text="Object info: ", font=(DEFAULT_FONT, TEXT_SIZE_INFO), tags="info")
+        self.hud_objects = (self.time_text, self.auto_play_text, self.scale_text,
+                            self.distance_text_km, self.distance_text_au, self.following_object,
                             self.velocity_reference_text, self.following_object_info)
 
     def bind_events(self):
@@ -114,6 +148,12 @@ class App(ctk.CTk):
         self.bind("<Up>", self.change_time_step)
         self.bind("<Down>", self.change_time_step)
         self.bind("<space>", self.pause_resume_simulation)
+
+    def show_setup_window(self):
+        if (self.setup_simulation_window is None
+                or not self.setup_simulation_window.winfo_exists()):
+            self.setup_simulation_window = SetupSimulationWindow()
+        self.setup_simulation_window.focus()
 
     def change_velocity_reference(self, event):
         clicked_body_ids = self.widgets.canvas.find_overlapping(event.x, event.y, event.x, event.y)
@@ -211,6 +251,8 @@ class App(ctk.CTk):
         new_width = event.width
         new_height = event.height
         self.widgets.canvas.configure(width=new_width, height=new_height)
+        self.widgets.canvas.itemconfig(self.widgets.button_window, window=self.widgets.setup_simulation_button)
+        self.widgets.canvas.coords(self.widgets.button_window, self.widgets.canvas.winfo_reqwidth() - 10, 7)
         self.center_point_x, self.center_point_y = round(new_width/2), round(new_height/2)
         update_standard_draw_scale(self, new_width, new_height)
         update_distance_scale(self)
@@ -407,6 +449,12 @@ class Widgets(ctk.CTkFrame):
         self.configure(fg_color=DEFAULT_BACKGROUND)
         self.canvas = ctk.CTkCanvas(parent, bg="black", width=WINDOW_SIZE[0], height=WINDOW_SIZE[1])
         self.canvas.pack(fill="both", expand=True)
+        self.setup_simulation_button = ctk.CTkButton(self.canvas, text="Setup simulation")
+        self.button_window = self.canvas.create_window(self.canvas.winfo_reqwidth()-10,
+                                                       7,
+                                                       anchor=ctk.NE,
+                                                       window=self.setup_simulation_button)
+        # self.button_window = self.canvas.create_window()
         self.canvas.update_idletasks()
 
 
