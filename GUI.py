@@ -258,6 +258,8 @@ class App(ctk.CTk):
         self.widgets.canvas.configure(width=new_width, height=new_height)
         self.widgets.canvas.itemconfig(self.widgets.button_window, window=self.widgets.setup_simulation_button)
         self.widgets.canvas.coords(self.widgets.button_window, self.widgets.canvas.winfo_reqwidth() - 10, 7)
+        self.widgets.canvas.itemconfig(self.widgets.progress_bar_window, window=self.widgets.time_progress_bar)
+        self.widgets.canvas.coords(self.widgets.progress_bar_window, 0, self.widgets.canvas.winfo_reqheight()-10)
         self.center_point_x, self.center_point_y = round(new_width/2), round(new_height/2)
         update_standard_draw_scale(self, new_width, new_height)
         update_distance_scale(self)
@@ -459,6 +461,13 @@ class Widgets(ctk.CTkFrame):
                                                        7,
                                                        anchor=ctk.NE,
                                                        window=self.setup_simulation_button)
+        self.time_progress_bar = ctk.CTkProgressBar(self.canvas)
+        self.progress_bar_window = self.canvas.create_window(0,
+                                                             self.canvas.winfo_reqheight()-10,
+                                                             anchor=ctk.S,
+                                                             window=self.time_progress_bar)
+        # self.time_progress_bar.configure(height=10)
+        # self.time_progress_bar.pack(expand=True, fill="x", side="bottom")
         # self.button_window = self.canvas.create_window()
         self.canvas.update_idletasks()
 
