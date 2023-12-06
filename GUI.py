@@ -1,5 +1,6 @@
 import customtkinter as ctk
-import tkinter as tk
+import locale
+from tkinter import Listbox as tkListBox
 from settings import *
 from classes import Simulation, Point, SpaceshipState, FlightPlan
 from functions import format_with_thousands_separator, property_name_and_units, \
@@ -17,33 +18,37 @@ from graphics import draw_celestial_bodies, update_standard_draw_scale, \
 class SetupSimulationWindow(ctk.CTkToplevel):
     def __init__(self):
         super().__init__()
+        # Save original locale settings
+        original_locale = locale.getlocale(locale.LC_NUMERIC)
+        # Change locale settings so ctk will work
+        locale.setlocale(locale.LC_NUMERIC, "C")
+        
         self.geometry("400x300")
-        #self.configure(fg_color=DEFAULT_BACKGROUND)
+        self.configure(fg_color=DEFAULT_BACKGROUND)
         self.title("Simulation Setup")
-        #self.iconbitmap(default=WINDOW_LOGO)
-        #self.update_idletasks()
-        
-        #self.label = tk.Label(master=self, text="Testing")
-        self.label = ctk.CTkLabel(master=self, text="Testing using another window", width=42)
-        self.label.pack(padx=20, pady=20)
-        self.button = tk.Button(master=self, text="Test button")
-        self.button.pack()
-        
-        # self.mainloop()
+        self.iconbitmap(default=WINDOW_LOGO)
+        self.update_idletasks()
         
         # Create objectives dropdown menu
-        # objectives_label = ctk.CTkLabel(popup, text="Select Objective:")
-        # objectives_label.pack()
-        # objectives_options = ["Fastest Time", "Least Fuel Usage"]
-        # objectives_var = ctk.StringVar(popup)
-        # objectives_var.set(objectives_options[0])
-        # objectives_dropdown = ctk.CTkComboBox(popup, textvariable=objectives_var, values=objectives_options)
-        # objectives_dropdown.pack()
+        objectives_label = ctk.CTkLabel(master=self, text="Select Objective:")
+        objectives_label.pack(padx=DEFAULT_NAME_TEXT_PADDING, pady=DEFAULT_NAME_TEXT_PADDING)
+        objectives_options = ["Fastest Time", "Least Fuel Usage", "Shortest Distance"]
+        objectives_var = ctk.StringVar(master=self)
+        objectives_var.set(objectives_options[0])
+        # objectives_dropdown = ctk.CTkComboBox(master=self, textvariable=objectives_var, values=objectives_options)
+        objectives_dropdown = ctk.CTkComboBox(master=self, values=objectives_options)
+        objectives_dropdown.pack(padx=DEFAULT_NAME_TEXT_PADDING, pady=DEFAULT_NAME_TEXT_PADDING)
 
         # Add more widgets for spaceship setup, destination selection, etc.
 
-        # run_button = ctk.CTkButton(popup, text="Run Simulation")
-        # run_button.pack()
+        run_button = ctk.CTkButton(master=self, text="Run Simulation")
+        run_button.pack(padx=DEFAULT_NAME_TEXT_PADDING, pady=DEFAULT_NAME_TEXT_PADDING)
+        
+        # self.mainloop()
+        
+        # Revert changes to the locale settings
+        locale.setlocale(locale.LC_NUMERIC, original_locale)
+        
 
 
 class App(ctk.CTk):
