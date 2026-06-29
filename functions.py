@@ -1,14 +1,25 @@
+from __future__ import annotations
+
 import locale
 import hashlib
+from datetime import datetime
 from math import pi
 from settings import MAX_JULIAN_DATE, MIN_JULIAN_DATE
 
-def convert_to_julian_date(date, seconds=None, minutes=None,
-                           hours=None, days=None, months=None, years=None):
+
+def convert_to_julian_date(
+    date: datetime,
+    seconds: float | None = None,
+    minutes: float | None = None,
+    hours: float | None = None,
+    days: float | None = None,
+    months: float | None = None,
+    years: float | None = None,
+) -> float:
     year = date.year
     month = date.month
     day = date.day
-    hour= date.hour
+    hour = date.hour
     minute = date.minute
     second = date.second
     if seconds is not None: second += seconds
@@ -25,9 +36,10 @@ def convert_to_julian_date(date, seconds=None, minutes=None,
         julian_date = MAX_JULIAN_DATE
     return julian_date
 
-def color_index_to_rgb(color_index):
+
+def color_index_to_rgb(color_index: float) -> str:
     color_temp = 4600 * ((1 / ((0.92 * color_index) + 1.7)) + (1 / ((0.92 * color_index) + 0.62)))
-    if color_temp <=6600:
+    if color_temp <= 6600:
         r = 255
         g = max(0, min(255, int((color_temp - 2000) / 25)))
         b = 0
@@ -38,7 +50,8 @@ def color_index_to_rgb(color_index):
     color_hex = f"#{r:02x}{g:02x}{b:02x}".upper()
     return color_hex
 
-def get_lighter_color(hex_color, lighten_factor=0.2):
+
+def get_lighter_color(hex_color: str, lighten_factor: float = 0.2) -> str:
     hex_color = hex_color.lstrip("#")
     r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
     r_lighter = int(min(255, r + (255 - r) * lighten_factor))
@@ -47,7 +60,8 @@ def get_lighter_color(hex_color, lighten_factor=0.2):
     hex_lighter = "#{:02x}{:02x}{:02x}".format(r_lighter, g_lighter, b_lighter)
     return hex_lighter
 
-def generate_spaceship_trajectory_color(spaceship_name):
+
+def generate_spaceship_trajectory_color(spaceship_name: str) -> str:
     hash_function = hashlib.md5()
     hash_function.update(spaceship_name.encode('utf-8'))
     hash_value = hash_function.digest()
@@ -58,7 +72,8 @@ def generate_spaceship_trajectory_color(spaceship_name):
     rgb_color = "#{:02x}{:02x}{:02x}".format(r, g, b)
     return rgb_color
 
-def calculate_additional_properties(data_dict, color=False):
+
+def calculate_additional_properties(data_dict: dict, color: bool = False) -> None:
     for item, data in data_dict.items():
         if color:
             data["COLOR"] = color_index_to_rgb(data["COLOR_INDEX"])
@@ -66,7 +81,8 @@ def calculate_additional_properties(data_dict, color=False):
         data["ROTATION_PERIOD"] = round(data["CIRCUMFERENCE"]/data["ROTATION_VELOCITY"], 0)
         data["ORBIT_POINTS"] = []
 
-def format_with_thousands_separator(number, num_decimals=-1):
+
+def format_with_thousands_separator(number: float | int, num_decimals: int = -1) -> str:
     locale.setlocale(locale.LC_ALL, '')
     if 'e' in str(number).lower():
         coeff, exponent = str(number).split('e')
@@ -94,7 +110,8 @@ def format_with_thousands_separator(number, num_decimals=-1):
         formatted_number = f"{formatted_number}e{exponent}"
     return formatted_number
 
-def property_name_and_units(property_name):
+
+def property_name_and_units(property_name: str) -> tuple[str, str]:
     if property_name in ("radius", "circumference"):
         units = "km"
         if property_name == "radius":

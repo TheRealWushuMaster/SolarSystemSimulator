@@ -1,3 +1,10 @@
 __pycache__/
 *.pyc
 *.bsp
+
+# Surface textures are downloaded locally (see textures/README.md); not vendored.
+textures/*.jpg
+textures/*.png
+
+# Exported trajectories (user-generated).
+exports/

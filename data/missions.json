@@ -1,0 +1,20 @@
+{
+    "Voyager 1": {
+        "epoch_jd": 2443401.5,
+        "position_km": [152058896.2431421, -11455703.32072384, -4330584.664708722],
+        "velocity_km_s": [7.126911892364907, 35.37645172680150, 16.11168535984360],
+        "structure_mass": 825.0,
+        "color": "#ffd27f",
+        "description": "Grand Tour - Jupiter flyby 1979-03-05, then Saturn (1980)",
+        "follow": "Sun"
+    },
+    "Voyager 2": {
+        "epoch_jd": 2443387.5,
+        "position_km": [143001938.8142671, -43078293.36038641, -15209441.20025549],
+        "velocity_km_s": [12.53903407164490, 32.51388843284968, 17.57952143415526],
+        "structure_mass": 825.0,
+        "color": "#9fd0ff",
+        "description": "Grand Tour - Jupiter (1979), Saturn, Uranus, Neptune",
+        "follow": "Sun"
+    }
+}

@@ -1,0 +1,18 @@
+[project]
+name = "solara"
+version = "0.1.0"
+description = "Solar system simulator with spacecraft trajectory planning"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "customtkinter>=5.2.2",
+    "jplephem>=2.22",
+    "numpy>=2.0",
+    "requests>=2.32",
+    "ursina>=8.3.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]

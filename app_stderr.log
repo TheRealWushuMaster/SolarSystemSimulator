@@ -1,0 +1,6 @@
+Known pipe types:
+  wglGraphicsPipe
+(3 aux display modules not yet loaded.)
+:prc(warning): changing default value for ConfigVariable paste-emit-keystrokes from '1' to '0'.
+:pnmimage:png(warning): iCCP: known incorrect sRGB profile
+:display:windisplay(warning): Could not find icon filename textures/ursina.ico
