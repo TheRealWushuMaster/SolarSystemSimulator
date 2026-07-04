@@ -34,7 +34,6 @@ class CelestialBody:
     `circumference` and `rotation_period` are derived automatically and
     do not need to be stored or passed in.
     """
-
     def __init__(self,
                  name: str,
                  radius: float,
@@ -60,7 +59,6 @@ class CelestialBody:
         self.texture: str | None = texture
         self.rings: int = rings
         self.axial_tilt_deg: float = axial_tilt_deg
-
         # Set by ephemeris at runtime; start at origin.
         self.x: float = 0.0
         self.y: float = 0.0
@@ -68,10 +66,8 @@ class CelestialBody:
         self.velocity_x: float = 0.0
         self.velocity_y: float = 0.0
         self.velocity_z: float = 0.0
-
         # Render cache for orbital path; populated by graphics layer.
         self.orbit_points: list = []
-
         # Subclasses must set self.color.
         self.color: str = "#ffffff"
 
@@ -91,18 +87,24 @@ class CelestialBody:
 
     @property
     def position(self) -> Vec3:
-        return Vec3(self.x, self.y, self.z)
+        return Vec3(self.x,
+                    self.y,
+                    self.z)
 
     @position.setter
-    def position(self, v: Vec3) -> None:
+    def position(self,
+                 v: Vec3) -> None:
         self.x, self.y, self.z = v.x, v.y, v.z
 
     @property
     def velocity(self) -> Vec3:
-        return Vec3(self.velocity_x, self.velocity_y, self.velocity_z)
+        return Vec3(x=self.velocity_x,
+                    y=self.velocity_y,
+                    z=self.velocity_z)
 
     @velocity.setter
-    def velocity(self, v: Vec3) -> None:
+    def velocity(self,
+                 v: Vec3) -> None:
         self.velocity_x, self.velocity_y, self.velocity_z = v.x, v.y, v.z
 
     # ------------------------------------------------------------------
@@ -114,7 +116,7 @@ class CelestialBody:
                                coefficient: float = 1.0) -> Vec3:
         v: Vec3 = Vec3(self.x, self.y, self.z)
         if normalized:
-            v: Vec3 = v.normalized()
+            v = v.normalized()
         return v * coefficient
 
     @override
@@ -124,7 +126,6 @@ class CelestialBody:
 
 class Star(CelestialBody):
     """A stellar body. Color is derived automatically from color_index."""
-
     def __init__(self,
                  name: str,
                  star_type: str,
@@ -140,7 +141,6 @@ class Star(CelestialBody):
 
 class Planet(CelestialBody):
     """A planetary body or moon."""
-
     def __init__(self,
                  name: str,
                  planet_type: str,
@@ -157,7 +157,7 @@ class Planet(CelestialBody):
 
 def load_bodies_from_json(path: Path = _BODIES_JSON) -> dict[str, CelestialBody]:
     """Load celestial bodies from data/bodies.json."""
-    with open(path) as f:
+    with open(file=path) as f:
         data: dict[str, Any] = json.load(f)
     bodies: dict[str, CelestialBody] = {}
     for name, props in data.get("stars", {}).items():
