@@ -3,16 +3,17 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
-from settings import simulation_steps, DEFAULT_SMALL_TIME_STEP, \
+from .settings import simulation_steps, DEFAULT_SMALL_TIME_STEP, \
     DEFAULT_LARGE_TIME_STEP, DEFAULT_ORBIT_DIRECTION
-from orbital_functions import calculate_total_gravitational_acceleration, vector_from_to, \
+from .orbital_functions import calculate_total_gravitational_acceleration, vector_from_to, \
     return_normalized_vector, delta_v_to_establish_orbit
-from functions import convert_to_julian_date, generate_spaceship_trajectory_color
-from graphics import draw_celestial_bodies, draw_spaceship_trajectory
+from core.time import convert_to_julian_date
+from .functions import generate_spaceship_trajectory_color
+from .graphics import draw_celestial_bodies, draw_spaceship_trajectory
 from math import sin, cos, radians, exp, log
 
 if TYPE_CHECKING:
-    from GUI import App
+    from .GUI import App
 
 
 class Star:

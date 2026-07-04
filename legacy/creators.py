@@ -1,25 +1,9 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
 from typing import Any
-from classes import Star, Planet, Spaceship, SpaceshipState, PropulsionSystem, FlightPlan
-from core.bodies import Star as CoreStar, Planet as CorePlanet, CelestialBody
+from .classes import Star, Planet, Spaceship, SpaceshipState, PropulsionSystem, FlightPlan
 
-_BODIES_JSON: Path = Path(__file__).parent / "data" / "bodies.json"
-
-def load_bodies_from_json(path: Path = _BODIES_JSON) -> dict[str, Any]:
-    """Load celestial bodies from data/bodies.json using the new core classes."""
-    with open(file=path) as f:
-        data = json.load(fp=f)
-    bodies: dict = {}
-    for name, props in data.get("stars", {}).items():
-        bodies[name] = CoreStar(name=name, **props)
-    for name, props in data.get("planets", {}).items():
-        bodies[name] = CorePlanet(name=name, **props)
-    for name, props in data.get("moons", {}).items():
-        bodies[name] = CorePlanet(name=name, **props)
-    return bodies
+# load_bodies_from_json moved to core.bodies (used by the modern app + server).
 
 def create_bodies(
     star_data: dict | None = None,

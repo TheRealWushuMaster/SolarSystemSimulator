@@ -131,7 +131,7 @@ class TestValidation:
                          center="Sun")
 
     def test_from_bodies_builder(self, fake_kernel: FakeKernel) -> None:
-        from creators import load_bodies_from_json
+        from core.bodies import load_bodies_from_json
         bodies = load_bodies_from_json()
         # Restrict to bodies whose segments the fake kernel provides.
         subset = {name: bodies[name] for name in ("Sun", "Earth")}
@@ -159,7 +159,7 @@ class TestRealKernel:
     @pytest.fixture
     def real_ephemeris(self) -> JplEphemeris:
         from jplephem.spk import SPK
-        from creators import load_bodies_from_json
+        from core.bodies import load_bodies_from_json
         kernel = SPK.open(str(_KERNEL_PATH))
         bodies = load_bodies_from_json()
         # J2000.0 epoch

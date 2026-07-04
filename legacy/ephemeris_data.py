@@ -4,7 +4,7 @@ import requests
 import os
 import email.utils
 from typing import Any
-from settings import EPHEMERIS_FILE, EPHEMERIS_URL
+from .settings import EPHEMERIS_FILE, EPHEMERIS_URL
 from jplephem.spk import SPK
 
 

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import tkinter.font as tkfont
 from typing import Any
-from settings import DRAW_3D, CANVAS_DRAW_PADDING, SPACESHIP_COLOR, SPACESHIP_BORDER, \
+from .settings import DRAW_3D, CANVAS_DRAW_PADDING, SPACESHIP_COLOR, SPACESHIP_BORDER, \
     BODY_NAME_COLOR, DEFAULT_FONT, TEXT_SIZE_NAME, DEFAULT_NAME_TEXT_PADDING, ORBIT_FILL_COLOR
-from functions import get_lighter_color
+from .functions import get_lighter_color
 
 
 def update_standard_draw_scale(self: Any, width: float, height: float) -> None:

@@ -1,17 +1,17 @@
 import customtkinter as ctk
 import locale
 from tkinter import Listbox as tkListBox
-from settings import *
-from classes import Simulation, Point, SpaceshipState, FlightPlan
-from functions import format_with_thousands_separator, property_name_and_units, \
+from .settings import *
+from .classes import Simulation, Point, SpaceshipState, FlightPlan
+from .functions import format_with_thousands_separator, property_name_and_units, \
     calculate_additional_properties
 from math import sqrt
 from numpy import array, eye, sin, cos
-from creators import create_bodies, create_test_spaceship, create_iss
-from ephemeris_data import check_ephemeris_file_update, load_ephemeris_data, \
+from .creators import create_bodies, create_test_spaceship, create_iss
+from .ephemeris_data import check_ephemeris_file_update, load_ephemeris_data, \
     close_ephemeris_data
-from creators import create_bodies, create_test_spaceship
-from graphics import draw_celestial_bodies, update_standard_draw_scale, \
+from .creators import create_bodies, create_test_spaceship
+from .graphics import draw_celestial_bodies, update_standard_draw_scale, \
     update_distance_scale
 
 

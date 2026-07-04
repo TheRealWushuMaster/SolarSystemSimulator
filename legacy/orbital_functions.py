@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from typing import Any, Sequence
-from settings import c, AVERAGE_RADIATION_ANGLE, AU, G, DEFAULT_ORBIT_DIRECTION
+from .settings import c, AVERAGE_RADIATION_ANGLE, AU, G, DEFAULT_ORBIT_DIRECTION
 from math import pi, sin, cos, sqrt, acos, degrees
 from numpy import array, dot, ndarray
 

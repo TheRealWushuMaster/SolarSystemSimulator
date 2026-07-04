@@ -8,3 +8,11 @@ textures/*.png
 
 # Exported trajectories (user-generated).
 exports/
+
+# Frontend build output and deps -- rebuilt via `npm install`/`npm run build`.
+web/node_modules/
+web/dist/
+# Dev-convenience copy of ../textures for Vite's static server; production
+# serves the real textures/ directory directly (see deploy/nginx).
+web/public/textures/*.jpg
+web/public/textures/*.png

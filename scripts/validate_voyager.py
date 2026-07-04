@@ -9,9 +9,9 @@ Voyager actually was.
 
 Everything is in the same frame Solara already uses (heliocentric ICRF),
 which was confirmed to match HORIZONS to 0 km, so the state vector drops
-straight in. Run with the project venv:
+straight in. Run from the repo root with the project venv:
 
-    .venv\\Scripts\\python.exe validate_voyager.py
+    uv run python -m scripts.validate_voyager
 """
 
 
@@ -21,15 +21,16 @@ import os
 import re
 from typing import Any
 from jplephem.spk import SPK
+from config import EPHEMERIS_FILE
+from core.bodies import load_bodies_from_json
 from core.ephemeris import JplEphemeris
 from core.flight_plan import FlightPlan
 from core.spaceship import PropulsionSystem, Spaceship
 from core.vec3 import Vec3
-from creators import load_bodies_from_json
-from settings import EPHEMERIS_FILE
 
-HORIZONS_FILE: str = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                  "data", "voyager1_horizons.txt")
+HORIZONS_FILE: str = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "data", "voyager1_horizons.txt")
 
 # Adaptive step: move at most this fraction of the distance to the nearest
 # planet per step, clamped — tiny through the flyby, big in cruise.

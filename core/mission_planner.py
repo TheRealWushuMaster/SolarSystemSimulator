@@ -21,11 +21,34 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum, auto
+from math import pi, sqrt
 from typing import Protocol, override
 
 from core.flight_plan import FlightPlan
 from core.lambert import MU_SUN, LambertNoConvergence, solve_lambert
 from core.vec3 import Vec3
+
+# Porkchop grid defaults, matching the desktop app's GRID_*/MAX_DEPARTURE_WINDOW_S.
+DEFAULT_GRID_DEPARTURE_SAMPLES: int = 24
+DEFAULT_GRID_FLIGHT_SAMPLES: int = 12
+DEFAULT_MAX_DEPARTURE_WINDOW_S: float = 3.0 * 365.25 * 86400.0
+
+
+def linspace(start: float, stop: float, count: int) -> list[float]:
+    if count <= 1:
+        return [start]
+    step: float = (stop - start) / (count - 1)
+    return [start + step * i for i in range(count)]
+
+
+class OrbitingBody(Protocol):
+    """The minimal view of a body needed for the porkchop grid / capture radius."""
+
+    @property
+    def mass(self) -> float: ...
+
+    @property
+    def orbital_period(self) -> float: ...
 
 
 class Ephemeris(Protocol):
@@ -179,6 +202,50 @@ class MissionPlanner:
                 f"searched window."
             )
         return best
+
+    def transfer_grid(self,
+                      origin: str,
+                      target: str,
+                      now: float,
+                      bodies: dict[str, OrbitingBody],
+                      grid_departure_samples: int = DEFAULT_GRID_DEPARTURE_SAMPLES,
+                      grid_flight_samples: int = DEFAULT_GRID_FLIGHT_SAMPLES,
+                      max_departure_window_s: float = DEFAULT_MAX_DEPARTURE_WINDOW_S,
+                      ) -> tuple[list[float], list[float]]:
+        """
+        A porkchop search grid: departures over (up to) one synodic period
+        starting now, and flight times bracketing the Hohmann time between
+        the two bodies' current radii.
+        """
+        r1: float = self.ephemeris.state(origin, now)[0].magnitude()
+        r2: float = self.ephemeris.state(target, now)[0].magnitude()
+        semi_major: float = 0.5 * (r1 + r2)
+        hohmann_tof: float = pi * sqrt(semi_major**3 / self.mu)
+        flight_times: list[float] = linspace(0.6 * hohmann_tof, 1.6 * hohmann_tof,
+                                             grid_flight_samples)
+
+        period_origin: float = bodies[origin].orbital_period * 86400.0
+        period_target: float = bodies[target].orbital_period * 86400.0
+        rate_difference: float = abs(1.0 / period_origin - 1.0 / period_target)
+        synodic: float = (1.0 / rate_difference) if rate_difference > 0 else period_target
+        window: float = min(synodic, max_departure_window_s)
+        departure_times: list[float] = linspace(now, now + window, grid_departure_samples)
+        return departure_times, flight_times
+
+    def capture_radius(self, target: str, sim_time_s: float,
+                       bodies: dict[str, OrbitingBody]) -> float:
+        """
+        Capture shell at a fraction of the sphere of influence: it only has
+        to be wide enough to reliably latch the approach. The insertion then
+        coasts down to periapsis and circularizes there, so the *resulting*
+        orbit is low and well inside the SOI (stable against the Sun's
+        tide), regardless of how wide this shell is.
+        """
+        body = bodies[target]
+        sun = bodies["Sun"]
+        target_radius: float = self.ephemeris.state(target, sim_time_s)[0].magnitude()
+        sphere_of_influence: float = target_radius * (body.mass / sun.mass) ** 0.4
+        return 0.5 * sphere_of_influence
 
     # ------------------------------------------------------------------
     # Plan generation

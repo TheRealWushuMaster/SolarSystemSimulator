@@ -28,7 +28,7 @@ Use the left or right keys to adjust the time backwards or forwards, respectivel
 
 The date range is roughly between the years 1550 and 2650 (from the *de440t.bsp* ephemeris).
 ### 5. Auto simulation
-Use the *spacebar* key to start or stop the automatic time advancement using the selected time step. The speed of the simulation is determined by the `FRAMES_PER_SECOND` parameter in `settings.py` (default is 10).
+Use the *spacebar* key to start or stop the automatic time advancement using the selected time step. The speed of the simulation is determined by the `FRAMES_PER_SECOND` parameter in `legacy/settings.py` (default is 10).
 ### 6. Reset view and scale
 Use the *escape* key to reset the view to its default state (*scale=1.0* viewed from above)
 ## HUD information

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from math import cos, pi, sin, sqrt
 
 import pytest
@@ -198,3 +199,54 @@ class TestToFlightPlan:
         assert insertion.target_altitude_km == 400.0
         # Coast ends before nominal arrival so insertion is active early.
         assert coast.duration < solution.time_of_flight - 600.0
+
+
+@dataclass(frozen=True)
+class StubOrbitingBody:
+    mass: float
+    orbital_period: float  # days
+
+
+class TestTransferGrid:
+    def test_departure_window_capped(self, planner: MissionPlanner) -> None:
+        """Earth and Mars have very close periods relative to the cap, so
+        the synodic period would be enormous -- the search window must be
+        clamped to max_departure_window_s rather than spanning it."""
+        bodies = {
+            "Earth": StubOrbitingBody(mass=5.97e24, orbital_period=365.2563),
+            "Mars": StubOrbitingBody(mass=6.42e23, orbital_period=365.3),
+        }
+        departures, flights = planner.transfer_grid(
+            "Earth", "Mars", now=0.0, bodies=bodies,
+            max_departure_window_s=100.0 * DAY)
+        assert departures[0] == pytest.approx(0.0)
+        assert departures[-1] == pytest.approx(100.0 * DAY)
+        assert len(flights) == 12   # DEFAULT_GRID_FLIGHT_SAMPLES
+
+    def test_flight_times_bracket_hohmann(self, planner: MissionPlanner) -> None:
+        bodies = {
+            "Earth": StubOrbitingBody(mass=5.97e24, orbital_period=365.2563),
+            "Mars": StubOrbitingBody(mass=6.42e23, orbital_period=686.98),
+        }
+        _, flights = planner.transfer_grid("Earth", "Mars", now=0.0, bodies=bodies)
+        _, hohmann_tof = hohmann_expectations()
+        assert flights[0] == pytest.approx(0.6 * hohmann_tof)
+        assert flights[-1] == pytest.approx(1.6 * hohmann_tof)
+
+
+class TestCaptureRadius:
+    def test_scales_with_mass_ratio(self, planner: MissionPlanner) -> None:
+        """A more massive target has a wider sphere of influence, so the
+        capture shell (half the SOI) should scale the same way."""
+        bodies_light = {
+            "Mars": StubOrbitingBody(mass=6.42e23, orbital_period=686.98),
+            "Sun": StubOrbitingBody(mass=1.9885e30, orbital_period=0.0),
+        }
+        bodies_heavy = {
+            "Mars": StubOrbitingBody(mass=6.42e24, orbital_period=686.98),  # 10x mass
+            "Sun": StubOrbitingBody(mass=1.9885e30, orbital_period=0.0),
+        }
+        light = planner.capture_radius("Mars", sim_time_s=0.0, bodies=bodies_light)
+        heavy = planner.capture_radius("Mars", sim_time_s=0.0, bodies=bodies_heavy)
+        assert heavy > light
+        assert heavy / light == pytest.approx(10.0 ** 0.4, rel=1e-9)

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run *)",
+      "Bash(git mv *)",
+      "Bash(uv run python -c ' *)",
+      "Bash(uv lock *)",
+      "Bash(uv sync *)",
+      "Bash(pkill -f \"uvicorn server.main:app --port 8123\")",
+      "Bash(timeout 15 uv run python -c ' *)",
+      "Bash(timeout 20 uv run python -c ' *)",
+      "Bash(rm -f exports/Earth-Moon_trip_*.csv)",
+      "Bash(xargs -n1 uv run python -m py_compile)",
+      "Bash(git add *)",
+      "Bash(git reset *)"
+    ]
+  }
+}

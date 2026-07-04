@@ -11,7 +11,9 @@
             "parent_body": null,
             "location_path": [0, 10],
             "average_orbital_speed": 1.0,
-            "orbital_period": 0.0
+            "orbital_period": 0.0,
+            "texture": "2k_sun.jpg",
+            "axial_tilt_deg": 7.25
         }
     },
     "planets": {
@@ -28,7 +30,9 @@
             "average_orbital_speed": 47.36,
             "orbital_period": 87.9691,
             "atmosphere": 0,
-            "surface": 0
+            "surface": 0,
+            "texture": "2k_mercury.jpg",
+            "axial_tilt_deg": 0.03
         },
         "Venus": {
             "planet_type": "Rocky",
@@ -43,7 +47,9 @@
             "average_orbital_speed": 35.02,
             "orbital_period": 224.701,
             "atmosphere": 0,
-            "surface": 0
+            "surface": 0,
+            "texture": "2k_venus_atmosphere.jpg",
+            "axial_tilt_deg": 177.4
         },
         "Earth": {
             "planet_type": "Rocky",
@@ -58,7 +64,9 @@
             "average_orbital_speed": 29.7827,
             "orbital_period": 365.2563,
             "atmosphere": 0,
-            "surface": 0
+            "surface": 0,
+            "texture": "2k_earth_daymap.jpg",
+            "axial_tilt_deg": 23.44
         },
         "Mars": {
             "planet_type": "Rocky",
@@ -73,7 +81,9 @@
             "average_orbital_speed": 24.07,
             "orbital_period": 686.98,
             "atmosphere": 0,
-            "surface": 0
+            "surface": 0,
+            "texture": "2k_mars.jpg",
+            "axial_tilt_deg": 25.19
         },
         "Jupiter": {
             "planet_type": "Gas giant",
@@ -88,7 +98,9 @@
             "average_orbital_speed": 13.07,
             "orbital_period": 4332.59,
             "atmosphere": 0,
-            "surface": 0
+            "surface": 0,
+            "texture": "2k_jupiter.jpg",
+            "axial_tilt_deg": 3.13
         },
         "Saturn": {
             "planet_type": "Gas giant",
@@ -103,7 +115,9 @@
             "average_orbital_speed": 9.68,
             "orbital_period": 10759.22,
             "atmosphere": 0,
-            "surface": 0
+            "surface": 0,
+            "texture": "2k_saturn.jpg",
+            "axial_tilt_deg": 26.73
         },
         "Uranus": {
             "planet_type": "Ice giant",
@@ -118,7 +132,9 @@
             "average_orbital_speed": 6.80,
             "orbital_period": 30688.5,
             "atmosphere": 0,
-            "surface": 0
+            "surface": 0,
+            "texture": "2k_uranus.jpg",
+            "axial_tilt_deg": 97.77
         },
         "Neptune": {
             "planet_type": "Ice giant",
@@ -133,7 +149,9 @@
             "average_orbital_speed": 5.43,
             "orbital_period": 60195.0,
             "atmosphere": 0,
-            "surface": 0
+            "surface": 0,
+            "texture": "2k_neptune.jpg",
+            "axial_tilt_deg": 28.32
         },
         "Pluto": {
             "planet_type": "Dwarf",
@@ -148,7 +166,8 @@
             "average_orbital_speed": 4.743,
             "orbital_period": 90560.0,
             "atmosphere": 0,
-            "surface": 0
+            "surface": 0,
+            "axial_tilt_deg": 122.53
         }
     },
     "moons": {
@@ -165,7 +184,9 @@
             "average_orbital_speed": 1.022,
             "orbital_period": 27.321661,
             "atmosphere": 0,
-            "surface": 0
+            "surface": 0,
+            "texture": "2k_moon.jpg",
+            "axial_tilt_deg": 6.68
         }
     }
 }

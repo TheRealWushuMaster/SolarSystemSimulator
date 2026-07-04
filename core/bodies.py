@@ -1,7 +1,11 @@
 from __future__ import annotations
+import json
 from math import pi
-from typing import override
+from pathlib import Path
+from typing import Any, override
 from core.vec3 import Vec3
+
+_BODIES_JSON: Path = Path(__file__).parent.parent / "data" / "bodies.json"
 
 
 def _color_index_to_rgb(color_index: float) -> str:
@@ -42,7 +46,8 @@ class CelestialBody:
                  average_orbital_speed: float,
                  orbital_period: float,
                  texture: str | None = None,
-                 rings: int = 0) -> None:
+                 rings: int = 0,
+                 axial_tilt_deg: float = 0.0) -> None:
         self.name: str = name
         self.radius: float = radius
         self.mass: float = mass
@@ -54,6 +59,7 @@ class CelestialBody:
         self.orbital_period: float = orbital_period
         self.texture: str | None = texture
         self.rings: int = rings
+        self.axial_tilt_deg: float = axial_tilt_deg
 
         # Set by ephemeris at runtime; start at origin.
         self.x: float = 0.0
@@ -147,3 +153,17 @@ class Planet(CelestialBody):
         self.color: str = color
         self.atmosphere: int = atmosphere
         self.surface: int = surface
+
+
+def load_bodies_from_json(path: Path = _BODIES_JSON) -> dict[str, CelestialBody]:
+    """Load celestial bodies from data/bodies.json."""
+    with open(path) as f:
+        data: dict[str, Any] = json.load(f)
+    bodies: dict[str, CelestialBody] = {}
+    for name, props in data.get("stars", {}).items():
+        bodies[name] = Star(name=name, **props)
+    for name, props in data.get("planets", {}).items():
+        bodies[name] = Planet(name=name, **props)
+    for name, props in data.get("moons", {}).items():
+        bodies[name] = Planet(name=name, **props)
+    return bodies
