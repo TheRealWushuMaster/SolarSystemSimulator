@@ -17,7 +17,9 @@
       "Bash(which uv *)",
       "Bash(uv --version)",
       "Bash(npm ci *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(npx --yes pyright@latest)",
+      "Bash(.venv/Scripts/python.exe -c \"import ast; ast.parse\\(open\\('server/ws.py'\\).read\\(\\)\\); print\\('ws.py parses OK'\\)\")"
     ]
   }
 }

@@ -1,11 +1,8 @@
-from ursina.texture import Texture
-
-
-from ursina.texture import Texture
-
 
 from __future__ import annotations
 from enum import Enum, auto
+from ursina.entity import Entity
+from ursina.vec3 import Vec3
 from app_ursina.config import MARKER_APPARENT_SIZE, SATURN_RING_TEXTURE, SHIP_RADIUS_KM
 from app_ursina.geometry import (hex_to_color, log_diameter, make_ring_mesh,
                                  real_diameter, vec3_to_scene)
@@ -18,6 +15,7 @@ from ursina.vec3 import Vec3
 from ursina.entity import Entity
 from ursina.color import Color
 from ursina.entity import Entity
+from ursina.texture import Texture
 from ursina import Entity, Mesh, color as ursina_color
 
 
@@ -87,7 +85,7 @@ class BodyEntity(Entity):
                        unlit=True)
                 return
         else:                      # Jupiter / Uranus / Neptune: faint
-            inner, outer, ring_color = 0.65, 1.05, ursina_color.rgba(0.8,
+            inner, outer, ring_color = 0.65, 1.05, ursina_color.rgba(r=0.8,
                                                                      g=0.82,
                                                                      b=0.85,
                                                                      a=0.18)
@@ -156,7 +154,8 @@ class SpaceshipEntity(Entity):
     solar-system scale) shown via a fixed-apparent-size marker dot, exactly
     like the planet markers, plus its persistent trajectory trail.
     """
-    def __init__(self, name: str, color=ursina_color.azure) -> None:
+    def __init__(self, name: str,
+                 color=ursina_color.azure) -> None:
         super().__init__(model="sphere",
                          color=color,
                          scale=real_diameter(radius_km=SHIP_RADIUS_KM),
@@ -165,22 +164,27 @@ class SpaceshipEntity(Entity):
         # A small dot of fixed apparent size, so the craft stays visible
         # (and selectable) however far the camera is. Carries body_name so
         # double-click follow could pick it up like a body marker.
-        self.marker = Entity(model="sphere", color=color,
-                             collider="sphere", unlit=True)
+        self.marker: Entity = Entity(model="sphere",
+                                     color=color,
+                                     collider="sphere",
+                                     unlit=True)
         self.marker.body_name = name
-        self.trail = TrailEntity(color=color,
-                                 min_separation_km=2.0e6,
-                                 max_points=4000)
+        self.trail: TrailEntity = TrailEntity(color=color,
+                                              min_separation_km=2.0e6,
+                                              max_points=4000)
 
-    def apply_size(self, camera_distance: float) -> None:
+    def apply_size(self,
+                   camera_distance: float) -> None:
         self.marker.world_scale = camera_distance * MARKER_APPARENT_SIZE
 
-    def set_color(self, color) -> None:
+    def set_color(self,
+                  color) -> None:
         self.color = color
         self.marker.color = color
         self.trail.entity.color = color
 
-    def sync(self, position_km: Vec3) -> None:
-        self.position = vec3_to_scene(position_km)
+    def sync(self,
+             position_km: Vec3) -> None:
+        self.position: Vec3 = vec3_to_scene(v=position_km)
         self.marker.position = self.position
         self.trail.record(position_km)
