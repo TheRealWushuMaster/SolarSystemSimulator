@@ -1,8 +1,38 @@
-# ☀🌎🪐⭐☄ SOLARA: Solar System Simulator
+# ☀🌎🪐⭐☄🚀 SOLARA: Solar System Simulator
 This program creates a representation of the Solar System and its main celestial bodies using NASA's JPL ephemeris data. Its objective is to provide an accurate simulation that respects distances and sizes.
 
 Additionally, the user can create `Spaceship` models and simulate their trajectories.
+
+## Front ends
+The shared physics engine in `core/` (Lambert transfers, N-body propagation, ephemeris, flight plans) is consumed by three front ends:
+* `app_ursina/` -- desktop 3D renderer built with Ursina. The controls and HUD described below apply to this app.
+* `server/` + `web/` -- a FastAPI backend and Three.js/TypeScript frontend, published at [solarasim.space](https://solarasim.space). This is the actively deployed version.
+* `legacy/` -- the original customtkinter GUI, kept for reference.
+
+## Web app / deployment
+`server/` exposes REST endpoints (session lifecycle, mission menu actions, static catalogues) and a WebSocket for the per-tick simulation state; `web/` is the Three.js client that talks to it.
+
+To run the web app locally:
+```bash
+# Backend (from repo root)
+uv sync --group server
+uvicorn server.main:app --reload
+
+# Frontend (separate terminal)
+cd web
+npm install
+npm run dev
+```
+
+Deployment assets live in `deploy/`:
+* `deploy/solara-backend.service` -- hardened systemd unit for the backend (`NoNewPrivileges`, `ProtectSystem=full`)
+* `deploy/nginx/solarasim.conf` -- Nginx site config that terminates TLS and proxies `/api` and `/ws` to the backend
+* `deploy/deploy.sh` -- redeploy script (pull, `uv sync`, rebuild frontend, restart the service, health check)
+
+`deploy/deploy.sh` assumes the one-time server setup (systemd unit installed, `de440t.bsp` in place, Nginx site configured) is already done; it doesn't touch systemd or Nginx config itself.
+
 ## How to use
+The following controls apply to the desktop (`app_ursina`) and legacy apps.
 ### 1. Center view
 Double click on any object or its name to focus the simulation on it.
 ### 2. Adjust scale

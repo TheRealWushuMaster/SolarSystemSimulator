@@ -6,7 +6,7 @@ import type {
   StateMessage,
 } from "./wireTypes";
 
-// In production this is served from the same origin as the app (Caddy
+// In production this is served from the same origin as the app (Nginx
 // proxies /api and /ws to the backend), so an empty base just works. In dev,
 // Vite serves the frontend on its own port and the backend runs separately.
 const API_BASE: string = import.meta.env.DEV ? "http://localhost:8000" : "";

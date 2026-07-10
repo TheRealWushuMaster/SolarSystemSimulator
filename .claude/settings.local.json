@@ -12,7 +12,12 @@
       "Bash(rm -f exports/Earth-Moon_trip_*.csv)",
       "Bash(xargs -n1 uv run python -m py_compile)",
       "Bash(git add *)",
-      "Bash(git reset *)"
+      "Bash(git reset *)",
+      "Bash(.venv/Scripts/python.exe -m pytest -q)",
+      "Bash(which uv *)",
+      "Bash(uv --version)",
+      "Bash(npm ci *)",
+      "Bash(npm run *)"
     ]
   }
 }

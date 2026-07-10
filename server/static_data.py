@@ -10,6 +10,7 @@ re-derived from the live per-session CelestialBody objects.
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 from math import pi
 from pathlib import Path
 from typing import Any
@@ -59,12 +60,18 @@ def _body_entry(name: str, props: dict[str, Any], is_star: bool) -> dict[str, An
     }
 
 
+@lru_cache(maxsize=1)
 def orbit_lines(kernel: Any, epoch_jd: float) -> dict[str, list[list[float]]]:
     """
     One faint line per body that orbits the Sun directly, sampled over one
     orbital period -- mirrors app.py's _draw_orbit_lines(). Stateless: takes
     the shared, read-only SPK kernel directly rather than a session (no
     per-tick mutation involved, so it needs no session of its own).
+
+    kernel and epoch_jd are both fixed for the process lifetime (set once in
+    server.main at startup), so the result is identical on every call --
+    cached so a public, unauthenticated GET doesn't rebuild the ephemeris and
+    resample every body on every request.
     """
     from core.bodies import load_bodies_from_json
     from core.ephemeris import JplEphemeris

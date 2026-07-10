@@ -21,6 +21,12 @@ from server.session import SolaraSession
 # background sweep task for this.
 MAX_IDLE_SECONDS: float = 30.0 * 60.0
 
+# A public URL can be hit with a burst of POST /api/session calls faster than
+# MAX_IDLE_SECONDS ever elapses, so the lazy idle sweep alone can't bound
+# memory. Once at the cap, the oldest session (by last-seen) is evicted to
+# make room -- simpler than rejecting with 429 for a single-user deployment.
+MAX_SESSIONS: int = 50
+
 _sessions: dict[str, SolaraSession] = {}
 _last_seen: dict[str, float] = {}
 _kernel: Any = None
@@ -35,7 +41,13 @@ def configure(kernel: Any, epoch_jd: float) -> None:
 
 def create_session() -> SolaraSession:
     _sweep_idle()
-    session = SolaraSession(kernel=_kernel, epoch_jd=_epoch_jd)
+    if len(_sessions) >= MAX_SESSIONS:
+        oldest_id = min(_last_seen, key=lambda sid: _last_seen[sid])
+        drop_session(oldest_id)
+    # SolaraSession loads its own "now" at construction time -- _epoch_jd
+    # here is only the fixed startup reference used for the shared,
+    # cached orbit_lines (see static_data.orbit_lines).
+    session = SolaraSession(kernel=_kernel)
     _sessions[session.session_id] = session
     _last_seen[session.session_id] = time.monotonic()
     return session

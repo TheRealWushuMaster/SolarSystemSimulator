@@ -26,6 +26,7 @@ from core.moon_transfer import MoonMissionState, plan_moon_transfer
 from core.physics import G, circular_orbit_velocity
 from core.propagator import DEFAULT_DT_MAX, advance_coasting
 from core.spaceship import PropulsionSystem, Spaceship
+from core.time import convert_to_julian_date
 from core.trail import TrailPath
 from core.bodies import load_bodies_from_json
 from core.vec3 import Vec3
@@ -44,6 +45,18 @@ MOON_TRAIL_KM: float = 5000.0
 MISSIONS_FILE: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..",
                                   "data", "missions.json")
 EXPORT_DIR: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "exports")
+EXPORT_MAX_FILES: int = 100  # oldest exports are pruned past this on each export, to bound disk use on a public URL
+
+
+def _sweep_exports() -> None:
+    """Delete oldest files in EXPORT_DIR beyond EXPORT_MAX_FILES."""
+    entries = [os.path.join(EXPORT_DIR, name) for name in os.listdir(EXPORT_DIR)]
+    files = [path for path in entries if os.path.isfile(path)]
+    if len(files) <= EXPORT_MAX_FILES:
+        return
+    files.sort(key=os.path.getmtime)
+    for path in files[:len(files) - EXPORT_MAX_FILES]:
+        os.remove(path)
 
 
 class SolaraSession:
@@ -55,12 +68,15 @@ class SolaraSession:
     SPK kernel in its own lightweight JplEphemeris instance.
     """
 
-    def __init__(self, kernel: Any, epoch_jd: float) -> None:
+    def __init__(self, kernel: Any) -> None:
         self.session_id: str = uuid.uuid4().hex
+        # Loaded fresh per session (rather than once at server startup) so
+        # that whoever opens the app sees today's actual date and body
+        # positions, not wherever the server's uptime happened to start.
         self.epoch: datetime = datetime.now()
         self.bodies: dict[str, CelestialBody] = load_bodies_from_json()
         self.ephemeris: JplEphemeris = JplEphemeris.from_bodies(
-            kernel=kernel, bodies=self.bodies, epoch_jd=epoch_jd)
+            kernel=kernel, bodies=self.bodies, epoch_jd=convert_to_julian_date(self.epoch))
 
         self.sim_time_s: float = 0.0
         self.time_step_index: int = DEFAULT_TIME_STEP_INDEX
@@ -390,6 +406,7 @@ class SolaraSession:
         filename = f"{basename}_{stamp}.csv".replace(" ", "_")
         path = os.path.join(EXPORT_DIR, filename)
         rows = export_csv(self.sim_ship, path, start_time_s=self.mission_departure_time)
+        _sweep_exports()
         return {"status": "ok", "rows": rows, "path": path}
 
     # ------------------------------------------------------------------
