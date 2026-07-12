@@ -158,7 +158,7 @@ class Planet(CelestialBody):
 def load_bodies_from_json(path: Path = _BODIES_JSON) -> dict[str, CelestialBody]:
     """Load celestial bodies from data/bodies.json."""
     with open(file=path) as f:
-        data: dict[str, Any] = json.load(f)
+        data: dict[str, Any] = json.load(fp=f)
     bodies: dict[str, CelestialBody] = {}
     for name, props in data.get("stars", {}).items():
         bodies[name] = Star(name=name, **props)

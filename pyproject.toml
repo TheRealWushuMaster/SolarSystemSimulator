@@ -9,6 +9,14 @@ dependencies = [
     "numpy>=2.0",
 ]
 
+[tool.pytest.ini_options]
+# The suite lives in tests/. legacy/ is the retired desktop app and includes a
+# throwaway test_bsp.py smoke script that opens the (gitignored) de440t.bsp at
+# import time -- collecting it fails in CI where the kernel isn't present.
+# Scoping collection to tests/ keeps `pytest` with no args identical in CI and
+# locally, regardless of whether the ephemeris happens to be on disk.
+testpaths = ["tests"]
+
 [dependency-groups]
 dev = [
     "pytest>=8.0",

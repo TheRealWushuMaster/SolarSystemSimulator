@@ -254,7 +254,8 @@ class SolaraApp(MissionMixin, HudMixin, MenuMixin, Entity):
         self.refresh_positions()
         self.refresh_hud()
 
-    def _advance_historical(self, dt_s: float) -> None:
+    def _advance_historical(self,
+                            dt_s: float) -> None:
         """Coast a real craft forward under full N-body gravity (adaptive)."""
         advance_coasting(ship=self.sim_ship,
                          ephemeris=self.ephemeris,
@@ -264,7 +265,8 @@ class SolaraApp(MissionMixin, HudMixin, MenuMixin, Entity):
         self.sim_time_s += dt_s
         self._sync_bodies_to_time(time_s=self.sim_time_s)
 
-    def _advance_mission(self, dt_s: float) -> None:
+    def _advance_mission(self,
+                         dt_s: float) -> None:
         fine_chunk: float = self.sim_ship.max_integration_dt
         remaining: float = dt_s
         while remaining > 1e-6:
@@ -286,7 +288,8 @@ class SolaraApp(MissionMixin, HudMixin, MenuMixin, Entity):
             step: float = min(chunk, remaining)
             self.sim_time_s += step
             for name, body in self.mission_gravity_bodies.items():
-                position, velocity = self.ephemeris.state(name, self.sim_time_s)
+                position, velocity = self.ephemeris.state(body=name,
+                                                          time_s=self.sim_time_s)
                 body.position = position
                 body.velocity = velocity
             self.sim_ship.step_forward(dt=step,
@@ -327,7 +330,8 @@ class SolaraApp(MissionMixin, HudMixin, MenuMixin, Entity):
             body.position = position
             body.velocity = velocity
 
-    def _advance_ship(self, dt_s: float) -> None:
+    def _advance_ship(self,
+                      dt_s: float) -> None:
         """
         While parked the craft is kinematic (placed in refresh_positions),
         so there is nothing to integrate. During a mission the simulated
@@ -342,7 +346,8 @@ class SolaraApp(MissionMixin, HudMixin, MenuMixin, Entity):
         else:
             self.sim_ship.step_backwards()
 
-    def _set_home(self, body: str) -> None:
+    def _set_home(self,
+                  body: str) -> None:
         """Park the craft around `body`, ending any active mission."""
         self._close_menus()
         self.home_body = body
@@ -407,7 +412,8 @@ class SolaraApp(MissionMixin, HudMixin, MenuMixin, Entity):
             points: list = []
             for i in range(ORBIT_SAMPLES + 1):
                 t: float = self.sim_time_s + period_s * i / ORBIT_SAMPLES
-                position, _ = self.ephemeris.state(body=name, time_s=t)
+                position, _ = self.ephemeris.state(body=name,
+                                                   time_s=t)
                 points.append(vec3_to_scene(position))
             Entity(model=Mesh(vertices=points,
                               mode="line",
@@ -429,7 +435,8 @@ class SolaraApp(MissionMixin, HudMixin, MenuMixin, Entity):
             entity.update_from_state(position_km=position)
             entity.update_spin(time_s=self.sim_time_s)
         # Parked: kinematic parking orbit. Mission: the simulated craft.
-        ship_position: Vec3 = (self._parking_position() if self.parked
+        ship_position: Vec3 = (self._parking_position()
+                               if self.parked
                                else self.sim_ship.position)
         self.ships[SHIP_NAME].sync(position_km=ship_position)
         self.camera_rig.position = self._follow_entity().position
@@ -439,9 +446,10 @@ class SolaraApp(MissionMixin, HudMixin, MenuMixin, Entity):
         cam = camera.world_position
         for entity in self.body_entities.values():
             distance = (entity.world_position - cam).length()
-            entity.apply_size(self.size_mode, distance)
+            entity.apply_size(mode=self.size_mode,
+                              camera_distance=distance)
         for ship in self.ships.values():
-            ship.apply_size((ship.world_position - cam).length())
+            ship.apply_size(camera_distance=(ship.world_position - cam).length())
 
     # ------------------------------------------------------------------
     # Per-frame update and input (called by ursina)
@@ -449,7 +457,7 @@ class SolaraApp(MissionMixin, HudMixin, MenuMixin, Entity):
 
     def update(self) -> None:
         if self.auto_play:
-            self.advance(self.time_step_s * self.play_direction)
+            self.advance(dt_s=self.time_step_s * self.play_direction)
         self.apply_visual_sizes()
         self.update_labels()
         if self.show_plan:
@@ -468,7 +476,8 @@ class SolaraApp(MissionMixin, HudMixin, MenuMixin, Entity):
             self.play_direction *= -1.0
             self.refresh_hud()
         elif key == "m":
-            self.size_mode = (SizeMode.REAL if self.size_mode is SizeMode.LOG
+            self.size_mode = (SizeMode.REAL
+                              if self.size_mode is SizeMode.LOG
                               else SizeMode.LOG)
             self.refresh_hud()
         elif key == "f":
@@ -511,7 +520,6 @@ def main() -> None:
     app = Ursina(title="Solara",
                                  borderless=False)
     window.color = ursina_color.black
-
     epoch: datetime = datetime.now()
     kernel: SPK = SPK.open(path=EPHEMERIS_FILE)
     bodies: dict[str, CelestialBody] = load_bodies_from_json()
