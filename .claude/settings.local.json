@@ -20,7 +20,11 @@
       "Bash(npm run *)",
       "Bash(npx --yes pyright@latest)",
       "Bash(.venv/Scripts/python.exe -c \"import ast; ast.parse\\(open\\('server/ws.py'\\).read\\(\\)\\); print\\('ws.py parses OK'\\)\")",
-      "Bash(.venv/Scripts/python.exe -m pytest --collect-only -q)"
+      "Bash(.venv/Scripts/python.exe -m pytest --collect-only -q)",
+      "Bash(.venv/Scripts/python.exe -m pyright --outputjson)",
+      "Bash(.venv/Scripts/python.exe -m pyright)",
+      "Bash(sed 's|.*Solara.||')",
+      "Bash(echo \"exit: $?\")"
     ]
   }
 }

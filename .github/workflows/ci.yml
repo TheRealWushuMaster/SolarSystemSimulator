@@ -15,6 +15,10 @@ jobs:
           enable-cache: true
       - name: Install dependencies
         run: uv sync --group dev --group server
+      - name: Typecheck
+        # Scope and strictness come from pyrightconfig.json (core, server,
+        # tests -- app_ursina/legacy need GUI deps that aren't installed here).
+        run: uv run pyright
       - name: Run tests
         run: uv run pytest -q
 

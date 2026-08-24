@@ -15,6 +15,7 @@ classes in `classes.py`. The main differences:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from math import ceil, log
 from typing import override
@@ -170,7 +171,7 @@ class Spaceship:
     # Simulation stepping
     # ------------------------------------------------------------------
 
-    def step_forward(self, dt: float, bodies: dict[str, GravitatingBody]) -> None:
+    def step_forward(self, dt: float, bodies: Mapping[str, GravitatingBody]) -> None:
         """
         Advance one simulation step: replay from history when stepping
         over ground already covered, otherwise simulate a new step.
@@ -188,7 +189,7 @@ class Spaceship:
 
     def _simulate_step(self,
                        dt: float,
-                       bodies: dict[str, GravitatingBody]) -> None:
+                       bodies: Mapping[str, GravitatingBody]) -> None:
         """
         Advance the dynamic state by `dt` and record one snapshot.
 
@@ -219,7 +220,7 @@ class Spaceship:
     def _integrate_sub_step(self,
                             command: ThrustCommand,
                             dt: float,
-                            bodies: dict[str, GravitatingBody]) -> None:
+                            bodies: Mapping[str, GravitatingBody]) -> None:
         engine: PropulsionSystem = self.active_propulsion
         thrust: float = engine.thrust(command.throttle) if engine.has_fuel else 0.0
         fuel_needed: float = engine.fuel_needed(thrust, dt)

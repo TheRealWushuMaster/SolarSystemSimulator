@@ -19,6 +19,7 @@ it with analytic circular orbits.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum, auto
 from math import pi, sqrt
@@ -207,7 +208,7 @@ class MissionPlanner:
                       origin: str,
                       target: str,
                       now: float,
-                      bodies: dict[str, OrbitingBody],
+                      bodies: Mapping[str, OrbitingBody],
                       grid_departure_samples: int = DEFAULT_GRID_DEPARTURE_SAMPLES,
                       grid_flight_samples: int = DEFAULT_GRID_FLIGHT_SAMPLES,
                       max_departure_window_s: float = DEFAULT_MAX_DEPARTURE_WINDOW_S,
@@ -233,7 +234,7 @@ class MissionPlanner:
         return departure_times, flight_times
 
     def capture_radius(self, target: str, sim_time_s: float,
-                       bodies: dict[str, OrbitingBody]) -> float:
+                       bodies: Mapping[str, OrbitingBody]) -> float:
         """
         Capture shell at a fraction of the sphere of influence: it only has
         to be wide enough to reliably latch the approach. The insertion then

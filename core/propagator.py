@@ -18,9 +18,10 @@ Pure (no GUI): it reads/writes the bodies' state through their `position` /
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Protocol
 
-from core.physics import GravitatingBody
+from core.physics import GravitatingBody, SyncableBody
 from core.spaceship import Spaceship
 from core.vec3 import Vec3
 
@@ -35,8 +36,18 @@ class Ephemeris(Protocol):
     def state(self, body: str, time_s: float) -> tuple[Vec3, Vec3]: ...
 
 
-def adaptive_dt(ship: Spaceship,
-                bodies: dict[str, GravitatingBody],
+class MovingCraft(Protocol):
+    """The minimal view of a craft needed to size a sub-step."""
+
+    @property
+    def position(self) -> Vec3: ...
+
+    @property
+    def velocity(self) -> Vec3: ...
+
+
+def adaptive_dt(ship: MovingCraft,
+                bodies: Mapping[str, GravitatingBody],
                 step_fraction: float = DEFAULT_STEP_FRACTION,
                 dt_min: float = DEFAULT_DT_MIN,
                 dt_max: float = DEFAULT_DT_MAX) -> float:
@@ -62,7 +73,7 @@ def adaptive_dt(ship: Spaceship,
 
 def advance_coasting(ship: Spaceship,
                      ephemeris: Ephemeris,
-                     bodies: dict[str, GravitatingBody],
+                     bodies: Mapping[str, SyncableBody],
                      time_s: float,
                      dt_s: float,
                      step_fraction: float = DEFAULT_STEP_FRACTION,

@@ -19,6 +19,7 @@ testable with a stub.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from math import exp, log
 from typing import Protocol, cast, override
@@ -147,7 +148,7 @@ class Instruction(ABC):
     @abstractmethod
     def command(self,
                 ship: ShipState,
-                bodies: dict[str, BodyState],
+                bodies: Mapping[str, BodyState],
                 dt: float) -> ThrustCommand:
         """Return the thrust command for a step of `dt` seconds."""
 
@@ -166,7 +167,7 @@ class CoastInstruction(Instruction):
     @override
     def command(self,
                 ship: ShipState,
-                bodies: dict[str, BodyState],
+                bodies: Mapping[str, BodyState],
                 dt: float) -> ThrustCommand:
         return ThrustCommand.coast()
 
@@ -215,14 +216,14 @@ class ThrustInstruction(Instruction):
     @override
     def command(self,
                 ship: ShipState,
-                bodies: dict[str, BodyState],
+                bodies: Mapping[str, BodyState],
                 dt: float) -> ThrustCommand:
         direction: Vec3 = self._resolve_direction(ship, bodies)
         return ThrustCommand(throttle=self.throttle, direction=direction)
 
     def _resolve_direction(self,
                            ship: ShipState,
-                           bodies: dict[str, BodyState]) -> Vec3:
+                           bodies: Mapping[str, BodyState]) -> Vec3:
         if self.towards_body is not None:
             return (bodies[self.towards_body].position - ship.position).normalized()
         if self.away_from_body is not None:
@@ -271,7 +272,7 @@ class DeltaVInstruction(Instruction):
     @override
     def command(self,
                 ship: ShipState,
-                bodies: dict[str, BodyState],
+                bodies: Mapping[str, BodyState],
                 dt: float) -> ThrustCommand:
         direction: Vec3 = self._burn_direction(ship, bodies)
         throttle: float = self._throttle_for_step(ship, dt)
@@ -283,7 +284,7 @@ class DeltaVInstruction(Instruction):
 
     def _burn_direction(self,
                         ship: ShipState,
-                        bodies: dict[str, BodyState]) -> Vec3:
+                        bodies: Mapping[str, BodyState]) -> Vec3:
         velocity: Vec3 = ship.velocity
         if self.reference_body is not None and self.reference_body in bodies:
             velocity = velocity - bodies[self.reference_body].velocity
@@ -329,7 +330,7 @@ class VectorBurnInstruction(Instruction):
     @override
     def command(self,
                 ship: ShipState,
-                bodies: dict[str, BodyState],
+                bodies: Mapping[str, BodyState],
                 dt: float) -> ThrustCommand:
         time_budget: float = max(self.remaining, dt)
         target_dv: float = self.delta_v_remaining * dt / time_budget
@@ -401,7 +402,7 @@ class OrbitInsertionInstruction(Instruction):
     @override
     def command(self,
                 ship: ShipState,
-                bodies: dict[str, BodyState],
+                bodies: Mapping[str, BodyState],
                 dt: float) -> ThrustCommand:
         raw_body: BodyState | None = bodies.get(self.target_body)
         if raw_body is None:
@@ -561,7 +562,7 @@ class FlightPlan:
 
     def next_command(self,
                      ship: ShipState,
-                     bodies: dict[str, BodyState],
+                     bodies: Mapping[str, BodyState],
                      dt: float) -> ThrustCommand:
         """
         Return the thrust command for a simulation step of `dt` seconds

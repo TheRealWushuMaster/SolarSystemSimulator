@@ -16,10 +16,19 @@ dependencies = [
 # Scoping collection to tests/ keeps `pytest` with no args identical in CI and
 # locally, regardless of whether the ephemeris happens to be on disk.
 testpaths = ["tests"]
+# A WebSocket test that waits on a reply the server deliberately never sends
+# (a throttled tick) hangs forever rather than failing. Dump tracebacks and
+# abort instead of letting CI sit on it -- no run comes close to this.
+faulthandler_timeout = 120
 
 [dependency-groups]
 dev = [
     "pytest>=8.0",
+    # fastapi.testclient needs an httpx; starlette >=1.3 wants httpx2 and
+    # warns on the httpx 0.x it still accepts. pyright is the type checker
+    # CI runs against pyrightconfig.json (see .github/workflows/ci.yml).
+    "httpx2>=2.12",
+    "pyright>=1.1.400",
 ]
 server = [
     "fastapi>=0.115",

@@ -140,11 +140,17 @@ class SolaraSession:
     # Ship position (parked kinematic orbit, or the simulated craft)
     # ------------------------------------------------------------------
 
+    # `parked` and `sim_ship is None` are two views of the same fact, but only
+    # the latter narrows the type -- so these test the ship directly and treat
+    # "no ship" as parked, which is also the safer answer if the two ever
+    # disagree.
     def ship_position(self) -> Vec3:
-        return self._parking_position() if self.parked else self.sim_ship.position
+        if self.parked or self.sim_ship is None:
+            return self._parking_position()
+        return self.sim_ship.position
 
     def ship_velocity(self) -> Vec3:
-        if self.parked:
+        if self.parked or self.sim_ship is None:
             return Vec3()
         return self.sim_ship.velocity
 
@@ -165,9 +171,9 @@ class SolaraSession:
 
     def advance(self, dt_s: float) -> None:
         if self.mission_active and not self.parked and dt_s > 0.0 and self.sim_ship is not None:
-            self._advance_mission(dt_s)
+            self._advance_mission(dt_s=dt_s, ship=self.sim_ship)
         elif self.historical_active and dt_s > 0.0 and self.sim_ship is not None:
-            self._advance_historical(dt_s)
+            self._advance_historical(dt_s=dt_s, ship=self.sim_ship)
         else:
             self.sim_time_s += dt_s
             self._sync_bodies_to_time(self.sim_time_s)
@@ -176,18 +182,21 @@ class SolaraSession:
         if self.sim_ship is not None and self.trail.add(self.sim_ship.position):
             pass  # the delta is picked up by serialization from trail.points
 
-    def _advance_historical(self, dt_s: float) -> None:
+    # Both take the craft as an argument rather than reading self.sim_ship:
+    # advance() has already established it exists, and passing it through
+    # carries that guarantee into the body instead of re-deriving it.
+    def _advance_historical(self, dt_s: float, ship: Spaceship) -> None:
         """Coast a real craft forward under full N-body gravity (adaptive)."""
-        advance_coasting(self.sim_ship, self.ephemeris, self.bodies, self.sim_time_s, dt_s)
+        advance_coasting(ship, self.ephemeris, self.bodies, self.sim_time_s, dt_s)
         self.sim_time_s += dt_s
         self._sync_bodies_to_time(self.sim_time_s)
 
-    def _advance_mission(self, dt_s: float) -> None:
-        fine_chunk: float = self.sim_ship.max_integration_dt
+    def _advance_mission(self, dt_s: float, ship: Spaceship) -> None:
+        fine_chunk: float = ship.max_integration_dt
         remaining: float = dt_s
         while remaining > 1e-6:
             target = self.bodies[self.mission_target]
-            distance: float = (self.sim_ship.position - target.position).magnitude()
+            distance: float = (ship.position - target.position).magnitude()
             cap: float = self.mission_capture_km
             if distance <= 4.0 * cap:
                 chunk = fine_chunk
@@ -201,7 +210,7 @@ class SolaraSession:
                 position, velocity = self.ephemeris.state(name, self.sim_time_s)
                 body.position = position
                 body.velocity = velocity
-            self.sim_ship.step_forward(step, self.mission_gravity_bodies)
+            ship.step_forward(step, self.mission_gravity_bodies)
             self._maybe_correct_course()
             remaining -= step
         self._sync_bodies_to_time(self.sim_time_s)

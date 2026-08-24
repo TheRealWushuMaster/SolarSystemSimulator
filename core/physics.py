@@ -11,6 +11,7 @@ Unit conventions (matching the rest of the simulation):
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from math import cos, radians, sin, sqrt
 from typing import Protocol
 
@@ -35,8 +36,45 @@ class GravitatingBody(Protocol):
     def radius(self) -> float: ...
 
 
+class SyncableBody(Protocol):
+    """
+    A gravitating body whose state can be *rewritten* from an ephemeris.
+
+    Same shape as `GravitatingBody`, but with `position`/`velocity` declared
+    settable, for the callers that re-sync bodies in place each sub-step (see
+    propagator). They are spelled as property + setter rather than as plain
+    attributes so that an implementation storing its state some other way
+    still matches -- CelestialBody keeps loose x/y/z floats and exposes them
+    through a Vec3 property pair.
+    """
+
+    @property
+    def position(self) -> Vec3: ...
+
+    # Positional-only (`/`): a setter is never called by keyword, so the
+    # implementation is free to name its parameter whatever it likes.
+    @position.setter
+    def position(self, value: Vec3, /) -> None: ...
+
+    @property
+    def velocity(self) -> Vec3: ...
+
+    @velocity.setter
+    def velocity(self, value: Vec3, /) -> None: ...
+
+    @property
+    def mass(self) -> float: ...
+
+    @property
+    def radius(self) -> float: ...
+
+
+# Read-only `Mapping` rather than `dict` throughout: these callers only ever
+# look bodies up, and `dict` is invariant in its value type, so a concrete
+# `dict[str, CelestialBody]` would not satisfy `dict[str, GravitatingBody]`
+# even though CelestialBody implements the protocol.
 def gravitational_acceleration(position: Vec3,
-                               bodies: dict[str, GravitatingBody]) -> Vec3:
+                               bodies: Mapping[str, GravitatingBody]) -> Vec3:
     """
     Total gravitational acceleration (km/s^2) at `position` (km) from
     all `bodies`. Contributions from inside a body's radius are ignored
